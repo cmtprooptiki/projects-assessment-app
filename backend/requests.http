@@ -1,0 +1,545 @@
+@baseUrl = http://localhost:3001
+@contentType = application/json
+@token = your-jwt-token-here
+
+# ============================================================
+# AUTH
+# ============================================================
+
+### Register User (Admin)
+POST {{baseUrl}}/api/auth/register
+Content-Type: {{contentType}}
+
+{
+  "email": "admin@gmail.com",
+  "password": "12345678",
+  "firstName": "Admin",
+  "lastName": "User",
+  "role": "admin"
+}
+
+### Register User (Regular)
+POST {{baseUrl}}/api/auth/register
+Content-Type: {{contentType}}
+
+{
+  "email": "user@company.com",
+  "password": "password123",
+  "firstName": "Regular",
+  "lastName": "User",
+  "role": "user"
+}
+
+### Login
+POST {{baseUrl}}/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "admin@company.com",
+  "password": "password123"
+}
+
+### Get Current User (copy token from login response into @token at the top)
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{token}}
+
+### Validation Error - Invalid Email
+POST {{baseUrl}}/api/auth/register
+Content-Type: {{contentType}}
+
+{
+  "email": "not-an-email",
+  "password": "password123",
+  "firstName": "John",
+  "lastName": "Doe"
+}
+
+### Validation Error - Password Too Short
+POST {{baseUrl}}/api/auth/register
+Content-Type: {{contentType}}
+
+{
+  "email": "test@company.com",
+  "password": "123",
+  "firstName": "John",
+  "lastName": "Doe"
+}
+
+### Validation Error - Wrong Password
+POST {{baseUrl}}/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "admin@company.com",
+  "password": "wrongpassword"
+}
+
+
+# ============================================================
+# HEALTH CHECK
+# ============================================================
+
+### Health Check
+GET {{baseUrl}}/health
+
+
+# ============================================================
+# EMPLOYEES
+# ============================================================
+
+### Get All Employees
+GET {{baseUrl}}/api/employees
+
+### Get All Employees - With Filters
+GET {{baseUrl}}/api/employees?department=Engineering&isActive=true&page=1&limit=10
+
+### Get All Employees - Search
+GET {{baseUrl}}/api/employees?search=john
+
+### Get Employee by ID
+GET {{baseUrl}}/api/employees/1
+
+### Create Employee
+POST {{baseUrl}}/api/employees
+Content-Type: {{contentType}}
+
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "email": "john.doe@company.com",
+  "department": "Engineering",
+  "position": "Software Engineer",
+  "isActive": true
+}
+
+### Create Employee 2
+POST {{baseUrl}}/api/employees
+Content-Type: {{contentType}}
+
+{
+  "firstName": "Jane",
+  "lastName": "Smith",
+  "email": "jane.smith@company.com",
+  "department": "Design",
+  "position": "UI/UX Designer",
+  "isActive": true
+}
+
+### Create Employee 3
+POST {{baseUrl}}/api/employees
+Content-Type: {{contentType}}
+
+{
+  "firstName": "Michael",
+  "lastName": "Johnson",
+  "email": "michael.johnson@company.com",
+  "department": "Engineering",
+  "position": "Backend Developer",
+  "isActive": true
+}
+
+### Update Employee
+PUT {{baseUrl}}/api/employees/1
+Content-Type: {{contentType}}
+
+{
+  "position": "Senior Software Engineer",
+  "department": "Engineering"
+}
+
+### Deactivate Employee
+PUT {{baseUrl}}/api/employees/1
+Content-Type: {{contentType}}
+
+{
+  "isActive": false
+}
+
+### Delete Employee
+DELETE {{baseUrl}}/api/employees/1
+
+### Validation Error - Missing Required Fields
+POST {{baseUrl}}/api/employees
+Content-Type: {{contentType}}
+
+{
+  "firstName": "John"
+}
+
+### Validation Error - Invalid Email
+POST {{baseUrl}}/api/employees
+Content-Type: {{contentType}}
+
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "email": "not-an-email",
+  "department": "Engineering",
+  "position": "Developer"
+}
+
+
+# ============================================================
+# CLIENTS
+# ============================================================
+
+### Get All Clients
+GET {{baseUrl}}/api/clients
+
+### Get All Clients - Search
+GET {{baseUrl}}/api/clients?search=acme&page=1&limit=10
+
+### Get Client by ID (includes assigned projects)
+GET {{baseUrl}}/api/clients/1
+
+### Create Client
+POST {{baseUrl}}/api/clients
+Content-Type: {{contentType}}
+
+{
+  "name": "Acme Corp",
+  "industry": "Technology",
+  "contactEmail": "contact@acmecorp.com",
+  "contactPhone": "+1 555 000 0001"
+}
+
+### Create Client 2
+POST {{baseUrl}}/api/clients
+Content-Type: {{contentType}}
+
+{
+  "name": "Global Industries",
+  "industry": "Finance",
+  "contactEmail": "info@globalind.com",
+  "notes": "Key enterprise client, handle with care."
+}
+
+### Create Client 3
+POST {{baseUrl}}/api/clients
+Content-Type: {{contentType}}
+
+{
+  "name": "Internal",
+  "notes": "Internal projects with no external client."
+}
+
+### Update Client
+PUT {{baseUrl}}/api/clients/1
+Content-Type: {{contentType}}
+
+{
+  "contactPhone": "+1 555 000 9999",
+  "notes": "Updated contact details."
+}
+
+### Delete Client (fails if projects are assigned)
+DELETE {{baseUrl}}/api/clients/1
+
+### Validation Error - Missing Name
+POST {{baseUrl}}/api/clients
+Content-Type: {{contentType}}
+
+{
+  "industry": "Technology"
+}
+
+
+# ============================================================
+# PROJECTS
+# ============================================================
+
+### Get All Projects
+GET {{baseUrl}}/api/projects
+
+### Get All Projects - Filter by Status
+GET {{baseUrl}}/api/projects?status=active
+
+### Get All Projects - Filter by Client
+GET {{baseUrl}}/api/projects?clientId=1
+
+### Get All Projects - Search
+GET {{baseUrl}}/api/projects?search=alpha&page=1&limit=10
+
+### Get Project by ID
+GET {{baseUrl}}/api/projects/1
+
+### Create Project (replace clientId with a real client ID)
+POST {{baseUrl}}/api/projects
+Content-Type: {{contentType}}
+
+{
+  "name": "Alpha Platform",
+  "code": "ALPHA-001",
+  "description": "Core platform modernization initiative.",
+  "clientId": 1,
+  "startDate": "2024-01-01",
+  "endDate": "2024-12-31",
+  "status": "active"
+}
+
+### Create Project 2
+POST {{baseUrl}}/api/projects
+Content-Type: {{contentType}}
+
+{
+  "name": "Beta Dashboard",
+  "code": "BETA-002",
+  "description": "Analytics dashboard for internal teams.",
+  "clientId": 3,
+  "startDate": "2024-03-01",
+  "status": "active"
+}
+
+### Create Project 3
+POST {{baseUrl}}/api/projects
+Content-Type: {{contentType}}
+
+{
+  "name": "Legacy Migration",
+  "code": "LEGACY-003",
+  "description": "Migrating legacy systems to the cloud.",
+  "clientId": 2,
+  "startDate": "2023-06-01",
+  "endDate": "2024-06-01",
+  "status": "completed"
+}
+
+### Update Project
+PUT {{baseUrl}}/api/projects/1
+Content-Type: {{contentType}}
+
+{
+  "status": "on_hold",
+  "description": "Project paused pending client approval."
+}
+
+### Delete Project
+DELETE {{baseUrl}}/api/projects/1
+
+### Validation Error - Invalid Status
+POST {{baseUrl}}/api/projects
+Content-Type: {{contentType}}
+
+{
+  "name": "Test Project",
+  "code": "TEST-001",
+  "clientId": 1,
+  "startDate": "2024-01-01",
+  "status": "invalid_status"
+}
+
+### Validation Error - End Date Before Start Date
+POST {{baseUrl}}/api/projects
+Content-Type: {{contentType}}
+
+{
+  "name": "Test Project",
+  "code": "TEST-002",
+  "clientId": 1,
+  "startDate": "2024-12-01",
+  "endDate": "2024-01-01"
+}
+
+
+# ============================================================
+# ROLES
+# ============================================================
+
+### Get All Roles
+GET {{baseUrl}}/api/roles
+
+### Get Role by ID
+GET {{baseUrl}}/api/roles/1
+
+### Create Role - Frontend Developer
+POST {{baseUrl}}/api/roles
+Content-Type: {{contentType}}
+
+{
+  "name": "Frontend Developer",
+  "description": "Responsible for UI implementation and frontend architecture."
+}
+
+### Create Role - Backend Developer
+POST {{baseUrl}}/api/roles
+Content-Type: {{contentType}}
+
+{
+  "name": "Backend Developer",
+  "description": "Responsible for server-side logic and APIs."
+}
+
+### Create Role - UI/UX Designer
+POST {{baseUrl}}/api/roles
+Content-Type: {{contentType}}
+
+{
+  "name": "UI/UX Designer",
+  "description": "Responsible for user experience and interface design."
+}
+
+### Create Role - Project Manager
+POST {{baseUrl}}/api/roles
+Content-Type: {{contentType}}
+
+{
+  "name": "Project Manager",
+  "description": "Responsible for project planning, tracking, and delivery."
+}
+
+### Create Role - Tech Lead
+POST {{baseUrl}}/api/roles
+Content-Type: {{contentType}}
+
+{
+  "name": "Tech Lead",
+  "description": "Responsible for technical direction and code reviews."
+}
+
+### Update Role
+PUT {{baseUrl}}/api/roles/1
+Content-Type: {{contentType}}
+
+{
+  "description": "Updated description for this role."
+}
+
+### Delete Role
+DELETE {{baseUrl}}/api/roles/1
+
+### Validation Error - Duplicate Role Name (run after creating a role)
+POST {{baseUrl}}/api/roles
+Content-Type: {{contentType}}
+
+{
+  "name": "Frontend Developer"
+}
+
+
+# ============================================================
+# PROJECT PARTICIPATIONS
+# ============================================================
+
+### Get All Participations
+GET {{baseUrl}}/api/participations
+
+### Get All Participations - Filter by Project
+GET {{baseUrl}}/api/participations?projectId=1
+
+### Get All Participations - Filter by Employee
+GET {{baseUrl}}/api/participations?employeeId=1
+
+### Get All Participations - Filter by Year and Month
+GET {{baseUrl}}/api/participations?year=2024&month=6
+
+### Get All Participations - Filter by Year
+GET {{baseUrl}}/api/participations?year=2024
+
+### Get All Participations - Filter by Date Range
+GET {{baseUrl}}/api/participations?startDate=2024-01-01&endDate=2024-06-30
+
+### Get All Participations - Filter by Department
+GET {{baseUrl}}/api/participations?department=Engineering
+
+### Get All Participations - Multiple Filters
+GET {{baseUrl}}/api/participations?projectId=1&department=Engineering&year=2024
+
+### Get Participation by ID
+GET {{baseUrl}}/api/participations/1
+
+### Create Participation
+POST {{baseUrl}}/api/participations
+Content-Type: {{contentType}}
+
+{
+  "employeeId": 1,
+  "projectId": 1,
+  "roleId": 1,
+  "startDate": "2024-01-01",
+  "endDate": "2024-06-30",
+  "notes": "Working on frontend module."
+}
+
+### Create Participation 2
+POST {{baseUrl}}/api/participations
+Content-Type: {{contentType}}
+
+{
+  "employeeId": 2,
+  "projectId": 1,
+  "roleId": 3,
+  "startDate": "2024-02-01",
+  "notes": "Design phase."
+}
+
+### Create Participation 3 - Ongoing (no endDate)
+POST {{baseUrl}}/api/participations
+Content-Type: {{contentType}}
+
+{
+  "employeeId": 1,
+  "projectId": 2,
+  "roleId": 2,
+  "startDate": "2024-03-01"
+}
+
+### Update Participation
+PUT {{baseUrl}}/api/participations/1
+Content-Type: {{contentType}}
+
+{
+  "endDate": "2024-09-30",
+  "notes": "Extended participation."
+}
+
+### Delete Participation
+DELETE {{baseUrl}}/api/participations/1
+
+### Validation Error - Invalid Employee ID
+POST {{baseUrl}}/api/participations
+Content-Type: {{contentType}}
+
+{
+  "employeeId": 9999,
+  "projectId": 1,
+  "roleId": 1,
+  "startDate": "2024-01-01"
+}
+
+
+# ============================================================
+# DASHBOARD
+# ============================================================
+
+### Dashboard Summary
+GET {{baseUrl}}/api/dashboard/summary
+
+### Project Dashboard
+GET {{baseUrl}}/api/dashboard/project/1
+
+### Employee Dashboard
+GET {{baseUrl}}/api/dashboard/employee/1
+
+### Filtered Participations - By Project
+GET {{baseUrl}}/api/dashboard/participations?projectId=1
+
+### Filtered Participations - By Employee
+GET {{baseUrl}}/api/dashboard/participations?employeeId=1
+
+### Filtered Participations - By Role
+GET {{baseUrl}}/api/dashboard/participations?roleId=1
+
+### Filtered Participations - By Year
+GET {{baseUrl}}/api/dashboard/participations?year=2024
+
+### Filtered Participations - By Year and Month
+GET {{baseUrl}}/api/dashboard/participations?year=2024&month=3
+
+### Filtered Participations - By Date Range
+GET {{baseUrl}}/api/dashboard/participations?startDate=2024-01-01&endDate=2024-06-30
+
+### Filtered Participations - By Department and Status
+GET {{baseUrl}}/api/dashboard/participations?department=Engineering&status=active
+
+### Filtered Participations - All Filters Combined
+GET {{baseUrl}}/api/dashboard/participations?projectId=1&employeeId=1&year=2024&month=1

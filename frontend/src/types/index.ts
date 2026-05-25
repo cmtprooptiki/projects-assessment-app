@@ -1,0 +1,142 @@
+export interface Department {
+  id: number;
+  name: string;
+  description?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Employee {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  department: string;
+  isActive: boolean;
+  photo?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  participations?: ProjectParticipation[];
+}
+
+export type ProjectStatus = 'active' | 'completed' | 'on_hold' | 'cancelled';
+
+export interface Client {
+  id: number;
+  name: string;
+  industry?: string | null;
+  contactEmail?: string | null;
+  contactPhone?: string | null;
+  notes?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  projects?: Project[];
+}
+
+export interface Project {
+  id: number;
+  name: string;
+  code: string;
+  description?: string | null;
+  clientId?: number | null;
+  client?: Client | null;
+  startDate: string;
+  endDate?: string | null;
+  status: ProjectStatus;
+  createdAt: string;
+  updatedAt: string;
+  participations?: ProjectParticipation[];
+}
+
+export interface Role {
+  id: number;
+  name: string;
+  description?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProjectParticipation {
+  id: number;
+  employeeId: number;
+  projectId: number;
+  roleId: number;
+  startDate: string;
+  endDate?: string | null;
+  notes?: string | null;
+  totalMonths?: number;
+  employee?: Employee;
+  project?: Project;
+  role?: Role;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PaginationMeta {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface PaginatedResult<T> {
+  success: boolean;
+  data: T[];
+  meta: PaginationMeta;
+}
+
+export interface ApiResult<T> {
+  success: boolean;
+  data: T;
+  message?: string;
+}
+
+export interface DashboardSummary {
+  overview: {
+    totalEmployees: number;
+    activeEmployees: number;
+    totalProjects: number;
+    activeProjects: number;
+    totalRoles: number;
+    totalParticipations: number;
+  };
+  projectsByStatus: Array<{ status: string; count: string }>;
+  employeesByDepartment: Array<{ department: string; count: string }>;
+  recentParticipations: ProjectParticipation[];
+}
+
+export interface EmployeeFilters {
+  department?: string;
+  isActive?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface ClientFilters {
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface ProjectFilters {
+  status?: string;
+  clientId?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface ParticipationFilters {
+  projectId?: string;
+  employeeId?: string;
+  roleId?: string;
+  department?: string;
+  status?: string;
+  startDate?: string;
+  endDate?: string;
+  year?: string;
+  month?: string;
+  page?: number;
+  limit?: number;
+}
