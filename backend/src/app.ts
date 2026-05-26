@@ -6,10 +6,28 @@ import path from 'path';
 
 dotenv.config();
 
+import argon2 from 'argon2';
 import sequelize from './config/database';
 import './models/index';
+import User from './models/User';
 import routes from './routes';
 import { errorHandler, notFound } from './middleware/errorHandler';
+
+const ensureAdminExists = async (): Promise<void> => {
+  const admin = await User.findOne({ where: { role: 'admin' } });
+  if (!admin) {
+    const email = process.env.DEFAULT_ADMIN_EMAIL || 'admin@admin.com';
+    const password = process.env.DEFAULT_ADMIN_PASSWORD || 'Admin1234!';
+    await User.create({
+      email,
+      password: await argon2.hash(password),
+      firstName: 'Admin',
+      lastName: 'User',
+      role: 'admin',
+    });
+    console.log(`Default admin created: ${email}`);
+  }
+};
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -39,6 +57,7 @@ const start = async (): Promise<void> => {
   try {
     await sequelize.authenticate();
     console.log('Database connection established successfully.');
+    await ensureAdminExists();
     app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
       console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
