@@ -49,7 +49,7 @@ services:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
     container_name: assessment_frontend
     ports:
-      - "3000:3000"
+      - "3002:3000"
     depends_on:
       - backend
     restart: unless-stopped
