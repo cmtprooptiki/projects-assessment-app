@@ -110,7 +110,7 @@ export default function UsersPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3 ml-4">
-                  <Badge variant={user.role === 'admin' ? 'blue' : 'gray'}>
+                  <Badge variant={user.role === 'admin' ? 'info' : 'default'}>
                     {user.role === 'admin' ? <Shield size={11} className="inline mr-1" /> : <UserIcon size={11} className="inline mr-1" />}
                     {user.role}
                   </Badge>
