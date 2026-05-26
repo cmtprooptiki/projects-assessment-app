@@ -13,6 +13,21 @@ const sanitize = (user: User) => ({
   updatedAt: user.updatedAt,
 });
 
+export const createUser = async (data: {
+  email: string;
+  firstName: string;
+  lastName: string;
+  role?: UserRole;
+  password: string;
+}) => {
+  const existing = await User.findOne({ where: { email: data.email } });
+  if (existing) throw new AppError('A user with this email already exists.', 409);
+
+  const hashed = await argon2.hash(data.password);
+  const user = await User.create({ ...data, password: hashed });
+  return sanitize(user);
+};
+
 export const getAllUsers = async (filters: {
   role?: string;
   search?: string;

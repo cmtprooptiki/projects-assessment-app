@@ -1,16 +1,17 @@
 'use client';
 
+import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import {
   LayoutDashboard, Users, Briefcase, Link2, Shield,
-  LogOut, BarChart3, BarChart2, Building2, Building,
+  LogOut, BarChart3, BarChart2, Building2, Building, UserCog,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { decodeToken } from '@/lib/auth';
 
-const navItems = [
+const navItems: { href: string; label: string; icon: React.ElementType; exact?: boolean; adminOnly?: boolean }[] = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard, exact: true },
   { href: '/employees', label: 'Employees', icon: Users },
   { href: '/departments', label: 'Departments', icon: Building },
@@ -19,6 +20,7 @@ const navItems = [
   { href: '/participations', label: 'Participations', icon: Link2 },
   { href: '/roles', label: 'Roles', icon: Shield },
   { href: '/statistics', label: 'Statistics', icon: BarChart2 },
+  { href: '/users', label: 'Users', icon: UserCog, adminOnly: true },
 ];
 
 export default function Sidebar() {
@@ -51,7 +53,7 @@ export default function Sidebar() {
 
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
         <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest px-3 mb-2">Main Menu</p>
-        {navItems.map(({ href, label, icon: Icon, exact }) => {
+        {navItems.filter(({ adminOnly }) => !adminOnly || user?.role === 'admin').map(({ href, label, icon: Icon, exact }) => {
           const active = isActive(href, exact);
           return (
             <Link

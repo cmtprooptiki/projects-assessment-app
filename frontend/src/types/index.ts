@@ -72,6 +72,18 @@ export interface ProjectParticipation {
   updatedAt: string;
 }
 
+export type UserRole = 'admin' | 'user';
+
+export interface User {
+  id: number;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: UserRole;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface PaginationMeta {
   total: number;
   page: number;
