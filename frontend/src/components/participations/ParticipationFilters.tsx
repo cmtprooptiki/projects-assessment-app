@@ -3,7 +3,7 @@
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Button from '@/components/ui/Button';
-import { ParticipationFilters } from '@/types';
+import type { ParticipationFilters } from '@/types';
 
 interface Props {
   filters: ParticipationFilters;

@@ -30,7 +30,6 @@ export const useCreateParticipation = () => {
       roleId: number;
       startDate: string;
       endDate?: string;
-      allocationPercentage: number;
       notes?: string;
     }) => api.post('/participations', data).then((r) => r.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['participations'] }),

@@ -13,7 +13,7 @@ interface FormValues {
   projectId: number;
   roleId: number;
   startDate: string;
-  endDate: string | null;
+  endDate: string;
   notes: string;
 }
 

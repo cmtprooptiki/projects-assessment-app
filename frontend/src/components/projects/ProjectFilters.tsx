@@ -3,7 +3,7 @@
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Button from '@/components/ui/Button';
-import { ProjectFilters } from '@/types';
+import type { ProjectFilters } from '@/types';
 
 interface Props {
   filters: ProjectFilters;
