@@ -15,5 +15,7 @@ COPY --from=builder /app/dist ./dist
 COPY src/config/sequelize.config.js ./src/config/
 COPY src/migrations ./src/migrations
 RUN mkdir -p uploads
+COPY docker-entrypoint.sh ./
+RUN chmod +x docker-entrypoint.sh
 EXPOSE 3001
-CMD ["sh", "-c", "npx sequelize-cli db:migrate && node dist/app.js"]
+CMD ["sh", "docker-entrypoint.sh"]
