@@ -11,8 +11,6 @@ import { ProjectStatus } from '@/types';
 const STATUS_COLORS: Record<string, string> = {
   active: '#10B981',
   completed: '#6366F1',
-  on_hold: '#FBA849',
-  cancelled: '#EF4444',
 };
 
 export default function ProjectsByStatusChart() {

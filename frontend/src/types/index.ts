@@ -6,6 +6,28 @@ export interface Department {
   updatedAt: string;
 }
 
+export interface Language {
+  id: number;
+  employeeId: number;
+  language: string;
+  degreeTitle?: string | null;
+  level?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Education {
+  id: number;
+  employeeId: number;
+  institutionName: string;
+  degreeTitle: string;
+  specialization?: string | null;
+  dateAwarded?: string | null;
+  recognized?: 'yes' | 'no' | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Employee {
   id: number;
   firstName: string;
@@ -14,12 +36,19 @@ export interface Employee {
   department: string;
   isActive: boolean;
   photo?: string | null;
+  fatherName?: string | null;
+  motherName?: string | null;
+  dateOfBirth?: string | null;
+  placeOfBirth?: string | null;
+  phone?: string | null;
+  homeAddress?: string | null;
   createdAt: string;
   updatedAt: string;
   participations?: ProjectParticipation[];
+  education?: Education[];
 }
 
-export type ProjectStatus = 'active' | 'completed' | 'on_hold' | 'cancelled';
+export type ProjectStatus = 'active' | 'completed';
 
 export interface Client {
   id: number;

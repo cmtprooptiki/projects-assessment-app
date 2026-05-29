@@ -63,6 +63,9 @@ export const getProjectById = async (id: number) => {
   return project;
 };
 
+const deriveStatus = (endDate?: string | null): 'active' | 'completed' =>
+  endDate ? 'completed' : 'active';
+
 export const createProject = async (data: ProjectCreationAttributes) => {
   const existing = await Project.findOne({ where: { code: data.code } });
   if (existing) throw new AppError('A project with this code already exists.', 409);
@@ -72,7 +75,7 @@ export const createProject = async (data: ProjectCreationAttributes) => {
     if (!client) throw new AppError('Client not found.', 404);
   }
 
-  const project = await Project.create(data);
+  const project = await Project.create({ ...data, status: deriveStatus(data.endDate) });
   return Project.findByPk(project.id, { include: [{ model: Client, as: 'client' }] });
 };
 
@@ -93,7 +96,8 @@ export const updateProject = async (
     if (!client) throw new AppError('Client not found.', 404);
   }
 
-  await project.update(data);
+  const endDate = 'endDate' in data ? data.endDate : project.endDate;
+  await project.update({ ...data, status: deriveStatus(endDate) });
   return Project.findByPk(id, { include: [{ model: Client, as: 'client' }] });
 };
 

@@ -33,6 +33,12 @@ export default function EmployeeForm({ defaultValues, onSubmit, submitLabel = 'S
     email: defaultValues?.email ?? '',
     department: defaultValues?.department ?? '',
     isActive: defaultValues?.isActive ?? true,
+    fatherName: defaultValues?.fatherName ?? '',
+    motherName: defaultValues?.motherName ?? '',
+    dateOfBirth: defaultValues?.dateOfBirth ? defaultValues.dateOfBirth.slice(0, 10) : '',
+    placeOfBirth: defaultValues?.placeOfBirth ?? '',
+    phone: defaultValues?.phone ?? '',
+    homeAddress: defaultValues?.homeAddress ?? '',
   });
 
   const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -74,6 +80,12 @@ export default function EmployeeForm({ defaultValues, onSubmit, submitLabel = 'S
       fd.append('email', form.email.trim());
       fd.append('department', form.department);
       fd.append('isActive', String(form.isActive));
+      if (form.fatherName) fd.append('fatherName', form.fatherName.trim());
+      if (form.motherName) fd.append('motherName', form.motherName.trim());
+      if (form.dateOfBirth) fd.append('dateOfBirth', form.dateOfBirth);
+      if (form.placeOfBirth) fd.append('placeOfBirth', form.placeOfBirth.trim());
+      if (form.phone) fd.append('phone', form.phone.trim());
+      if (form.homeAddress) fd.append('homeAddress', form.homeAddress.trim());
       if (photoFile) fd.append('photo', photoFile);
       if (clearPhoto) fd.append('clearPhoto', 'true');
       await onSubmit(fd);
@@ -85,9 +97,11 @@ export default function EmployeeForm({ defaultValues, onSubmit, submitLabel = 'S
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <Card className="p-6 space-y-5 max-w-2xl">
-        {/* Photo */}
+    <form onSubmit={handleSubmit} className="space-y-6 max-w-3xl">
+      {/* Basic Info */}
+      <Card className="p-6 space-y-5">
+        <h2 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Basic Information</h2>
+
         <div className="flex items-center gap-5">
           <div className="relative shrink-0">
             <div className="w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center text-white font-bold text-xl shadow-md">
@@ -114,7 +128,6 @@ export default function EmployeeForm({ defaultValues, onSubmit, submitLabel = 'S
           </div>
         </div>
 
-        {/* Name */}
         <div className="grid grid-cols-2 gap-4">
           <Input label="First Name" value={form.firstName} onChange={(e) => set('firstName', e.target.value)} placeholder="John" required />
           <Input label="Last Name" value={form.lastName} onChange={(e) => set('lastName', e.target.value)} placeholder="Doe" required />
@@ -122,7 +135,6 @@ export default function EmployeeForm({ defaultValues, onSubmit, submitLabel = 'S
 
         <Input label="Email Address" type="email" value={form.email} onChange={(e) => set('email', e.target.value)} placeholder="john.doe@company.com" required />
 
-        {/* Department */}
         <Select
           label="Department"
           placeholder="Select department"
@@ -132,24 +144,51 @@ export default function EmployeeForm({ defaultValues, onSubmit, submitLabel = 'S
           required
         />
 
-        {/* Active */}
         <div className="flex items-center gap-3">
           <input id="isActive" type="checkbox" checked={form.isActive} onChange={(e) => set('isActive', e.target.checked)}
             className="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500" />
           <label htmlFor="isActive" className="text-sm font-medium text-slate-700 dark:text-slate-300">Active employee</label>
         </div>
+      </Card>
 
-        {error && (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm px-4 py-3 rounded-lg">
-            {error}
-          </div>
-        )}
+      {/* Personal Information */}
+      <Card className="p-6 space-y-5">
+        <h2 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Personal Information</h2>
 
-        <div className="flex items-center gap-3 pt-2">
-          <Button type="submit" loading={loading}>{submitLabel}</Button>
-          <Button type="button" variant="secondary" onClick={() => router.back()}>Cancel</Button>
+        <div className="grid grid-cols-2 gap-4">
+          <Input label="Father's Name" value={form.fatherName ?? ''} onChange={(e) => set('fatherName', e.target.value)} placeholder="Παρωνύμιο" />
+          <Input label="Mother's Name" value={form.motherName ?? ''} onChange={(e) => set('motherName', e.target.value)} placeholder="Μητρώνυμο" />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <Input label="Date of Birth" type="date" value={form.dateOfBirth ?? ''} onChange={(e) => set('dateOfBirth', e.target.value)} />
+          <Input label="Place of Birth" value={form.placeOfBirth ?? ''} onChange={(e) => set('placeOfBirth', e.target.value)} placeholder="City, Country" />
+        </div>
+
+        <Input label="Phone" type="tel" value={form.phone ?? ''} onChange={(e) => set('phone', e.target.value)} placeholder="+30 210 0000000" />
+
+        <div>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">Home Address</label>
+          <textarea
+            value={form.homeAddress ?? ''}
+            onChange={(e) => set('homeAddress', e.target.value)}
+            placeholder="Street, City, Postal Code"
+            rows={2}
+            className="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 bg-white dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+          />
         </div>
       </Card>
+
+      {error && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm px-4 py-3 rounded-lg">
+          {error}
+        </div>
+      )}
+
+      <div className="flex items-center gap-3">
+        <Button type="submit" loading={loading}>{submitLabel}</Button>
+        <Button type="button" variant="secondary" onClick={() => router.back()}>Cancel</Button>
+      </div>
     </form>
   );
 }

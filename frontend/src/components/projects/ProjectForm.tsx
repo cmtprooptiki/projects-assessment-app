@@ -6,7 +6,7 @@ import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
-import { Client, Project, ProjectStatus } from '@/types';
+import { Client, Project } from '@/types';
 
 interface FormValues {
   name: string;
@@ -15,7 +15,6 @@ interface FormValues {
   clientId: number | null;
   startDate: string;
   endDate: string | null;
-  status: ProjectStatus;
 }
 
 interface Props {
@@ -24,13 +23,6 @@ interface Props {
   onSubmit: (data: FormValues) => Promise<void>;
   submitLabel?: string;
 }
-
-const statusOptions: Array<{ value: ProjectStatus; label: string }> = [
-  { value: 'active', label: 'Active' },
-  { value: 'completed', label: 'Completed' },
-  { value: 'on_hold', label: 'On Hold' },
-  { value: 'cancelled', label: 'Cancelled' },
-];
 
 export default function ProjectForm({
   defaultValues,
@@ -49,7 +41,6 @@ export default function ProjectForm({
     clientId: defaultValues?.clientId ?? (clients[0]?.id ?? null),
     startDate: defaultValues?.startDate ? defaultValues.startDate.slice(0, 10) : '',
     endDate: defaultValues?.endDate ? defaultValues.endDate.slice(0, 10) : '',
-    status: defaultValues?.status ?? 'active',
   });
 
   const set = (key: keyof FormValues, value: string | number | null) =>
@@ -121,7 +112,7 @@ export default function ProjectForm({
           />
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           <Input
             label="Start Date"
             type="date"
@@ -129,18 +120,17 @@ export default function ProjectForm({
             onChange={(e) => set('startDate', e.target.value)}
             required
           />
-          <Input
-            label="End Date"
-            type="date"
-            value={form.endDate ?? ''}
-            onChange={(e) => set('endDate', e.target.value)}
-          />
-          <Select
-            label="Status"
-            options={statusOptions}
-            value={form.status}
-            onChange={(e) => set('status', e.target.value as ProjectStatus)}
-          />
+          <div>
+            <Input
+              label="End Date"
+              type="date"
+              value={form.endDate ?? ''}
+              onChange={(e) => set('endDate', e.target.value)}
+            />
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+              Leave empty if the project is still active.
+            </p>
+          </div>
         </div>
 
         {error && (

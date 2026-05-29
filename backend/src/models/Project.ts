@@ -1,7 +1,7 @@
 import { Model, DataTypes, Optional } from 'sequelize';
 import sequelize from '../config/database';
 
-export type ProjectStatus = 'active' | 'completed' | 'on_hold' | 'cancelled';
+export type ProjectStatus = 'active' | 'completed';
 
 export interface ProjectAttributes {
   id: number;
@@ -72,7 +72,7 @@ Project.init(
       allowNull: true,
     },
     status: {
-      type: DataTypes.ENUM('active', 'completed', 'on_hold', 'cancelled'),
+      type: DataTypes.ENUM('active', 'completed'),
       allowNull: false,
       defaultValue: 'active',
     },

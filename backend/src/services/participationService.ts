@@ -4,6 +4,43 @@ import { AppError } from '../middleware/errorHandler';
 import { ProjectParticipationCreationAttributes } from '../models/ProjectParticipation';
 import { ParticipationFilterQuery } from '../types';
 
+const validateDatesAgainstProject = (
+  startDate: string,
+  endDate: string | null,
+  project: Project
+) => {
+  const today = new Date().toISOString().slice(0, 10);
+  const projectStart = project.startDate;
+  const projectEnd = project.endDate ?? today;
+
+  if (startDate < projectStart) {
+    throw new AppError(
+      `Start date cannot be before the project start date (${projectStart}).`,
+      422
+    );
+  }
+  if (startDate > projectEnd) {
+    throw new AppError(
+      `Start date cannot be after the project end date (${projectEnd}).`,
+      422
+    );
+  }
+  if (endDate) {
+    if (endDate < projectStart) {
+      throw new AppError(
+        `End date cannot be before the project start date (${projectStart}).`,
+        422
+      );
+    }
+    if (endDate > projectEnd) {
+      throw new AppError(
+        `End date cannot be after the project end date (${projectEnd}).`,
+        422
+      );
+    }
+  }
+};
+
 const buildParticipationWhere = (filters: ParticipationFilterQuery) => {
   const where: Record<string, unknown> = {};
   const employeeWhere: Record<string, unknown> = {};
@@ -107,6 +144,8 @@ export const createParticipation = async (
   if (!project) throw new AppError('Project not found.', 404);
   if (!role) throw new AppError('Role not found.', 404);
 
+  validateDatesAgainstProject(data.startDate, data.endDate ?? null, project);
+
   const participation = await ProjectParticipation.create(data);
 
   return ProjectParticipation.findByPk(participation.id, {
@@ -131,13 +170,22 @@ export const updateParticipation = async (
     const employee = await Employee.findByPk(data.employeeId);
     if (!employee) throw new AppError('Employee not found.', 404);
   }
+  let resolvedProject: Project | null = null;
   if (data.projectId) {
-    const project = await Project.findByPk(data.projectId);
-    if (!project) throw new AppError('Project not found.', 404);
+    resolvedProject = await Project.findByPk(data.projectId);
+    if (!resolvedProject) throw new AppError('Project not found.', 404);
   }
   if (data.roleId) {
     const role = await Role.findByPk(data.roleId);
     if (!role) throw new AppError('Role not found.', 404);
+  }
+
+  // If dates are being updated, validate against the project's range
+  const effectiveStartDate = data.startDate ?? participation.startDate;
+  const effectiveEndDate = 'endDate' in data ? (data.endDate ?? null) : participation.endDate;
+  const projectForValidation = resolvedProject ?? await Project.findByPk(participation.projectId);
+  if (projectForValidation && (data.startDate || 'endDate' in data)) {
+    validateDatesAgainstProject(effectiveStartDate, effectiveEndDate, projectForValidation);
   }
 
   await participation.update(data);

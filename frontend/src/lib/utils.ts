@@ -37,21 +37,10 @@ export function statusLabel(status: ProjectStatus): string {
   const map: Record<ProjectStatus, string> = {
     active: 'Active',
     completed: 'Completed',
-    on_hold: 'On Hold',
-    cancelled: 'Cancelled',
   };
   return map[status] ?? status;
 }
 
-export function statusVariant(
-  status: ProjectStatus
-): 'success' | 'info' | 'warning' | 'danger' {
-  const map: Record<ProjectStatus, 'success' | 'info' | 'warning' | 'danger'> =
-    {
-      active: 'success',
-      completed: 'info',
-      on_hold: 'warning',
-      cancelled: 'danger',
-    };
-  return map[status] ?? 'info';
+export function statusVariant(status: ProjectStatus): 'success' | 'info' {
+  return status === 'completed' ? 'info' : 'success';
 }

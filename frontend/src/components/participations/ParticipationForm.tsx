@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { Employee, Project, Role, ProjectParticipation } from '@/types';
+import { formatDate } from '@/lib/utils';
 
 interface FormValues {
   employeeId: number;
@@ -25,6 +26,8 @@ interface Props {
   onSubmit: (data: FormValues) => Promise<void>;
   submitLabel?: string;
 }
+
+const today = () => new Date().toISOString().slice(0, 10);
 
 export default function ParticipationForm({
   employees,
@@ -47,19 +50,31 @@ export default function ParticipationForm({
     notes: defaultValues?.notes ?? '',
   });
 
+  const selectedProject = projects.find((p) => p.id === form.projectId) ?? null;
+  const projectMin = selectedProject?.startDate ?? '';
+  const projectMax = selectedProject?.endDate ?? today();
+
   const set = (key: keyof FormValues, value: string | number) =>
     setForm((f) => ({ ...f, [key]: value }));
+
+  const handleProjectChange = (projectId: number) => {
+    const proj = projects.find((p) => p.id === projectId) ?? null;
+    const min = proj?.startDate ?? '';
+    const max = proj?.endDate ?? today();
+    setForm((f) => ({
+      ...f,
+      projectId,
+      // Reset dates that fall outside the new project's range
+      startDate: f.startDate && (f.startDate < min || f.startDate > max) ? '' : f.startDate,
+      endDate: f.endDate && (f.endDate < min || f.endDate > max) ? '' : f.endDate,
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    if (
-      !form.employeeId ||
-      !form.projectId ||
-      !form.roleId ||
-      !form.startDate
-    ) {
+    if (!form.employeeId || !form.projectId || !form.roleId || !form.startDate) {
       setError('Please fill in all required fields.');
       return;
     }
@@ -67,6 +82,30 @@ export default function ParticipationForm({
     if (form.endDate && form.endDate < form.startDate) {
       setError('End date must be after start date.');
       return;
+    }
+
+    if (selectedProject) {
+      const min = selectedProject.startDate;
+      const max = selectedProject.endDate ?? today();
+
+      if (form.startDate < min) {
+        setError(`Start date cannot be before the project start date (${formatDate(min)}).`);
+        return;
+      }
+      if (form.startDate > max) {
+        setError(`Start date cannot be after the project end date (${formatDate(max)}).`);
+        return;
+      }
+      if (form.endDate) {
+        if (form.endDate < min) {
+          setError(`End date cannot be before the project start date (${formatDate(min)}).`);
+          return;
+        }
+        if (form.endDate > max) {
+          setError(`End date cannot be after the project end date (${formatDate(max)}).`);
+          return;
+        }
+      }
     }
 
     setLoading(true);
@@ -78,6 +117,10 @@ export default function ParticipationForm({
       setLoading(false);
     }
   };
+
+  const dateRangeHint = selectedProject
+    ? `Project range: ${formatDate(selectedProject.startDate)} — ${selectedProject.endDate ? formatDate(selectedProject.endDate) : 'today'}`
+    : undefined;
 
   return (
     <form onSubmit={handleSubmit}>
@@ -100,7 +143,7 @@ export default function ParticipationForm({
               label: p.name,
             }))}
             value={form.projectId.toString()}
-            onChange={(e) => set('projectId', parseInt(e.target.value, 10))}
+            onChange={(e) => handleProjectChange(parseInt(e.target.value, 10))}
             required
           />
         </div>
@@ -121,14 +164,20 @@ export default function ParticipationForm({
             label="Start Date"
             type="date"
             value={form.startDate}
+            min={projectMin}
+            max={projectMax}
             onChange={(e) => set('startDate', e.target.value)}
+            hint={dateRangeHint}
             required
           />
           <Input
             label="End Date"
             type="date"
             value={form.endDate ?? ''}
+            min={projectMin}
+            max={projectMax}
             onChange={(e) => set('endDate', e.target.value)}
+            hint={dateRangeHint}
           />
         </div>
 

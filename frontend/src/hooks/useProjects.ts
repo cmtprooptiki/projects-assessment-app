@@ -15,10 +15,19 @@ export const useProject = (id: number | null) =>
     enabled: !!id,
   });
 
+type ProjectPayload = {
+  name: string;
+  code: string;
+  description: string;
+  clientId: number | null;
+  startDate: string;
+  endDate: string | null;
+};
+
 export const useCreateProject = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'participations'>) =>
+    mutationFn: (data: ProjectPayload) =>
       api.post('/projects', data).then((r) => r.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['projects'] }),
   });
@@ -27,7 +36,7 @@ export const useCreateProject = () => {
 export const useUpdateProject = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Partial<Project> }) =>
+    mutationFn: ({ id, data }: { id: number; data: Partial<ProjectPayload> }) =>
       api.put(`/projects/${id}`, data).then((r) => r.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['projects'] }),
   });

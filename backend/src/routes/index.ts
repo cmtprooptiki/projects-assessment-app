@@ -8,6 +8,8 @@ import roleRoutes from './roleRoutes';
 import departmentRoutes from './departmentRoutes';
 import participationRoutes from './participationRoutes';
 import dashboardRoutes from './dashboardRoutes';
+import educationRoutes from './educationRoutes';
+import languageRoutes from './languageRoutes';
 
 const router = Router();
 
@@ -20,5 +22,7 @@ router.use('/roles', roleRoutes);
 router.use('/departments', departmentRoutes);
 router.use('/participations', participationRoutes);
 router.use('/dashboard', dashboardRoutes);
+router.use('/employees/:employeeId/education', educationRoutes);
+router.use('/employees/:employeeId/languages', languageRoutes);
 
 export default router;
