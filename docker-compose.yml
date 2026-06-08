@@ -35,7 +35,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
     volumes:
-      - ./uploads:/app/uploads
+      - uploads_data:/app/uploads
     ports:
       - "3001:3001"
     depends_on:
@@ -57,3 +57,4 @@ services:
 
 volumes:
   mysql_data:
+  uploads_data:
