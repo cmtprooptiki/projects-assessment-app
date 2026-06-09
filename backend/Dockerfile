@@ -14,6 +14,6 @@ RUN npm ci
 COPY --from=builder /app/dist ./dist
 COPY src/config/sequelize.config.js ./src/config/
 COPY src/migrations ./src/migrations
-COPY uploads ./uploads
+RUN mkdir -p uploads/employees
 EXPOSE 3001
 CMD ["sh", "-c", "npx sequelize-cli db:migrate; node dist/app.js"]
