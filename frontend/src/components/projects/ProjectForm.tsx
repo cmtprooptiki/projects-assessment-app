@@ -43,7 +43,7 @@ export default function ProjectForm({
     clientId: defaultValues?.clientId ?? (clients[0]?.id ?? null),
     startDate: defaultValues?.startDate ? defaultValues.startDate.slice(0, 10) : '',
     endDate: defaultValues?.endDate ? defaultValues.endDate.slice(0, 10) : '',
-    budget: defaultValues?.budget != null ? String(defaultValues.budget) : '',
+    budget: defaultValues?.budget != null ? Number(defaultValues.budget).toFixed(2) : '',
     confirmationOfGoodPerformance: defaultValues?.confirmationOfGoodPerformance ?? '',
   });
 
