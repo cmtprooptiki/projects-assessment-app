@@ -9,6 +9,7 @@ import { Client } from '@/types';
 
 interface FormValues {
   name: string;
+  code: string;
   industry: string;
   contactEmail: string;
   contactPhone: string;
@@ -28,6 +29,7 @@ export default function ClientForm({ defaultValues, onSubmit, submitLabel = 'Sav
 
   const [form, setForm] = useState<FormValues>({
     name: defaultValues?.name ?? '',
+    code: defaultValues?.code ?? '',
     industry: defaultValues?.industry ?? '',
     contactEmail: defaultValues?.contactEmail ?? '',
     contactPhone: defaultValues?.contactPhone ?? '',
@@ -50,6 +52,7 @@ export default function ClientForm({ defaultValues, onSubmit, submitLabel = 'Sav
     try {
       await onSubmit({
         ...form,
+        code: form.code || null as any,
         industry: form.industry || null as any,
         contactEmail: form.contactEmail || null as any,
         contactPhone: form.contactPhone || null as any,
@@ -65,13 +68,21 @@ export default function ClientForm({ defaultValues, onSubmit, submitLabel = 'Sav
   return (
     <form onSubmit={handleSubmit}>
       <Card className="p-6 space-y-5 max-w-2xl">
-        <Input
-          label="Client Name"
-          value={form.name}
-          onChange={(e) => set('name', e.target.value)}
-          placeholder="Acme Corporation"
-          required
-        />
+        <div className="grid grid-cols-2 gap-4">
+          <Input
+            label="Client Name"
+            value={form.name}
+            onChange={(e) => set('name', e.target.value)}
+            placeholder="Acme Corporation"
+            required
+          />
+          <Input
+            label="Code"
+            value={form.code}
+            onChange={(e) => set('code', e.target.value)}
+            placeholder="ACME-001"
+          />
+        </div>
 
         <Input
           label="Industry"

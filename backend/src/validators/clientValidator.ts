@@ -1,10 +1,19 @@
 import { body } from 'express-validator';
 
+const codeRule = () =>
+  body('code')
+    .optional({ nullable: true })
+    .trim()
+    .isLength({ max: 50 }).withMessage('Client code must not exceed 50 characters.')
+    .matches(/^[\p{L}0-9_-]+$/u).withMessage('Client code can only contain letters, numbers, hyphens, and underscores.');
+
 export const createClientRules = [
   body('name')
     .trim()
     .notEmpty().withMessage('Client name is required.')
     .isLength({ max: 200 }).withMessage('Client name must not exceed 200 characters.'),
+
+  codeRule(),
 
   body('industry')
     .optional({ nullable: true })
@@ -33,6 +42,8 @@ export const updateClientRules = [
     .trim()
     .notEmpty().withMessage('Client name cannot be empty.')
     .isLength({ max: 200 }).withMessage('Client name must not exceed 200 characters.'),
+
+  codeRule(),
 
   body('industry')
     .optional({ nullable: true })

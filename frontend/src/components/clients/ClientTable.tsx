@@ -41,6 +41,7 @@ export default function ClientTable({ clients, onDeleted }: Props) {
           <thead>
             <tr className="border-b border-gray-100">
               <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Name</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Code</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Industry</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Contact</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Notes</th>
@@ -51,6 +52,11 @@ export default function ClientTable({ clients, onDeleted }: Props) {
             {clients.map((client) => (
               <tr key={client.id} className="hover:bg-gray-50 transition-colors">
                 <td className="px-4 py-3 font-medium text-gray-900">{client.name}</td>
+                <td className="px-4 py-3">
+                  {client.code
+                    ? <span className="font-mono text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded">{client.code}</span>
+                    : <span className="text-gray-300">—</span>}
+                </td>
                 <td className="px-4 py-3 text-gray-600">{client.industry ?? <span className="text-gray-300">—</span>}</td>
                 <td className="px-4 py-3 text-gray-600">
                   <div className="space-y-0.5">

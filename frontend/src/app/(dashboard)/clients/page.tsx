@@ -2,13 +2,14 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Plus } from 'lucide-react';
+import { Plus, Upload } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Pagination from '@/components/ui/Pagination';
 import { PageSpinner } from '@/components/ui/Spinner';
 import ClientTable from '@/components/clients/ClientTable';
+import ClientImportModal from '@/components/clients/ClientImportModal';
 import { useClients } from '@/hooks/useClients';
 import { ClientFilters } from '@/types';
 
@@ -16,6 +17,7 @@ const defaultFilters: ClientFilters = { page: 1, limit: 15 };
 
 export default function ClientsPage() {
   const [filters, setFilters] = useState<ClientFilters>(defaultFilters);
+  const [importOpen, setImportOpen] = useState(false);
   const { data, isLoading, error } = useClients(filters);
 
   const clients = data?.data ?? [];
@@ -34,12 +36,18 @@ export default function ClientsPage() {
             }
           />
         </div>
-        <Link href="/clients/new">
-          <Button>
-            <Plus size={16} />
-            Add Client
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" onClick={() => setImportOpen(true)}>
+            <Upload size={16} />
+            Import CSV
           </Button>
-        </Link>
+          <Link href="/clients/new">
+            <Button>
+              <Plus size={16} />
+              Add Client
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <Card>
@@ -64,6 +72,8 @@ export default function ClientsPage() {
           </>
         )}
       </Card>
+
+      <ClientImportModal open={importOpen} onClose={() => setImportOpen(false)} />
     </div>
   );
 }

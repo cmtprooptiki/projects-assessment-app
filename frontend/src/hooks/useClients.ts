@@ -40,3 +40,17 @@ export const useDeleteClient = () => {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['clients'] }),
   });
 };
+
+export const useImportClients = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (file: File) => {
+      const form = new FormData();
+      form.append('file', file);
+      return api.post('/clients/import', form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }).then((r) => r.data);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['clients'] }),
+  });
+};

@@ -4,6 +4,7 @@ import sequelize from '../config/database';
 export interface ClientAttributes {
   id: number;
   name: string;
+  code?: string | null;
   industry?: string | null;
   contactEmail?: string | null;
   contactPhone?: string | null;
@@ -13,7 +14,7 @@ export interface ClientAttributes {
 }
 
 export interface ClientCreationAttributes
-  extends Optional<ClientAttributes, 'id' | 'industry' | 'contactEmail' | 'contactPhone' | 'notes'> {}
+  extends Optional<ClientAttributes, 'id' | 'code' | 'industry' | 'contactEmail' | 'contactPhone' | 'notes'> {}
 
 class Client
   extends Model<ClientAttributes, ClientCreationAttributes>
@@ -21,6 +22,7 @@ class Client
 {
   public id!: number;
   public name!: string;
+  public code!: string | null;
   public industry!: string | null;
   public contactEmail!: string | null;
   public contactPhone!: string | null;
@@ -39,6 +41,11 @@ Client.init(
     name: {
       type: DataTypes.STRING(200),
       allowNull: false,
+      unique: true,
+    },
+    code: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
       unique: true,
     },
     industry: {

@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { validationResult } from 'express-validator';
 import * as clientService from '../services/clientService';
+import { AppError } from '../middleware/errorHandler';
 
 export const getAll = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -49,5 +50,15 @@ export const remove = async (req: Request, res: Response, next: NextFunction): P
   try {
     await clientService.deleteClient(parseInt(req.params.id, 10));
     res.json({ success: true, message: 'Client deleted successfully.' });
+  } catch (err) { next(err); }
+};
+
+export const importCSV = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    if (!req.file) {
+      throw new AppError('No CSV file uploaded.', 400);
+    }
+    const result = await clientService.importClients(req.file.buffer);
+    res.json({ success: true, data: result });
   } catch (err) { next(err); }
 };

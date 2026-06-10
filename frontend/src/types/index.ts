@@ -53,6 +53,7 @@ export type ProjectStatus = 'active' | 'completed';
 export interface Client {
   id: number;
   name: string;
+  code?: string | null;
   industry?: string | null;
   contactEmail?: string | null;
   contactPhone?: string | null;
