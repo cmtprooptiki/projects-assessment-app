@@ -60,6 +60,9 @@ export default function ProjectTable({ projects, onDeleted }: Props) {
               <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                 Status
               </th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                Budget
+              </th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
@@ -83,6 +86,11 @@ export default function ProjectTable({ projects, onDeleted }: Props) {
                   <Badge variant={statusVariant(proj.status)}>
                     {statusLabel(proj.status)}
                   </Badge>
+                </td>
+                <td className="px-4 py-3 text-gray-600 text-sm">
+                  {proj.budget != null
+                    ? `€ ${Number(proj.budget).toLocaleString('el-GR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                    : <span className="text-gray-300">—</span>}
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-1">

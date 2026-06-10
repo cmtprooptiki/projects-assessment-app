@@ -40,6 +40,16 @@ export const createProjectRules = [
   body('status')
     .optional()
     .isIn(validStatuses).withMessage(`Status must be one of: ${validStatuses.join(', ')}.`),
+
+  body('budget')
+    .optional({ nullable: true })
+    .isFloat({ min: 0 }).withMessage('Budget must be a positive number.')
+    .toFloat(),
+
+  body('confirmationOfGoodPerformance')
+    .optional({ nullable: true })
+    .trim()
+    .isLength({ max: 500 }).withMessage('Confirmation text must not exceed 500 characters.'),
 ];
 
 export const updateProjectRules = [
@@ -83,4 +93,14 @@ export const updateProjectRules = [
   body('status')
     .optional()
     .isIn(validStatuses).withMessage(`Status must be one of: ${validStatuses.join(', ')}.`),
+
+  body('budget')
+    .optional({ nullable: true })
+    .isFloat({ min: 0 }).withMessage('Budget must be a positive number.')
+    .toFloat(),
+
+  body('confirmationOfGoodPerformance')
+    .optional({ nullable: true })
+    .trim()
+    .isLength({ max: 500 }).withMessage('Confirmation text must not exceed 500 characters.'),
 ];

@@ -73,6 +73,8 @@ export interface Project {
   startDate: string;
   endDate?: string | null;
   status: ProjectStatus;
+  budget?: number | null;
+  confirmationOfGoodPerformance?: string | null;
   createdAt: string;
   updatedAt: string;
   participations?: ProjectParticipation[];

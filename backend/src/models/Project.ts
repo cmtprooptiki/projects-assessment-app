@@ -12,6 +12,8 @@ export interface ProjectAttributes {
   startDate: string;
   endDate?: string | null;
   status: ProjectStatus;
+  budget?: number | null;
+  confirmationOfGoodPerformance?: string | null;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -19,7 +21,7 @@ export interface ProjectAttributes {
 export interface ProjectCreationAttributes
   extends Optional<
     ProjectAttributes,
-    'id' | 'description' | 'endDate' | 'status' | 'clientId'
+    'id' | 'description' | 'endDate' | 'status' | 'clientId' | 'budget' | 'confirmationOfGoodPerformance'
   > {}
 
 class Project
@@ -34,6 +36,8 @@ class Project
   public startDate!: string;
   public endDate!: string | null;
   public status!: ProjectStatus;
+  public budget!: number | null;
+  public confirmationOfGoodPerformance!: string | null;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }
@@ -75,6 +79,14 @@ Project.init(
       type: DataTypes.ENUM('active', 'completed'),
       allowNull: false,
       defaultValue: 'active',
+    },
+    budget: {
+      type: DataTypes.DECIMAL(12, 2),
+      allowNull: true,
+    },
+    confirmationOfGoodPerformance: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
     },
   },
   {
