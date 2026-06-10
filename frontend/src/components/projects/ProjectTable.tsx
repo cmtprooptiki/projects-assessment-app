@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, CheckCircle2 } from 'lucide-react';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
@@ -63,6 +63,9 @@ export default function ProjectTable({ projects, onDeleted }: Props) {
               <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                 Budget
               </th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                Confirmation
+              </th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
@@ -90,6 +93,16 @@ export default function ProjectTable({ projects, onDeleted }: Props) {
                 <td className="px-4 py-3 text-gray-600 text-sm">
                   {proj.budget != null
                     ? `€ ${Number(proj.budget).toLocaleString('el-GR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                    : <span className="text-gray-300">—</span>}
+                </td>
+                <td className="px-4 py-3">
+                  {proj.confirmationOfGoodPerformance
+                    ? (
+                      <span title={proj.confirmationOfGoodPerformance} className="inline-flex items-center gap-1 text-xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+                        <CheckCircle2 size={13} className="text-emerald-500" />
+                        Yes
+                      </span>
+                    )
                     : <span className="text-gray-300">—</span>}
                 </td>
                 <td className="px-4 py-3">
