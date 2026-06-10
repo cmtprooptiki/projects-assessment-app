@@ -32,7 +32,9 @@ DROP TABLE IF EXISTS `clients`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `clients` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `cashflowId` int unsigned DEFAULT NULL,
   `name` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `code` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `industry` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `contactEmail` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `contactPhone` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -41,8 +43,10 @@ CREATE TABLE `clients` (
   `updatedAt` datetime NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`),
+  UNIQUE KEY `code` (`code`),
+  UNIQUE KEY `cashflowId` (`cashflowId`),
   KEY `clients_name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -51,7 +55,7 @@ CREATE TABLE `clients` (
 
 LOCK TABLES `clients` WRITE;
 /*!40000 ALTER TABLE `clients` DISABLE KEYS */;
-INSERT INTO `clients` VALUES (1,'WHO','Healthcare',NULL,NULL,NULL,'2026-05-25 09:00:51','2026-05-25 09:00:51'),(2,'EDSNA','Healthcare',NULL,NULL,NULL,'2026-05-25 09:01:03','2026-05-25 09:01:03'),(3,'EU COMMISION',NULL,NULL,NULL,NULL,'2026-05-25 09:01:20','2026-05-25 09:01:20');
+INSERT INTO `clients` VALUES (1,NULL,'WHO',NULL,'Healthcare',NULL,NULL,NULL,'2026-05-25 09:00:51','2026-05-25 09:00:51'),(2,NULL,'EDSNA',NULL,'Healthcare',NULL,NULL,NULL,'2026-05-25 09:01:03','2026-05-25 09:01:03'),(3,NULL,'EU COMMISION',NULL,NULL,NULL,NULL,NULL,'2026-05-25 09:01:20','2026-05-25 09:01:20');
 /*!40000 ALTER TABLE `clients` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -241,6 +245,8 @@ CREATE TABLE `projects` (
   `startDate` date NOT NULL,
   `endDate` date DEFAULT NULL,
   `status` enum('active','completed') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'active',
+  `budget` decimal(12,2) DEFAULT NULL,
+  `confirmationOfGoodPerformance` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `createdAt` datetime NOT NULL,
   `updatedAt` datetime NOT NULL,
   `clientId` int unsigned DEFAULT NULL,
@@ -259,7 +265,7 @@ CREATE TABLE `projects` (
 
 LOCK TABLES `projects` WRITE;
 /*!40000 ALTER TABLE `projects` DISABLE KEYS */;
-INSERT INTO `projects` VALUES (1,'Paratiritirio','ALPHA-001','Project paused pending client approval.','2024-01-01','2024-12-31','completed','2026-05-22 13:14:06','2026-05-25 12:42:07',2),(2,'Drone Project','DRONE-0001','EU PROJECT 231','2024-03-01','2026-05-28','completed','2026-05-22 13:14:12','2026-05-29 14:36:46',3),(3,'Health IQ','WHO-004','Migrating legacy systems to the cloud.','2023-06-01',NULL,'active','2026-05-22 13:14:16','2026-05-29 14:25:49',1);
+INSERT INTO `projects` VALUES (1,'Paratiritirio','ALPHA-001','Project paused pending client approval.','2024-01-01','2024-12-31','completed',NULL,NULL,'2026-05-22 13:14:06','2026-05-25 12:42:07',2),(2,'Drone Project','ΣΥΝΛ-00000142','EU PROJECT 231','2024-03-01','2026-05-28','completed',5264354.00,'Ta pigame exairetika se ayto to Drone project.Eimaste oi kaluteroi apo olous.','2026-05-22 13:14:12','2026-06-10 10:05:37',3),(3,'Health IQ','WHO-004','Migrating legacy systems to the cloud.','2023-06-01',NULL,'active',NULL,NULL,'2026-05-22 13:14:16','2026-05-29 14:25:49',1);
 /*!40000 ALTER TABLE `projects` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -312,7 +318,7 @@ CREATE TABLE `sequelizemeta` (
 
 LOCK TABLES `sequelizemeta` WRITE;
 /*!40000 ALTER TABLE `sequelizemeta` DISABLE KEYS */;
-INSERT INTO `sequelizemeta` VALUES ('20240101000001-create-employees.js'),('20240101000002-create-projects.js'),('20240101000003-create-roles.js'),('20240101000004-create-project-participations.js'),('20240101000005-create-users.js'),('20240101000006-remove-allocation-percentage.js'),('20240101000007-create-clients.js'),('20240101000008-update-projects-add-clientid.js'),('20240101000009-add-photo-to-employees.js'),('20240101000010-create-departments.js'),('20240101000011-update-employees-position-to-roleid.js'),('20240101000012-drop-employees-roleid.js'),('20240101000013-add-personal-fields-to-employees.js'),('20240101000014-create-employee-education.js'),('20240101000015-create-employee-languages.js'),('20240101000016-simplify-project-status.js'),('20240101000017-add-recognized-to-education.js');
+INSERT INTO `sequelizemeta` VALUES ('20240101000001-create-employees.js'),('20240101000002-create-projects.js'),('20240101000003-create-roles.js'),('20240101000004-create-project-participations.js'),('20240101000005-create-users.js'),('20240101000006-remove-allocation-percentage.js'),('20240101000007-create-clients.js'),('20240101000008-update-projects-add-clientid.js'),('20240101000009-add-code-to-clients.js'),('20240101000009-add-photo-to-employees.js'),('20240101000010-create-departments.js'),('20240101000011-update-employees-position-to-roleid.js'),('20240101000012-drop-employees-roleid.js'),('20240101000013-add-personal-fields-to-employees.js'),('20240101000014-create-employee-education.js'),('20240101000015-create-employee-languages.js'),('20240101000016-simplify-project-status.js'),('20240101000017-add-recognized-to-education.js'),('20240101000018-add-budget-confirmation-to-projects.js'),('20240101000019-add-cashflow-id-to-clients.js');
 /*!40000 ALTER TABLE `sequelizemeta` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -357,4 +363,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-06-08 17:30:33
+-- Dump completed on 2026-06-10 17:52:13
