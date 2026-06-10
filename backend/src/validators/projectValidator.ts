@@ -12,7 +12,7 @@ export const createProjectRules = [
     .trim()
     .notEmpty().withMessage('Project code is required.')
     .isLength({ max: 50 }).withMessage('Project code must not exceed 50 characters.')
-    .matches(/^[A-Z0-9_-]+$/i).withMessage('Project code can only contain letters, numbers, hyphens, and underscores.'),
+    .matches(/^[\p{L}0-9_-]+$/u).withMessage('Project code can only contain letters, numbers, hyphens, and underscores.'),
 
   body('description')
     .optional({ nullable: true })
@@ -54,7 +54,7 @@ export const updateProjectRules = [
     .trim()
     .notEmpty().withMessage('Project code cannot be empty.')
     .isLength({ max: 50 }).withMessage('Project code must not exceed 50 characters.')
-    .matches(/^[A-Z0-9_-]+$/i).withMessage('Project code can only contain letters, numbers, hyphens, and underscores.'),
+    .matches(/^[\p{L}0-9_-]+$/u).withMessage('Project code can only contain letters, numbers, hyphens, and underscores.'),
 
   body('description')
     .optional({ nullable: true })
