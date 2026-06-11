@@ -94,6 +94,57 @@ export const deleteClient = async (id: number) => {
   await client.destroy();
 };
 
+// ── Cashflow sync ──────────────────────────────────────────────────────────────
+
+export interface CashflowCustomer {
+  id: number;
+  name: string;
+  customer_code?: string | null;
+  epagelma?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  afm?: string | null;
+  doy?: string | null;
+  address?: string | null;
+  website?: string | null;
+}
+
+export const syncFromCashflow = async (customer: CashflowCustomer) => {
+  const noteParts = [
+    customer.afm ? `AFM: ${customer.afm}` : null,
+    customer.doy ? `DOY: ${customer.doy}` : null,
+    customer.address ? `Address: ${customer.address}` : null,
+    customer.website ? `Website: ${customer.website}` : null,
+  ].filter(Boolean);
+
+  const payload = {
+    cashflowId: customer.id,
+    name: customer.name,
+    code: customer.customer_code || null,
+    industry: customer.epagelma || null,
+    contactEmail: customer.email || null,
+    contactPhone: customer.phone || null,
+    notes: noteParts.length ? noteParts.join(' | ') : null,
+  };
+
+  const existing = await Client.findOne({ where: { cashflowId: customer.id } });
+
+  if (existing) {
+    await existing.update(payload);
+    return { action: 'updated', client: existing };
+  }
+
+  // Name might already exist from a manually created client — match by name as fallback
+  const byName = await Client.findOne({ where: { name: customer.name } });
+  if (byName) {
+    await byName.update({ ...payload });
+    return { action: 'linked', client: byName };
+  }
+
+  const created = await Client.create(payload);
+  return { action: 'created', client: created };
+};
+
 // ── CSV helpers ────────────────────────────────────────────────────────────────
 
 function parseCSV(text: string): string[][] {

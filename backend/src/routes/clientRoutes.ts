@@ -17,6 +17,7 @@ const csvUpload = multer({
 router.get('/', clientController.getAll);
 router.post('/', createClientRules, clientController.create);
 router.post('/import', csvUpload, clientController.importCSV);
+router.post('/sync', clientController.syncFromCashflow);
 router.get('/:id', clientController.getById);
 router.put('/:id', updateClientRules, clientController.update);
 router.delete('/:id', clientController.remove);

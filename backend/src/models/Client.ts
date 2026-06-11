@@ -3,6 +3,7 @@ import sequelize from '../config/database';
 
 export interface ClientAttributes {
   id: number;
+  cashflowId?: number | null;
   name: string;
   code?: string | null;
   industry?: string | null;
@@ -14,13 +15,14 @@ export interface ClientAttributes {
 }
 
 export interface ClientCreationAttributes
-  extends Optional<ClientAttributes, 'id' | 'code' | 'industry' | 'contactEmail' | 'contactPhone' | 'notes'> {}
+  extends Optional<ClientAttributes, 'id' | 'cashflowId' | 'code' | 'industry' | 'contactEmail' | 'contactPhone' | 'notes'> {}
 
 class Client
   extends Model<ClientAttributes, ClientCreationAttributes>
   implements ClientAttributes
 {
   public id!: number;
+  public cashflowId!: number | null;
   public name!: string;
   public code!: string | null;
   public industry!: string | null;
@@ -37,6 +39,11 @@ Client.init(
       type: DataTypes.INTEGER.UNSIGNED,
       autoIncrement: true,
       primaryKey: true,
+    },
+    cashflowId: {
+      type: DataTypes.INTEGER.UNSIGNED,
+      allowNull: true,
+      unique: true,
     },
     name: {
       type: DataTypes.STRING(200),
