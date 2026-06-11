@@ -1,6 +1,6 @@
 import { body } from 'express-validator';
 
-const validStatuses = ['active', 'completed', 'on_hold', 'cancelled'];
+const validStatuses = ['Υπογεγραμμένο', 'Ολοκληρωμένο', 'Αποπληρωμένο'];
 
 export const createProjectRules = [
   body('name')

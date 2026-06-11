@@ -128,7 +128,7 @@ export const getClientDashboard = async (clientId: number) => {
     .slice(0, 10);
 
   const uniqueEmployees = new Set(participations.map((p) => p.employeeId)).size;
-  const activeProjects = projects.filter((p) => p.status === 'active').length;
+  const activeProjects = projects.filter((p) => p.status === 'Υπογεγραμμένο').length;
 
   return {
     client: client.toJSON(),
@@ -156,7 +156,7 @@ export const getDashboardSummary = async () => {
     Employee.count(),
     Employee.count({ where: { isActive: true } }),
     Project.count(),
-    Project.count({ where: { status: 'active' } }),
+    Project.count({ where: { status: 'Υπογεγραμμένο' } }),
     Role.count(),
     ProjectParticipation.count(),
   ]);

@@ -76,3 +76,11 @@ export const remove = async (
     next(err);
   }
 };
+
+export const syncFromCashflow = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const result = await projectService.syncFromCashflow(req.body);
+    const status = result.action === 'created' ? 201 : 200;
+    res.status(status).json({ success: true, data: result });
+  } catch (err) { next(err); }
+};

@@ -1,7 +1,7 @@
 import { Op } from 'sequelize';
 import { Project, ProjectParticipation, Employee, Role, Client } from '../models';
 import { AppError } from '../middleware/errorHandler';
-import { ProjectCreationAttributes } from '../models/Project';
+import { ProjectCreationAttributes, ProjectStatus } from '../models/Project';
 
 export const getAllProjects = async (filters: {
   status?: string;
@@ -63,9 +63,6 @@ export const getProjectById = async (id: number) => {
   return project;
 };
 
-const deriveStatus = (endDate?: string | null): 'active' | 'completed' =>
-  endDate ? 'completed' : 'active';
-
 export const createProject = async (data: ProjectCreationAttributes) => {
   const existing = await Project.findOne({ where: { code: data.code } });
   if (existing) throw new AppError('A project with this code already exists.', 409);
@@ -75,7 +72,7 @@ export const createProject = async (data: ProjectCreationAttributes) => {
     if (!client) throw new AppError('Client not found.', 404);
   }
 
-  const project = await Project.create({ ...data, status: deriveStatus(data.endDate) });
+  const project = await Project.create({ ...data, status: data.status ?? 'Υπογεγραμμένο' });
   return Project.findByPk(project.id, { include: [{ model: Client, as: 'client' }] });
 };
 
@@ -96,9 +93,61 @@ export const updateProject = async (
     if (!client) throw new AppError('Client not found.', 404);
   }
 
-  const endDate = 'endDate' in data ? data.endDate : project.endDate;
-  await project.update({ ...data, status: deriveStatus(endDate) });
+  await project.update(data);
   return Project.findByPk(id, { include: [{ model: Client, as: 'client' }] });
+};
+
+// ── Cashflow sync ──────────────────────────────────────────────────────────────
+
+export interface CashflowErgo {
+  id: number;
+  name: string;
+  erga_code?: string | null;
+  sign_date?: string | null;
+  ammount_total?: number | null;
+  status: string;
+  customer_id?: number | null;
+}
+
+const VALID_STATUSES = ['Υπογεγραμμένο', 'Ολοκληρωμένο', 'Αποπληρωμένο'];
+
+export const syncFromCashflow = async (ergo: CashflowErgo) => {
+  if (!ergo.name) return { action: 'skipped', reason: 'empty name' };
+  if (!VALID_STATUSES.includes(ergo.status)) return { action: 'skipped', reason: 'status not tracked' };
+
+  let clientId: number | null = null;
+  if (ergo.customer_id) {
+    const client = await Client.findOne({ where: { cashflowId: ergo.customer_id } });
+    if (client) clientId = client.id;
+  }
+
+  const code = ergo.erga_code?.trim() || `ERG-${ergo.id}`;
+  const startDate = ergo.sign_date ? ergo.sign_date.split('T')[0] : new Date().toISOString().split('T')[0];
+
+  const payload = {
+    cashflowId: ergo.id,
+    name: ergo.name,
+    code,
+    clientId,
+    startDate,
+    status: ergo.status as ProjectStatus,
+    budget: ergo.ammount_total ?? null,
+  };
+
+  const existing = await Project.findOne({ where: { cashflowId: ergo.id } });
+  if (existing) {
+    await existing.update(payload);
+    return { action: 'updated', project: existing };
+  }
+
+  const byCode = await Project.findOne({ where: { code } });
+  if (byCode) {
+    await byCode.update(payload);
+    return { action: 'linked', project: byCode };
+  }
+
+  const created = await Project.create(payload);
+  return { action: 'created', project: created };
 };
 
 export const deleteProject = async (id: number) => {

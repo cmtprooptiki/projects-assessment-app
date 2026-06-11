@@ -1,10 +1,11 @@
 import { Model, DataTypes, Optional } from 'sequelize';
 import sequelize from '../config/database';
 
-export type ProjectStatus = 'active' | 'completed';
+export type ProjectStatus = 'Υπογεγραμμένο' | 'Ολοκληρωμένο' | 'Αποπληρωμένο';
 
 export interface ProjectAttributes {
   id: number;
+  cashflowId?: number | null;
   name: string;
   code: string;
   description?: string | null;
@@ -21,7 +22,7 @@ export interface ProjectAttributes {
 export interface ProjectCreationAttributes
   extends Optional<
     ProjectAttributes,
-    'id' | 'description' | 'endDate' | 'status' | 'clientId' | 'budget' | 'confirmationOfGoodPerformance'
+    'id' | 'cashflowId' | 'description' | 'endDate' | 'status' | 'clientId' | 'budget' | 'confirmationOfGoodPerformance'
   > {}
 
 class Project
@@ -29,6 +30,7 @@ class Project
   implements ProjectAttributes
 {
   public id!: number;
+  public cashflowId!: number | null;
   public name!: string;
   public code!: string;
   public description!: string | null;
@@ -48,6 +50,11 @@ Project.init(
       type: DataTypes.INTEGER.UNSIGNED,
       autoIncrement: true,
       primaryKey: true,
+    },
+    cashflowId: {
+      type: DataTypes.INTEGER.UNSIGNED,
+      allowNull: true,
+      unique: true,
     },
     name: {
       type: DataTypes.STRING(200),
@@ -76,9 +83,9 @@ Project.init(
       allowNull: true,
     },
     status: {
-      type: DataTypes.ENUM('active', 'completed'),
+      type: DataTypes.ENUM('Υπογεγραμμένο', 'Ολοκληρωμένο', 'Αποπληρωμένο'),
       allowNull: false,
-      defaultValue: 'active',
+      defaultValue: 'Υπογεγραμμένο',
     },
     budget: {
       type: DataTypes.DECIMAL(12, 2),
