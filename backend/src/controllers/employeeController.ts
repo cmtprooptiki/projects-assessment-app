@@ -71,3 +71,11 @@ export const remove = async (req: Request, res: Response, next: NextFunction): P
     res.json({ success: true, message: 'Employee deleted successfully.' });
   } catch (err) { next(err); }
 };
+
+export const syncFromAzure = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const result = await employeeService.syncFromAzure(req.body);
+    const status = result.action === 'created' ? 201 : 200;
+    res.status(status).json({ success: true, data: result });
+  } catch (err) { next(err); }
+};

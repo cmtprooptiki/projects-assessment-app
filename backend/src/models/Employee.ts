@@ -3,6 +3,7 @@ import sequelize from '../config/database';
 
 export interface EmployeeAttributes {
   id: number;
+  azureId?: string | null;
   firstName: string;
   lastName: string;
   email: string;
@@ -20,13 +21,14 @@ export interface EmployeeAttributes {
 }
 
 export interface EmployeeCreationAttributes
-  extends Optional<EmployeeAttributes, 'id' | 'isActive' | 'photo' | 'fatherName' | 'motherName' | 'dateOfBirth' | 'placeOfBirth' | 'phone' | 'homeAddress'> {}
+  extends Optional<EmployeeAttributes, 'id' | 'azureId' | 'isActive' | 'photo' | 'fatherName' | 'motherName' | 'dateOfBirth' | 'placeOfBirth' | 'phone' | 'homeAddress'> {}
 
 class Employee
   extends Model<EmployeeAttributes, EmployeeCreationAttributes>
   implements EmployeeAttributes
 {
   public id!: number;
+  public azureId!: string | null;
   public firstName!: string;
   public lastName!: string;
   public email!: string;
@@ -46,6 +48,7 @@ class Employee
 Employee.init(
   {
     id: { type: DataTypes.INTEGER.UNSIGNED, autoIncrement: true, primaryKey: true },
+    azureId: { type: DataTypes.STRING(50), allowNull: true, unique: true },
     firstName: { type: DataTypes.STRING(100), allowNull: false },
     lastName: { type: DataTypes.STRING(100), allowNull: false },
     email: { type: DataTypes.STRING(255), allowNull: false, unique: true },

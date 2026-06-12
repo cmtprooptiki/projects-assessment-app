@@ -89,3 +89,49 @@ export const deleteEmployee = async (id: number) => {
   if (employee.photo) deletePhotoFile(employee.photo);
   await employee.destroy();
 };
+
+// ── Azure AD sync ──────────────────────────────────────────────────────────────
+
+export interface AzureUser {
+  id: string;
+  givenName?: string | null;
+  surname?: string | null;
+  mail?: string | null;
+  userPrincipalName?: string | null;
+  department?: string | null;
+  accountEnabled?: boolean | null;
+}
+
+export const syncFromAzure = async (user: AzureUser) => {
+  const firstName = user.givenName?.trim() || 'Unknown';
+  const lastName = user.surname?.trim() || 'Unknown';
+  const email = (user.mail || user.userPrincipalName || '').trim();
+  const department = user.department?.trim() || 'N/A';
+  const isActive = user.accountEnabled ?? true;
+
+  if (!email) return { action: 'skipped', reason: 'no email' };
+
+  const payload = {
+    azureId: user.id,
+    firstName,
+    lastName,
+    email,
+    department,
+    isActive,
+  };
+
+  const existing = await Employee.findOne({ where: { azureId: user.id } });
+  if (existing) {
+    await existing.update(payload);
+    return { action: 'updated', employee: existing };
+  }
+
+  const byEmail = await Employee.findOne({ where: { email } });
+  if (byEmail) {
+    await byEmail.update(payload);
+    return { action: 'linked', employee: byEmail };
+  }
+
+  const created = await Employee.create(payload);
+  return { action: 'created', employee: created };
+};
