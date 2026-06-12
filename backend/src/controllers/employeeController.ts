@@ -79,3 +79,15 @@ export const syncFromAzure = async (req: Request, res: Response, next: NextFunct
     res.status(status).json({ success: true, data: result });
   } catch (err) { next(err); }
 };
+
+export const syncCleanup = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { azureIds } = req.body;
+    if (!Array.isArray(azureIds)) {
+      res.status(400).json({ success: false, message: 'azureIds must be an array' });
+      return;
+    }
+    const result = await employeeService.syncCleanup(azureIds);
+    res.json({ success: true, data: result });
+  } catch (err) { next(err); }
+};

@@ -132,6 +132,21 @@ export const syncFromAzure = async (user: AzureUser) => {
     return { action: 'linked', employee: byEmail };
   }
 
+  // Don't create new records for unlicensed/inactive users
+  if (!isActive) return { action: 'skipped', reason: 'no qualifying license' };
+
   const created = await Employee.create(payload);
   return { action: 'created', employee: created };
+};
+
+export const syncCleanup = async (activeAzureIds: string[]) => {
+  const whereCondition = activeAzureIds.length > 0
+    ? { azureId: { [Op.and]: [{ [Op.not]: null }, { [Op.notIn]: activeAzureIds }] }, isActive: true }
+    : { azureId: { [Op.not]: null }, isActive: true };
+
+  const [updatedCount] = await Employee.update(
+    { isActive: false },
+    { where: whereCondition }
+  );
+  return { deactivated: updatedCount };
 };

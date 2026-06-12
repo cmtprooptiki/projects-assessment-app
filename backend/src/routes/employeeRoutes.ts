@@ -8,6 +8,7 @@ const router = Router();
 
 router.get('/', controller.getAll);
 router.post('/sync', controller.syncFromAzure);
+router.post('/sync/cleanup', controller.syncCleanup);
 router.get('/:id', controller.getById);
 router.post('/', uploadEmployeePhoto, createEmployeeRules, validate, controller.create);
 router.put('/:id', uploadEmployeePhoto, updateEmployeeRules, validate, controller.update);
