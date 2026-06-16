@@ -21,6 +21,12 @@ export const getAllProjects = async (filters: {
     where[Op.or as unknown as string] = [
       { name: { [Op.like]: `%${search}%` } },
       { code: { [Op.like]: `%${search}%` } },
+      { description: { [Op.like]: `%${search}%` } },
+      { status: { [Op.like]: `%${search}%` } },
+      { startDate: { [Op.like]: `%${search}%` } },
+      { endDate: { [Op.like]: `%${search}%` } },
+      { budget: { [Op.like]: `%${search}%` } },
+      { confirmationOfGoodPerformance: { [Op.like]: `%${search}%` } },
       { '$client.name$': { [Op.like]: `%${search}%` } },
     ];
   }
