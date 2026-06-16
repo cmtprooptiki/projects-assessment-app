@@ -1,4 +1,4 @@
-import { Op } from 'sequelize';
+import { Op, where as sequelizeWhere, cast, col } from 'sequelize';
 import { Project, ProjectParticipation, Employee, Role, Client } from '../models';
 import { AppError } from '../middleware/errorHandler';
 import { ProjectCreationAttributes, ProjectStatus } from '../models/Project';
@@ -18,16 +18,17 @@ export const getAllProjects = async (filters: {
   if (status) where.status = status;
   if (clientId) where.clientId = parseInt(clientId, 10);
   if (search) {
+    const likeSearch = { [Op.like]: `%${search}%` };
     where[Op.or as unknown as string] = [
-      { name: { [Op.like]: `%${search}%` } },
-      { code: { [Op.like]: `%${search}%` } },
-      { description: { [Op.like]: `%${search}%` } },
-      { status: { [Op.like]: `%${search}%` } },
-      { startDate: { [Op.like]: `%${search}%` } },
-      { endDate: { [Op.like]: `%${search}%` } },
-      { budget: { [Op.like]: `%${search}%` } },
-      { confirmationOfGoodPerformance: { [Op.like]: `%${search}%` } },
-      { '$client.name$': { [Op.like]: `%${search}%` } },
+      { name: likeSearch },
+      { code: likeSearch },
+      { description: likeSearch },
+      { status: likeSearch },
+      { confirmationOfGoodPerformance: likeSearch },
+      { '$client.name$': likeSearch },
+      sequelizeWhere(cast(col('projects.startDate'), 'CHAR'), likeSearch),
+      sequelizeWhere(cast(col('projects.endDate'), 'CHAR'), likeSearch),
+      sequelizeWhere(cast(col('projects.budget'), 'CHAR'), likeSearch),
     ];
   }
 
