@@ -21,16 +21,18 @@ export const getAllProjects = async (filters: {
     where[Op.or as unknown as string] = [
       { name: { [Op.like]: `%${search}%` } },
       { code: { [Op.like]: `%${search}%` } },
+      { '$client.name$': { [Op.like]: `%${search}%` } },
     ];
   }
 
   const { count, rows } = await Project.findAndCountAll({
     where,
-    include: [{ model: Client, as: 'client' }],
+    include: [{ model: Client, as: 'client', required: false }],
     limit,
     offset,
     order: [['name', 'ASC']],
     distinct: true,
+    subQuery: false,
   });
 
   return {
