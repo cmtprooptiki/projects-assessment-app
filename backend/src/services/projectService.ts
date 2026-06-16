@@ -1,5 +1,6 @@
-import { Op, where as sequelizeWhere, cast, col } from 'sequelize';
+import { Op, literal } from 'sequelize';
 import { Project, ProjectParticipation, Employee, Role, Client } from '../models';
+import sequelizeInstance from '../config/database';
 import { AppError } from '../middleware/errorHandler';
 import { ProjectCreationAttributes, ProjectStatus } from '../models/Project';
 
@@ -19,6 +20,7 @@ export const getAllProjects = async (filters: {
   if (clientId) where.clientId = parseInt(clientId, 10);
   if (search) {
     const likeSearch = { [Op.like]: `%${search}%` };
+    const escapedLike = sequelizeInstance.escape(`%${search}%`);
     where[Op.or as unknown as string] = [
       { name: likeSearch },
       { code: likeSearch },
@@ -26,9 +28,9 @@ export const getAllProjects = async (filters: {
       { status: likeSearch },
       { confirmationOfGoodPerformance: likeSearch },
       { '$client.name$': likeSearch },
-      sequelizeWhere(cast(col('projects.startDate'), 'CHAR'), likeSearch),
-      sequelizeWhere(cast(col('projects.endDate'), 'CHAR'), likeSearch),
-      sequelizeWhere(cast(col('projects.budget'), 'CHAR'), likeSearch),
+      literal(`CAST(\`projects\`.\`startDate\` AS CHAR) LIKE ${escapedLike}`),
+      literal(`CAST(\`projects\`.\`endDate\` AS CHAR) LIKE ${escapedLike}`),
+      literal(`CAST(\`projects\`.\`budget\` AS CHAR) LIKE ${escapedLike}`),
     ];
   }
 
