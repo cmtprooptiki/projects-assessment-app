@@ -42,6 +42,9 @@ export interface Employee {
   placeOfBirth?: string | null;
   phone?: string | null;
   homeAddress?: string | null;
+  workStartDate?: string | null;
+  workEndDate?: string | null;
+  yearsOfService?: number | null;
   createdAt: string;
   updatedAt: string;
   participations?: ProjectParticipation[];
