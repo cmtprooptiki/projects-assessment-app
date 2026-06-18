@@ -11,6 +11,16 @@ const deletePhotoFile = (photoPath: string | null | undefined) => {
   try { if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath); } catch {}
 };
 
+const calcYearsOfService = (workStartDate: string | null | undefined, workEndDate: string | null | undefined): number | null => {
+  if (!workStartDate) return null;
+  const start = new Date(workStartDate);
+  const end = workEndDate ? new Date(workEndDate) : new Date();
+  let years = end.getFullYear() - start.getFullYear();
+  const monthDiff = end.getMonth() - start.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && end.getDate() < start.getDate())) years--;
+  return Math.max(0, years);
+};
+
 export const getAllEmployees = async (filters: {
   department?: string;
   isActive?: string;
@@ -40,7 +50,10 @@ export const getAllEmployees = async (filters: {
   });
 
   return {
-    data: rows,
+    data: rows.map(e => ({
+      ...e.toJSON(),
+      yearsOfService: calcYearsOfService(e.workStartDate, e.workEndDate),
+    })),
     meta: { total: count, page, limit, totalPages: Math.ceil(count / limit) },
   };
 };
@@ -59,7 +72,10 @@ export const getEmployeeById = async (id: number) => {
     ],
   });
   if (!employee) throw new AppError('Employee not found.', 404);
-  return employee;
+  return {
+    ...employee.toJSON(),
+    yearsOfService: calcYearsOfService(employee.workStartDate, employee.workEndDate),
+  };
 };
 
 export const createEmployee = async (data: EmployeeCreationAttributes) => {

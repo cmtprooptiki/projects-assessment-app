@@ -22,7 +22,7 @@ export const getById = async (req: Request, res: Response, next: NextFunction): 
 
 export const create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { firstName, lastName, email, department, isActive, fatherName, motherName, dateOfBirth, placeOfBirth, phone, homeAddress } = req.body;
+    const { firstName, lastName, email, department, isActive, fatherName, motherName, dateOfBirth, placeOfBirth, phone, homeAddress, workStartDate, workEndDate } = req.body;
     const photo = req.file ? `/uploads/employees/${req.file.filename}` : undefined;
 
     const employee = await employeeService.createEmployee({
@@ -35,6 +35,8 @@ export const create = async (req: Request, res: Response, next: NextFunction): P
       ...(placeOfBirth && { placeOfBirth }),
       ...(phone && { phone }),
       ...(homeAddress && { homeAddress }),
+      ...(workStartDate && { workStartDate }),
+      ...(workEndDate && { workEndDate }),
     });
     res.status(201).json({ success: true, data: employee });
   } catch (err) { next(err); }
@@ -42,7 +44,7 @@ export const create = async (req: Request, res: Response, next: NextFunction): P
 
 export const update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { firstName, lastName, email, department, isActive, clearPhoto, fatherName, motherName, dateOfBirth, placeOfBirth, phone, homeAddress } = req.body;
+    const { firstName, lastName, email, department, isActive, clearPhoto, fatherName, motherName, dateOfBirth, placeOfBirth, phone, homeAddress, workStartDate, workEndDate } = req.body;
     const newPhoto = req.file ? `/uploads/employees/${req.file.filename}` : undefined;
 
     const data: Record<string, unknown> = {};
@@ -59,6 +61,8 @@ export const update = async (req: Request, res: Response, next: NextFunction): P
     if (placeOfBirth !== undefined) data.placeOfBirth = placeOfBirth || null;
     if (phone !== undefined) data.phone = phone || null;
     if (homeAddress !== undefined) data.homeAddress = homeAddress || null;
+    if (workStartDate !== undefined) data.workStartDate = workStartDate || null;
+    if (workEndDate !== undefined) data.workEndDate = workEndDate || null;
 
     const employee = await employeeService.updateEmployee(parseInt(req.params.id, 10), data as any);
     res.json({ success: true, data: employee });
