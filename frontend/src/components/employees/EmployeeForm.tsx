@@ -89,8 +89,8 @@ export default function EmployeeForm({ defaultValues, onSubmit, submitLabel = 'S
       if (form.placeOfBirth) fd.append('placeOfBirth', form.placeOfBirth.trim());
       if (form.phone) fd.append('phone', form.phone.trim());
       if (form.homeAddress) fd.append('homeAddress', form.homeAddress.trim());
-      fd.append('workStartDate', form.workStartDate);
-      fd.append('workEndDate', form.workEndDate);
+      if (form.workStartDate) fd.append('workStartDate', form.workStartDate);
+      if (form.workEndDate) fd.append('workEndDate', form.workEndDate);
       if (photoFile) fd.append('photo', photoFile);
       if (clearPhoto) fd.append('clearPhoto', 'true');
       await onSubmit(fd);
