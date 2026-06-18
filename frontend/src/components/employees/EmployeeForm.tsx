@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Camera, X } from 'lucide-react';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
+import DatePicker from '@/components/ui/DatePicker';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { Employee } from '@/types';
@@ -165,7 +166,7 @@ export default function EmployeeForm({ defaultValues, onSubmit, submitLabel = 'S
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <Input label="Date of Birth" type="date" value={form.dateOfBirth ?? ''} onChange={(e) => set('dateOfBirth', e.target.value)} />
+          <DatePicker label="Date of Birth" value={form.dateOfBirth ?? ''} onChange={(v) => set('dateOfBirth', v)} />
           <Input label="Place of Birth" value={form.placeOfBirth ?? ''} onChange={(e) => set('placeOfBirth', e.target.value)} placeholder="City, Country" />
         </div>
 
@@ -188,21 +189,17 @@ export default function EmployeeForm({ defaultValues, onSubmit, submitLabel = 'S
         <h2 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Employment</h2>
 
         <div className="grid grid-cols-2 gap-4">
-          <Input
+          <DatePicker
             label="Start Date"
-            type="date"
             value={form.workStartDate}
-            onChange={(e) => set('workStartDate', e.target.value)}
+            onChange={(v) => set('workStartDate', v)}
           />
-          <div>
-            <Input
-              label="End Date"
-              type="date"
-              value={form.workEndDate}
-              onChange={(e) => set('workEndDate', e.target.value)}
-            />
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Leave empty if still employed</p>
-          </div>
+          <DatePicker
+            label="End Date"
+            value={form.workEndDate}
+            onChange={(v) => set('workEndDate', v)}
+            hint="Leave empty if still employed"
+          />
         </div>
 
         {form.workStartDate && (
