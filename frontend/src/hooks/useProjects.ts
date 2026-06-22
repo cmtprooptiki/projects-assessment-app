@@ -46,3 +46,15 @@ export const useDeleteProject = () => {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['projects'] }),
   });
 };
+
+export const useLinkContracts = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, contractIds }: { id: number; contractIds: number[] }) =>
+      api.patch(`/projects/${id}/contracts`, { contractIds }).then((r) => r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['projects'] });
+      qc.invalidateQueries({ queryKey: ['contracts'] });
+    },
+  });
+};

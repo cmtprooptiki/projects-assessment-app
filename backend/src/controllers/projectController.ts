@@ -47,3 +47,12 @@ export const remove = async (req: Request, res: Response, next: NextFunction): P
     res.json({ success: true, message: 'Project deleted successfully.' });
   } catch (err) { next(err); }
 };
+
+export const linkContracts = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const projectId = parseInt(req.params.id, 10);
+    const { contractIds } = req.body;
+    const project = await projectService.linkContractsToProject(projectId, Array.isArray(contractIds) ? contractIds : []);
+    res.json({ success: true, data: project });
+  } catch (err) { next(err); }
+};

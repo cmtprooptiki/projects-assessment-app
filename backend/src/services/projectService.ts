@@ -91,3 +91,17 @@ export const deleteProject = async (id: number) => {
   if (!project) throw new AppError('Project not found.', 404);
   await project.destroy();
 };
+
+export const linkContractsToProject = async (projectId: number, contractIds: number[]) => {
+  const project = await Project.findByPk(projectId);
+  if (!project) throw new AppError('Project not found.', 404);
+  // Unlink all contracts currently linked to this project
+  await Contract.update({ projectId: null } as any, { where: { projectId } });
+  // Link the selected contracts
+  if (contractIds.length > 0) {
+    await Contract.update({ projectId } as any, { where: { id: contractIds } });
+  }
+  return Project.findByPk(projectId, {
+    include: [{ model: Client, as: 'client' }, { model: Contract, as: 'contracts' }],
+  });
+};

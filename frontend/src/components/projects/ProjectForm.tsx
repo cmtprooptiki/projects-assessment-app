@@ -1,12 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
-import { Client, Project } from '@/types';
+import Badge from '@/components/ui/Badge';
+import { Client, Project, Contract } from '@/types';
+import { useContracts } from '@/hooks/useContracts';
+import { useLinkContracts } from '@/hooks/useProjects';
+import { statusLabel, statusVariant } from '@/lib/utils';
 
 interface FormValues {
   name: string;
@@ -18,7 +22,7 @@ interface FormValues {
 interface Props {
   defaultValues?: Partial<Project>;
   clients: Client[];
-  onSubmit: (data: FormValues) => Promise<void>;
+  onSubmit: (data: FormValues) => Promise<number>;
   submitLabel?: string;
 }
 
@@ -34,6 +38,30 @@ export default function ProjectForm({ defaultValues, clients, onSubmit, submitLa
     clientId: defaultValues?.clientId ?? null,
   });
 
+  const [linkedContractIds, setLinkedContractIds] = useState<number[]>(
+    defaultValues?.contracts?.map((c) => c.id) ?? []
+  );
+
+  const linkContracts = useLinkContracts();
+
+  const { data: contractsData, isLoading: contractsLoading } = useContracts(
+    form.clientId ? { clientId: String(form.clientId), limit: 999 } : { limit: 0 },
+    { enabled: form.clientId != null }
+  );
+  const availableContracts: Contract[] = form.clientId ? (contractsData?.data ?? []) : [];
+
+  // When client changes, clear linked contracts
+  const handleClientChange = (clientId: number | null) => {
+    setForm((f) => ({ ...f, clientId }));
+    setLinkedContractIds([]);
+  };
+
+  const toggleContract = (id: number) => {
+    setLinkedContractIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
   const set = (key: keyof FormValues, value: string | number | null) =>
     setForm((f) => ({ ...f, [key]: value }));
 
@@ -46,10 +74,12 @@ export default function ProjectForm({ defaultValues, clients, onSubmit, submitLa
     }
     setLoading(true);
     try {
-      await onSubmit({
+      const projectId = await onSubmit({
         ...form,
         description: form.description || null as any,
       });
+      await linkContracts.mutateAsync({ id: projectId, contractIds: linkedContractIds });
+      router.push('/projects');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong.');
     } finally {
@@ -79,8 +109,54 @@ export default function ProjectForm({ defaultValues, clients, onSubmit, submitLa
           options={clientOptions}
           placeholder="Select client..."
           value={form.clientId != null ? String(form.clientId) : ''}
-          onChange={(e) => set('clientId', e.target.value ? parseInt(e.target.value, 10) : null)}
+          onChange={(e) => handleClientChange(e.target.value ? parseInt(e.target.value, 10) : null)}
         />
+
+        {form.clientId != null && (
+          <div>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-2">
+              Linked Contracts
+              {linkedContractIds.length > 0 && (
+                <span className="ml-2 text-xs font-normal text-indigo-600 dark:text-indigo-400">
+                  {linkedContractIds.length} selected
+                </span>
+              )}
+            </label>
+            {contractsLoading ? (
+              <div className="h-24 rounded-xl bg-slate-50 dark:bg-slate-800 animate-pulse" />
+            ) : availableContracts.length === 0 ? (
+              <p className="text-sm text-slate-400 dark:text-slate-500 py-3">No contracts found for this client.</p>
+            ) : (
+              <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-700 max-h-72 overflow-y-auto">
+                {availableContracts.map((c) => {
+                  const checked = linkedContractIds.includes(c.id);
+                  return (
+                    <label
+                      key={c.id}
+                      className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors ${
+                        checked
+                          ? 'bg-indigo-50 dark:bg-indigo-500/10'
+                          : 'hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleContract(c.id)}
+                        className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"
+                      />
+                      <span className="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400 shrink-0">
+                        {c.code}
+                      </span>
+                      <span className="text-sm text-slate-700 dark:text-slate-300 flex-1 truncate">{c.name}</span>
+                      <Badge variant={statusVariant(c.status)}>{statusLabel(c.status)}</Badge>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
         <div>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">Description</label>

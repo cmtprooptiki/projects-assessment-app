@@ -1,13 +1,12 @@
 'use client';
 
-import { useRouter, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { PageSpinner } from '@/components/ui/Spinner';
 import ProjectForm from '@/components/projects/ProjectForm';
 import { useProject, useUpdateProject } from '@/hooks/useProjects';
 import { useClients } from '@/hooks/useClients';
 
 export default function EditProjectPage() {
-  const router = useRouter();
   const params = useParams();
   const id = parseInt(params.id as string, 10);
 
@@ -23,7 +22,7 @@ export default function EditProjectPage() {
       clients={clientsData?.data ?? []}
       onSubmit={async (formData) => {
         await updateProject.mutateAsync({ id, data: formData as any });
-        router.push('/projects');
+        return id;
       }}
       submitLabel="Update Project"
     />

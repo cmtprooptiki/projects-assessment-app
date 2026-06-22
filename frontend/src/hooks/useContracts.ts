@@ -2,10 +2,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { Contract, ContractFilters, PaginatedResult, ApiResult } from '@/types';
 
-export const useContracts = (filters: ContractFilters = {}) =>
+export const useContracts = (filters: ContractFilters = {}, options?: { enabled?: boolean }) =>
   useQuery<PaginatedResult<Contract>>({
     queryKey: ['contracts', filters],
     queryFn: () => api.get('/contracts', { params: filters }).then((r) => r.data),
+    enabled: options?.enabled,
   });
 
 export const useContract = (id: number | null) =>
