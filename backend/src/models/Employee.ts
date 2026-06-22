@@ -16,14 +16,12 @@ export interface EmployeeAttributes {
   placeOfBirth?: string | null;
   phone?: string | null;
   homeAddress?: string | null;
-  workStartDate?: string | null;
-  workEndDate?: string | null;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
 export interface EmployeeCreationAttributes
-  extends Optional<EmployeeAttributes, 'id' | 'azureId' | 'isActive' | 'photo' | 'fatherName' | 'motherName' | 'dateOfBirth' | 'placeOfBirth' | 'phone' | 'homeAddress' | 'workStartDate' | 'workEndDate'> {}
+  extends Optional<EmployeeAttributes, 'id' | 'azureId' | 'isActive' | 'photo' | 'fatherName' | 'motherName' | 'dateOfBirth' | 'placeOfBirth' | 'phone' | 'homeAddress'> {}
 
 class Employee
   extends Model<EmployeeAttributes, EmployeeCreationAttributes>
@@ -43,8 +41,6 @@ class Employee
   public placeOfBirth!: string | null;
   public phone!: string | null;
   public homeAddress!: string | null;
-  public workStartDate!: string | null;
-  public workEndDate!: string | null;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }
@@ -65,8 +61,6 @@ Employee.init(
     placeOfBirth: { type: DataTypes.STRING(200), allowNull: true, defaultValue: null },
     phone: { type: DataTypes.STRING(50), allowNull: true, defaultValue: null },
     homeAddress: { type: DataTypes.TEXT, allowNull: true, defaultValue: null },
-    workStartDate: { type: DataTypes.DATEONLY, allowNull: true, defaultValue: null },
-    workEndDate: { type: DataTypes.DATEONLY, allowNull: true, defaultValue: null },
   },
   { sequelize, tableName: 'employees', modelName: 'Employee' }
 );

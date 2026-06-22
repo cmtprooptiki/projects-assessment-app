@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Plus, Pencil, Trash2, GraduationCap, Languages } from 'lucide-react';
+import { Plus, Pencil, Trash2, GraduationCap, Languages, CalendarDays } from 'lucide-react';
 import { PageSpinner } from '@/components/ui/Spinner';
 import EmployeeForm from '@/components/employees/EmployeeForm';
 import Card from '@/components/ui/Card';
@@ -11,22 +11,41 @@ import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Modal from '@/components/ui/Modal';
 import EmptyState from '@/components/ui/EmptyState';
+import DatePicker from '@/components/ui/DatePicker';
 import { useEmployee, useUpdateEmployee } from '@/hooks/useEmployees';
 import { useEducation, useCreateEducation, useUpdateEducation, useDeleteEducation } from '@/hooks/useEducation';
 import { useLanguages, useCreateLanguage, useUpdateLanguage, useDeleteLanguage } from '@/hooks/useLanguages';
-import type { Education, Language } from '@/types';
+import { useAvailability, useCreateAvailability, useUpdateAvailability, useDeleteAvailability } from '@/hooks/useAvailability';
+import type { Education, Language, AvailabilityPeriod } from '@/types';
 
 const emptyEdu = { institutionName: '', degreeTitle: '', specialization: '', dateAwarded: '', recognized: '' };
-
 const recognizedOptions = [
   { value: '', label: '—' },
   { value: 'yes', label: 'Yes' },
   { value: 'no', label: 'No' },
 ];
 const emptyLang = { language: '', degreeTitle: '', level: '' };
+const emptyAvail = { startDate: '', endDate: '', notes: '' };
 
 type EduMode = null | 'create' | { edit: Education };
 type LangMode = null | 'create' | { edit: Language };
+type AvailMode = null | 'create' | { edit: AvailabilityPeriod };
+
+function formatDate(d: string) {
+  return new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function calcYearsOfService(periods: AvailabilityPeriod[]): number | null {
+  if (!periods.length) return null;
+  const today = new Date();
+  let totalMs = 0;
+  for (const p of periods) {
+    const start = new Date(p.startDate + 'T00:00:00');
+    const end = p.endDate ? new Date(p.endDate + 'T00:00:00') : today;
+    totalMs += Math.max(0, end.getTime() - start.getTime());
+  }
+  return Math.floor(totalMs / (365.25 * 24 * 60 * 60 * 1000));
+}
 
 export default function EditEmployeePage() {
   const router = useRouter();
@@ -60,8 +79,21 @@ export default function EditEmployeePage() {
   const updateLanguage = useUpdateLanguage(id);
   const deleteLanguage = useDeleteLanguage(id);
 
+  // Availability state
+  const { data: availData, isLoading: loadingAvail } = useAvailability(id);
+  const availList = availData?.data ?? [];
+  const [availMode, setAvailMode] = useState<AvailMode>(null);
+  const [deletingAvail, setDeletingAvail] = useState<AvailabilityPeriod | null>(null);
+  const [availForm, setAvailForm] = useState(emptyAvail);
+  const [availError, setAvailError] = useState('');
+  const [availSaving, setAvailSaving] = useState(false);
+  const createAvailability = useCreateAvailability(id);
+  const updateAvailability = useUpdateAvailability(id);
+  const deleteAvailability = useDeleteAvailability(id);
+
   const isEditingEdu = eduMode && typeof eduMode === 'object';
   const isEditingLang = langMode && typeof langMode === 'object';
+  const isEditingAvail = availMode && typeof availMode === 'object';
 
   // Education handlers
   const handleOpenCreateEdu = () => { setEduForm(emptyEdu); setEduError(''); setEduMode('create'); };
@@ -105,7 +137,32 @@ export default function EditEmployeePage() {
     try { await deleteLanguage.mutateAsync(deletingLang.id); setDeletingLang(null); } catch {}
   };
 
+  // Availability handlers
+  const handleOpenCreateAvail = () => { setAvailForm(emptyAvail); setAvailError(''); setAvailMode('create'); };
+  const handleOpenEditAvail = (p: AvailabilityPeriod) => {
+    setAvailForm({ startDate: p.startDate.slice(0, 10), endDate: p.endDate ? p.endDate.slice(0, 10) : '', notes: p.notes ?? '' });
+    setAvailError(''); setAvailMode({ edit: p });
+  };
+  const handleAvailSave = async (e: React.FormEvent) => {
+    e.preventDefault(); setAvailError('');
+    if (!availForm.startDate) { setAvailError('Start date is required.'); return; }
+    setAvailSaving(true);
+    try {
+      const payload = { startDate: availForm.startDate, endDate: availForm.endDate || undefined, notes: availForm.notes || undefined };
+      if (availMode === 'create') await createAvailability.mutateAsync(payload);
+      else if (isEditingAvail) await updateAvailability.mutateAsync({ id: availMode.edit.id, data: payload });
+      setAvailMode(null);
+    } catch (err) { setAvailError(err instanceof Error ? err.message : 'Something went wrong.'); }
+    finally { setAvailSaving(false); }
+  };
+  const handleAvailDelete = async () => {
+    if (!deletingAvail) return;
+    try { await deleteAvailability.mutateAsync(deletingAvail.id); setDeletingAvail(null); } catch {}
+  };
+
   if (isLoading) return <PageSpinner />;
+
+  const yearsOfService = calcYearsOfService(availList);
 
   return (
     <div className="space-y-6">
@@ -117,6 +174,50 @@ export default function EditEmployeePage() {
         }}
         submitLabel="Update Employee"
       />
+
+      {/* Availability Section */}
+      <div className="max-w-3xl space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CalendarDays size={18} className="text-indigo-600" />
+            <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200 uppercase tracking-wide">Availability Periods</h2>
+            {yearsOfService !== null && (
+              <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400">
+                {yearsOfService} yr{yearsOfService !== 1 ? 's' : ''} of service
+              </span>
+            )}
+          </div>
+          <Button size="sm" onClick={handleOpenCreateAvail}><Plus size={14} />Add Period</Button>
+        </div>
+        <Card>
+          {loadingAvail ? <div className="p-6"><PageSpinner /></div>
+            : availList.length === 0
+            ? <EmptyState title="No availability periods" description="Add a period to track when this employee is available to work." />
+            : (
+              <div className="divide-y divide-slate-100 dark:divide-slate-700">
+                {availList.map((p) => (
+                  <div key={p.id} className="px-6 py-4 flex items-center justify-between group hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 rounded-full shrink-0 bg-emerald-500" />
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                          {formatDate(p.startDate)}
+                          <span className="mx-2 text-slate-400">→</span>
+                          {p.endDate ? formatDate(p.endDate) : <span className="text-emerald-600 dark:text-emerald-400">Present</span>}
+                        </p>
+                        {p.notes && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{p.notes}</p>}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-4">
+                      <Button variant="ghost" size="sm" onClick={() => handleOpenEditAvail(p)}><Pencil size={14} /></Button>
+                      <Button variant="ghost" size="sm" onClick={() => setDeletingAvail(p)} className="text-red-500 hover:bg-red-50 hover:text-red-600"><Trash2 size={14} /></Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+        </Card>
+      </div>
 
       {/* Education Section */}
       <div className="max-w-3xl space-y-3">
@@ -184,6 +285,30 @@ export default function EditEmployeePage() {
             )}
         </Card>
       </div>
+
+      {/* Availability Modals */}
+      <Modal open={!!availMode} onClose={() => setAvailMode(null)} title={isEditingAvail ? 'Edit Availability Period' : 'Add Availability Period'}>
+        <form onSubmit={handleAvailSave} className="space-y-4">
+          <DatePicker label="Start Date" value={availForm.startDate} onChange={(v) => setAvailForm(f => ({ ...f, startDate: v }))} required />
+          <DatePicker label="End Date" value={availForm.endDate} onChange={(v) => setAvailForm(f => ({ ...f, endDate: v }))} hint="Leave empty if still working" />
+          <Input label="Notes" value={availForm.notes} onChange={(e) => setAvailForm(f => ({ ...f, notes: e.target.value }))} placeholder="Optional notes" />
+          {availError && <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-lg">{availError}</div>}
+          <div className="flex justify-end gap-3">
+            <Button type="button" variant="secondary" onClick={() => setAvailMode(null)}>Cancel</Button>
+            <Button type="submit" loading={availSaving}>{isEditingAvail ? 'Update' : 'Add'}</Button>
+          </div>
+        </form>
+      </Modal>
+      <Modal open={!!deletingAvail} onClose={() => setDeletingAvail(null)} title="Delete Availability Period">
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
+          Delete period <span className="font-semibold">{deletingAvail ? formatDate(deletingAvail.startDate) : ''}</span>
+          {deletingAvail?.endDate ? ` → ${formatDate(deletingAvail.endDate)}` : ' → Present'}?
+        </p>
+        <div className="flex justify-end gap-3">
+          <Button variant="secondary" onClick={() => setDeletingAvail(null)}>Cancel</Button>
+          <Button variant="danger" loading={deleteAvailability.isPending} onClick={handleAvailDelete}>Delete</Button>
+        </div>
+      </Modal>
 
       {/* Education Modals */}
       <Modal open={!!eduMode} onClose={() => setEduMode(null)} title={isEditingEdu ? 'Edit Education' : 'Add Education'}>

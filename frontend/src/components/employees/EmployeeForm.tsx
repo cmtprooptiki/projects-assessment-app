@@ -40,8 +40,6 @@ export default function EmployeeForm({ defaultValues, onSubmit, submitLabel = 'S
     placeOfBirth: defaultValues?.placeOfBirth ?? '',
     phone: defaultValues?.phone ?? '',
     homeAddress: defaultValues?.homeAddress ?? '',
-    workStartDate: defaultValues?.workStartDate ? defaultValues.workStartDate.slice(0, 10) : '',
-    workEndDate: defaultValues?.workEndDate ? defaultValues.workEndDate.slice(0, 10) : '',
   });
 
   const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -89,8 +87,6 @@ export default function EmployeeForm({ defaultValues, onSubmit, submitLabel = 'S
       if (form.placeOfBirth) fd.append('placeOfBirth', form.placeOfBirth.trim());
       if (form.phone) fd.append('phone', form.phone.trim());
       if (form.homeAddress) fd.append('homeAddress', form.homeAddress.trim());
-      if (form.workStartDate) fd.append('workStartDate', form.workStartDate);
-      if (form.workEndDate) fd.append('workEndDate', form.workEndDate);
       if (photoFile) fd.append('photo', photoFile);
       if (clearPhoto) fd.append('clearPhoto', 'true');
       await onSubmit(fd);
@@ -182,41 +178,6 @@ export default function EmployeeForm({ defaultValues, onSubmit, submitLabel = 'S
             className="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 bg-white dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
           />
         </div>
-      </Card>
-
-      {/* Employment */}
-      <Card className="p-6 space-y-5">
-        <h2 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Employment</h2>
-
-        <div className="grid grid-cols-2 gap-4">
-          <DatePicker
-            label="Start Date"
-            value={form.workStartDate}
-            onChange={(v) => set('workStartDate', v)}
-          />
-          <DatePicker
-            label="End Date"
-            value={form.workEndDate}
-            onChange={(v) => set('workEndDate', v)}
-            hint="Leave empty if still employed"
-          />
-        </div>
-
-        {form.workStartDate && (
-          <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-            <span className="font-medium">Years of service:</span>
-            <span className="font-bold text-indigo-600 dark:text-indigo-400">
-              {(() => {
-                const start = new Date(form.workStartDate);
-                const end = form.workEndDate ? new Date(form.workEndDate) : new Date();
-                let years = end.getFullYear() - start.getFullYear();
-                const m = end.getMonth() - start.getMonth();
-                if (m < 0 || (m === 0 && end.getDate() < start.getDate())) years--;
-                return Math.max(0, years);
-              })()}
-            </span>
-          </div>
-        )}
       </Card>
 
       {error && (

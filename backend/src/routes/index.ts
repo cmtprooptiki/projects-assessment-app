@@ -10,6 +10,7 @@ import participationRoutes from './participationRoutes';
 import dashboardRoutes from './dashboardRoutes';
 import educationRoutes from './educationRoutes';
 import languageRoutes from './languageRoutes';
+import availabilityRoutes from './availabilityRoutes';
 
 const router = Router();
 
@@ -24,5 +25,6 @@ router.use('/participations', participationRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/employees/:employeeId/education', educationRoutes);
 router.use('/employees/:employeeId/languages', languageRoutes);
+router.use('/employees/:employeeId/availability', availabilityRoutes);
 
 export default router;

@@ -1,24 +1,15 @@
 import fs from 'fs';
 import path from 'path';
 import { Op } from 'sequelize';
-import { Employee, ProjectParticipation, Project, Role } from '../models';
+import { Employee, ProjectParticipation, Project, Role, EmployeeAvailabilityPeriod } from '../models';
 import { AppError } from '../middleware/errorHandler';
 import { EmployeeAttributes, EmployeeCreationAttributes } from '../models/Employee';
+import { calcYearsOfService } from './availabilityService';
 
 const deletePhotoFile = (photoPath: string | null | undefined) => {
   if (!photoPath) return;
   const fullPath = path.join(process.cwd(), photoPath);
   try { if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath); } catch {}
-};
-
-const calcYearsOfService = (workStartDate: string | null | undefined, workEndDate: string | null | undefined): number | null => {
-  if (!workStartDate) return null;
-  const start = new Date(workStartDate);
-  const end = workEndDate ? new Date(workEndDate) : new Date();
-  let years = end.getFullYear() - start.getFullYear();
-  const monthDiff = end.getMonth() - start.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && end.getDate() < start.getDate())) years--;
-  return Math.max(0, years);
 };
 
 export const getAllEmployees = async (filters: {
@@ -44,16 +35,21 @@ export const getAllEmployees = async (filters: {
 
   const { count, rows } = await Employee.findAndCountAll({
     where,
+    include: [{ model: EmployeeAvailabilityPeriod, as: 'availabilityPeriods' }],
     limit,
     offset,
     order: [['firstName', 'ASC'], ['lastName', 'ASC']],
+    distinct: true,
   });
 
   return {
-    data: rows.map(e => ({
-      ...e.toJSON(),
-      yearsOfService: calcYearsOfService(e.workStartDate, e.workEndDate),
-    })),
+    data: rows.map(e => {
+      const json = e.toJSON() as any;
+      return {
+        ...json,
+        yearsOfService: calcYearsOfService(json.availabilityPeriods ?? []),
+      };
+    }),
     meta: { total: count, page, limit, totalPages: Math.ceil(count / limit) },
   };
 };
@@ -69,12 +65,14 @@ export const getEmployeeById = async (id: number) => {
           { model: Role, as: 'role' },
         ],
       },
+      { model: EmployeeAvailabilityPeriod, as: 'availabilityPeriods' },
     ],
   });
   if (!employee) throw new AppError('Employee not found.', 404);
+  const json = employee.toJSON() as any;
   return {
-    ...employee.toJSON(),
-    yearsOfService: calcYearsOfService(employee.workStartDate, employee.workEndDate),
+    ...json,
+    yearsOfService: calcYearsOfService(json.availabilityPeriods ?? []),
   };
 };
 
@@ -127,14 +125,7 @@ export const syncFromAzure = async (user: AzureUser) => {
 
   if (!email) return { action: 'skipped', reason: 'no email' };
 
-  const payload = {
-    azureId: user.id,
-    firstName,
-    lastName,
-    email,
-    department,
-    isActive,
-  };
+  const payload = { azureId: user.id, firstName, lastName, email, department, isActive };
 
   const existing = await Employee.findOne({ where: { azureId: user.id } });
   if (existing) {

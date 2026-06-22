@@ -28,6 +28,16 @@ export interface Education {
   updatedAt: string;
 }
 
+export interface AvailabilityPeriod {
+  id: number;
+  employeeId: number;
+  startDate: string;
+  endDate?: string | null;
+  notes?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Employee {
   id: number;
   firstName: string;
@@ -42,9 +52,8 @@ export interface Employee {
   placeOfBirth?: string | null;
   phone?: string | null;
   homeAddress?: string | null;
-  workStartDate?: string | null;
-  workEndDate?: string | null;
   yearsOfService?: number | null;
+  availabilityPeriods?: AvailabilityPeriod[];
   createdAt: string;
   updatedAt: string;
   participations?: ProjectParticipation[];

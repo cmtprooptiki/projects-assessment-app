@@ -9,8 +9,6 @@ const personalRules = (optional = false) => {
     body('placeOfBirth').optional().trim().isLength({ max: 200 }),
     body('phone').optional().trim().isLength({ max: 50 }),
     body('homeAddress').optional().trim(),
-    body('workStartDate').optional({ nullable: true, checkFalsy: true }).isISO8601().withMessage('Invalid work start date.'),
-    body('workEndDate').optional({ nullable: true, checkFalsy: true }).isISO8601().withMessage('Invalid work end date.'),
   ];
 };
 
