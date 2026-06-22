@@ -107,23 +107,6 @@ export interface Client {
   projects?: Project[];
 }
 
-export interface Project {
-  id: number;
-  name: string;
-  code: string;
-  description?: string | null;
-  clientId?: number | null;
-  client?: Client | null;
-  startDate: string;
-  endDate?: string | null;
-  status: ProjectStatus;
-  budget?: number | null;
-  confirmationOfGoodPerformance?: string | null;
-  createdAt: string;
-  updatedAt: string;
-  participations?: ProjectParticipation[];
-}
-
 export interface Role {
   id: number;
   name: string;

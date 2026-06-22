@@ -6,7 +6,7 @@ import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
-import { Employee, Project, Role, ProjectParticipation } from '@/types';
+import { Employee, Contract, Role, ProjectParticipation } from '@/types';
 import { formatDate } from '@/lib/utils';
 
 interface FormValues {
@@ -20,7 +20,7 @@ interface FormValues {
 
 interface Props {
   employees: Employee[];
-  projects: Project[];
+  projects: Contract[];
   roles: Role[];
   defaultValues?: Partial<ProjectParticipation>;
   onSubmit: (data: FormValues) => Promise<void>;

@@ -6,11 +6,11 @@ import { useDashboardSummary } from '@/hooks/useDashboard';
 import { useTheme } from '@/lib/theme';
 import { donutOptions } from '@/lib/chartConfig';
 import { statusLabel } from '@/lib/utils';
-import { ProjectStatus } from '@/types';
 
 const STATUS_COLORS: Record<string, string> = {
-  active: '#10B981',
-  completed: '#6366F1',
+  'Υπογεγραμμένο': '#10B981',
+  'Ολοκληρωμένο': '#6366F1',
+  'Αποπληρωμένο': '#F59E0B',
 };
 
 export default function ProjectsByStatusChart() {
@@ -20,7 +20,7 @@ export default function ProjectsByStatusChart() {
 
   const items = data?.data?.projectsByStatus ?? [];
   const series = items.map((i) => parseInt(i.count, 10));
-  const labels = items.map((i) => statusLabel(i.status as ProjectStatus));
+  const labels = items.map((i) => statusLabel(i.status));
   const colors = items.map((i) => STATUS_COLORS[i.status] ?? '#6366F1');
 
   const options = {

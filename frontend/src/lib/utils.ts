@@ -1,5 +1,3 @@
-import { ProjectStatus } from '@/types';
-
 export function cn(...classes: (string | undefined | false | null)[]): string {
   return classes.filter(Boolean).join(' ');
 }
@@ -33,14 +31,20 @@ export function calcMonths(
   return Math.max(0, months);
 }
 
-export function statusLabel(status: ProjectStatus): string {
-  const map: Record<ProjectStatus, string> = {
-    active: 'Active',
-    completed: 'Completed',
+export function statusLabel(status: string): string {
+  const map: Record<string, string> = {
+    'Υπογεγραμμένο': 'Signed',
+    'Ολοκληρωμένο': 'Completed',
+    'Αποπληρωμένο': 'Paid',
   };
   return map[status] ?? status;
 }
 
-export function statusVariant(status: ProjectStatus): 'success' | 'info' {
-  return status === 'completed' ? 'info' : 'success';
+export function statusVariant(status: string): 'success' | 'info' | 'warning' {
+  const map: Record<string, 'success' | 'info' | 'warning'> = {
+    'Υπογεγραμμένο': 'success',
+    'Ολοκληρωμένο': 'info',
+    'Αποπληρωμένο': 'warning',
+  };
+  return map[status] ?? 'info';
 }
