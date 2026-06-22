@@ -1,86 +1,49 @@
 import { Request, Response, NextFunction } from 'express';
 import * as projectService from '../services/projectService';
 
-export const getAll = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export const getAll = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { status, search, page, limit } = req.query as Record<string, string>;
+    const { clientId, search, page, limit } = req.query as Record<string, string>;
     const result = await projectService.getAllProjects({
-      status,
-      search,
+      clientId, search,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
     });
     res.json({ success: true, ...result });
-  } catch (err) {
-    next(err);
-  }
+  } catch (err) { next(err); }
 };
 
-export const getById = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export const getById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const project = await projectService.getProjectById(
-      parseInt(req.params.id, 10)
-    );
+    const project = await projectService.getProjectById(parseInt(req.params.id, 10));
     res.json({ success: true, data: project });
-  } catch (err) {
-    next(err);
-  }
+  } catch (err) { next(err); }
 };
 
-export const create = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export const create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const project = await projectService.createProject(req.body);
+    const { name, acronym, description, clientId } = req.body;
+    const project = await projectService.createProject({ name, acronym, description, clientId: clientId || null });
     res.status(201).json({ success: true, data: project });
-  } catch (err) {
-    next(err);
-  }
+  } catch (err) { next(err); }
 };
 
-export const update = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export const update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const project = await projectService.updateProject(
-      parseInt(req.params.id, 10),
-      req.body
-    );
+    const { name, acronym, description, clientId } = req.body;
+    const data: Record<string, unknown> = {};
+    if (name !== undefined) data.name = name;
+    if (acronym !== undefined) data.acronym = acronym;
+    if (description !== undefined) data.description = description || null;
+    if (clientId !== undefined) data.clientId = clientId || null;
+    const project = await projectService.updateProject(parseInt(req.params.id, 10), data as any);
     res.json({ success: true, data: project });
-  } catch (err) {
-    next(err);
-  }
+  } catch (err) { next(err); }
 };
 
-export const remove = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export const remove = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     await projectService.deleteProject(parseInt(req.params.id, 10));
     res.json({ success: true, message: 'Project deleted successfully.' });
-  } catch (err) {
-    next(err);
-  }
-};
-
-export const syncFromCashflow = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    const result = await projectService.syncFromCashflow(req.body);
-    const status = result.action === 'created' ? 201 : 200;
-    res.status(status).json({ success: true, data: result });
   } catch (err) { next(err); }
 };

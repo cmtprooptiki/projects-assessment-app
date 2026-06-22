@@ -5,7 +5,7 @@ import { PageSpinner } from '@/components/ui/Spinner';
 import ParticipationForm from '@/components/participations/ParticipationForm';
 import { useParticipation, useUpdateParticipation } from '@/hooks/useParticipations';
 import { useEmployees } from '@/hooks/useEmployees';
-import { useProjects } from '@/hooks/useProjects';
+import { useContracts } from '@/hooks/useContracts';
 import { useRoles } from '@/hooks/useRoles';
 
 export default function EditParticipationPage() {
@@ -17,7 +17,7 @@ export default function EditParticipationPage() {
   const { data: employeesData, isLoading: loadingEmployees } = useEmployees({
     limit: 999,
   });
-  const { data: projectsData, isLoading: loadingProjects } = useProjects({
+  const { data: projectsData, isLoading: loadingProjects } = useContracts({
     limit: 999,
   });
   const { data: rolesData, isLoading: loadingRoles } = useRoles();

@@ -2,30 +2,30 @@
 
 import { useRouter, useParams } from 'next/navigation';
 import { PageSpinner } from '@/components/ui/Spinner';
-import ProjectForm from '@/components/projects/ProjectForm';
-import { useProject, useUpdateProject } from '@/hooks/useProjects';
+import ContractForm from '@/components/contracts/ContractForm';
+import { useContract, useUpdateContract } from '@/hooks/useContracts';
 import { useClients } from '@/hooks/useClients';
 
-export default function EditProjectPage() {
+export default function EditContractPage() {
   const router = useRouter();
   const params = useParams();
   const id = parseInt(params.id as string, 10);
 
-  const { data, isLoading: projectLoading } = useProject(id);
+  const { data, isLoading: contractLoading } = useContract(id);
   const { data: clientsData, isLoading: clientsLoading } = useClients({ limit: 200 });
-  const updateProject = useUpdateProject();
+  const updateContract = useUpdateContract();
 
-  if (projectLoading || clientsLoading) return <PageSpinner />;
+  if (contractLoading || clientsLoading) return <PageSpinner />;
 
   return (
-    <ProjectForm
+    <ContractForm
       defaultValues={data?.data}
       clients={clientsData?.data ?? []}
       onSubmit={async (formData) => {
-        await updateProject.mutateAsync({ id, data: formData as any });
-        router.push('/projects');
+        await updateContract.mutateAsync({ id, data: formData as any });
+        router.push('/contracts');
       }}
-      submitLabel="Update Project"
+      submitLabel="Update Contract"
     />
   );
 }

@@ -60,7 +60,39 @@ export interface Employee {
   education?: Education[];
 }
 
-export type ProjectStatus = 'active' | 'completed';
+export type ContractStatus = 'Υπογεγραμμένο' | 'Ολοκληρωμένο' | 'Αποπληρωμένο';
+
+export interface Contract {
+  id: number;
+  cashflowId?: number | null;
+  projectId?: number | null;
+  name: string;
+  code: string;
+  description?: string | null;
+  clientId?: number | null;
+  client?: Client | null;
+  startDate: string;
+  endDate?: string | null;
+  status: ContractStatus;
+  budget?: number | null;
+  confirmationOfGoodPerformance?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  participations?: ProjectParticipation[];
+}
+
+export interface Project {
+  id: number;
+  projectCode: string;
+  name: string;
+  acronym: string;
+  description?: string | null;
+  clientId?: number | null;
+  client?: Client | null;
+  contracts?: Contract[];
+  createdAt: string;
+  updatedAt: string;
+}
 
 export interface Client {
   id: number;
@@ -110,7 +142,7 @@ export interface ProjectParticipation {
   notes?: string | null;
   totalMonths?: number;
   employee?: Employee;
-  project?: Project;
+  project?: Contract;
   role?: Role;
   createdAt: string;
   updatedAt: string;
@@ -175,8 +207,16 @@ export interface ClientFilters {
   limit?: number;
 }
 
-export interface ProjectFilters {
+export interface ContractFilters {
   status?: string;
+  clientId?: string;
+  projectId?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface ProjectFilters {
   clientId?: string;
   search?: string;
   page?: number;

@@ -1,5 +1,5 @@
 import { Op, fn, col, literal } from 'sequelize';
-import { Employee, Project, Role, ProjectParticipation, Client } from '../models';
+import { Employee, Contract, Role, ProjectParticipation, Client } from '../models';
 import { AppError } from '../middleware/errorHandler';
 import { ParticipationFilterQuery } from '../types';
 
@@ -14,8 +14,8 @@ const calcMonths = (startDate: string, endDate: string | null): number => {
 };
 
 export const getProjectDashboard = async (projectId: number) => {
-  const project = await Project.findByPk(projectId);
-  if (!project) throw new AppError('Project not found.', 404);
+  const contract = await Contract.findByPk(projectId);
+  if (!contract) throw new AppError('Contract not found.', 404);
 
   const participations = await ProjectParticipation.findAll({
     where: { projectId },
@@ -34,7 +34,7 @@ export const getProjectDashboard = async (projectId: number) => {
   const uniqueEmployees = new Set(participations.map((p) => p.employeeId)).size;
 
   return {
-    project: project.toJSON(),
+    project: contract.toJSON(),
     participations: enriched,
     stats: {
       totalParticipants: uniqueEmployees,
@@ -50,7 +50,7 @@ export const getEmployeeDashboard = async (employeeId: number) => {
   const participations = await ProjectParticipation.findAll({
     where: { employeeId },
     include: [
-      { model: Project, as: 'project' },
+      { model: Contract, as: 'project' },
       { model: Role, as: 'role' },
     ],
     order: [['startDate', 'DESC']],
@@ -63,7 +63,6 @@ export const getEmployeeDashboard = async (employeeId: number) => {
 
   const uniqueProjects = new Set(participations.map((p) => p.projectId)).size;
   const totalMonths = enriched.reduce((sum, p) => sum + p.totalMonths, 0);
-
   const activeParticipations = participations.filter(
     (p) => !p.endDate || new Date(p.endDate) >= new Date()
   );
@@ -84,16 +83,16 @@ export const getClientDashboard = async (clientId: number) => {
   const client = await Client.findByPk(clientId);
   if (!client) throw new AppError('Client not found.', 404);
 
-  const projects = await Project.findAll({ where: { clientId }, order: [['startDate', 'DESC']] });
-  const projectIds = projects.map((p) => p.id);
+  const contracts = await Contract.findAll({ where: { clientId }, order: [['startDate', 'DESC']] });
+  const contractIds = contracts.map((c) => c.id);
 
   const participations =
-    projectIds.length > 0
+    contractIds.length > 0
       ? await ProjectParticipation.findAll({
-          where: { projectId: { [Op.in]: projectIds } },
+          where: { projectId: { [Op.in]: contractIds } },
           include: [
             { model: Employee, as: 'employee' },
-            { model: Project, as: 'project' },
+            { model: Contract, as: 'project' },
             { model: Role, as: 'role' },
           ],
           order: [['startDate', 'DESC']],
@@ -105,10 +104,10 @@ export const getClientDashboard = async (clientId: number) => {
     totalMonths: calcMonths(p.startDate, p.endDate),
   }));
 
-  const projectStats = projects.map((proj) => {
-    const pp = enriched.filter((p) => p.projectId === proj.id);
+  const projectStats = contracts.map((c) => {
+    const pp = enriched.filter((p) => p.projectId === c.id);
     return {
-      ...proj.toJSON(),
+      ...c.toJSON(),
       participationCount: pp.length,
       uniqueEmployees: new Set(pp.map((p) => p.employeeId)).size,
       totalMonths: pp.reduce((s, p) => s + p.totalMonths, 0),
@@ -128,7 +127,7 @@ export const getClientDashboard = async (clientId: number) => {
     .slice(0, 10);
 
   const uniqueEmployees = new Set(participations.map((p) => p.employeeId)).size;
-  const activeProjects = projects.filter((p) => p.status === 'Υπογεγραμμένο').length;
+  const activeContracts = contracts.filter((c) => c.status === 'Υπογεγραμμένο').length;
 
   return {
     client: client.toJSON(),
@@ -136,8 +135,8 @@ export const getClientDashboard = async (clientId: number) => {
     participations: enriched,
     topEmployees,
     stats: {
-      totalProjects: projects.length,
-      activeProjects,
+      totalProjects: contracts.length,
+      activeProjects: activeContracts,
       totalParticipations: participations.length,
       uniqueEmployees,
     },
@@ -146,22 +145,17 @@ export const getClientDashboard = async (clientId: number) => {
 
 export const getDashboardSummary = async () => {
   const [
-    totalEmployees,
-    activeEmployees,
-    totalProjects,
-    activeProjects,
-    totalRoles,
-    totalParticipations,
+    totalEmployees, activeEmployees, totalContracts, activeContracts, totalRoles, totalParticipations,
   ] = await Promise.all([
     Employee.count(),
     Employee.count({ where: { isActive: true } }),
-    Project.count(),
-    Project.count({ where: { status: 'Υπογεγραμμένο' } }),
+    Contract.count(),
+    Contract.count({ where: { status: 'Υπογεγραμμένο' } }),
     Role.count(),
     ProjectParticipation.count(),
   ]);
 
-  const projectsByStatus = await Project.findAll({
+  const projectsByStatus = await Contract.findAll({
     attributes: ['status', [fn('COUNT', col('id')), 'count']],
     group: ['status'],
     raw: true,
@@ -177,7 +171,7 @@ export const getDashboardSummary = async () => {
   const recentParticipations = await ProjectParticipation.findAll({
     include: [
       { model: Employee, as: 'employee' },
-      { model: Project, as: 'project' },
+      { model: Contract, as: 'project' },
       { model: Role, as: 'role' },
     ],
     order: [['createdAt', 'DESC']],
@@ -188,8 +182,8 @@ export const getDashboardSummary = async () => {
     overview: {
       totalEmployees,
       activeEmployees,
-      totalProjects,
-      activeProjects,
+      totalProjects: totalContracts,
+      activeProjects: activeContracts,
       totalRoles,
       totalParticipations,
     },
@@ -199,29 +193,20 @@ export const getDashboardSummary = async () => {
   };
 };
 
-export const getFilteredParticipations = async (
-  filters: ParticipationFilterQuery
-) => {
+export const getFilteredParticipations = async (filters: ParticipationFilterQuery) => {
   const where: Record<string, unknown> = {};
   const employeeWhere: Record<string, unknown> = {};
-  const projectWhere: Record<string, unknown> = {};
+  const contractWhere: Record<string, unknown> = {};
 
   if (filters.employeeId) where.employeeId = parseInt(filters.employeeId, 10);
   if (filters.projectId) where.projectId = parseInt(filters.projectId, 10);
   if (filters.roleId) where.roleId = parseInt(filters.roleId, 10);
   if (filters.department) employeeWhere.department = filters.department;
-  if (filters.status) projectWhere.status = filters.status;
+  if (filters.status) contractWhere.status = filters.status;
 
-  if (filters.startDate) {
-    where.startDate = { [Op.gte as unknown as string]: filters.startDate };
-  }
+  if (filters.startDate) where.startDate = { [Op.gte as unknown as string]: filters.startDate };
   if (filters.endDate) {
-    where.endDate = {
-      [Op.or as unknown as string]: [
-        { [Op.lte as unknown as string]: filters.endDate },
-        null,
-      ],
-    };
+    where.endDate = { [Op.or as unknown as string]: [{ [Op.lte as unknown as string]: filters.endDate }, null] };
   }
 
   if (filters.year || filters.month) {
@@ -249,16 +234,8 @@ export const getFilteredParticipations = async (
   const participations = await ProjectParticipation.findAll({
     where,
     include: [
-      {
-        model: Employee,
-        as: 'employee',
-        where: Object.keys(employeeWhere).length ? employeeWhere : undefined,
-      },
-      {
-        model: Project,
-        as: 'project',
-        where: Object.keys(projectWhere).length ? projectWhere : undefined,
-      },
+      { model: Employee, as: 'employee', where: Object.keys(employeeWhere).length ? employeeWhere : undefined },
+      { model: Contract, as: 'project', where: Object.keys(contractWhere).length ? contractWhere : undefined },
       { model: Role, as: 'role' },
     ],
     order: [['startDate', 'DESC']],

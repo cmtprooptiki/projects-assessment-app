@@ -2,25 +2,25 @@
 
 import { useRouter } from 'next/navigation';
 import { PageSpinner } from '@/components/ui/Spinner';
-import ProjectForm from '@/components/projects/ProjectForm';
-import { useCreateProject } from '@/hooks/useProjects';
+import ContractForm from '@/components/contracts/ContractForm';
+import { useCreateContract } from '@/hooks/useContracts';
 import { useClients } from '@/hooks/useClients';
 
-export default function NewProjectPage() {
+export default function NewContractPage() {
   const router = useRouter();
-  const createProject = useCreateProject();
+  const createContract = useCreateContract();
   const { data: clientsData, isLoading } = useClients({ limit: 200 });
 
   if (isLoading) return <PageSpinner />;
 
   return (
-    <ProjectForm
+    <ContractForm
       clients={clientsData?.data ?? []}
       onSubmit={async (data) => {
-        await createProject.mutateAsync(data as any);
-        router.push('/projects');
+        await createContract.mutateAsync(data as any);
+        router.push('/contracts');
       }}
-      submitLabel="Create Project"
+      submitLabel="Create Contract"
     />
   );
 }

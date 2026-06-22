@@ -1,106 +1,15 @@
 import { body } from 'express-validator';
 
-const validStatuses = ['Υπογεγραμμένο', 'Ολοκληρωμένο', 'Αποπληρωμένο'];
-
 export const createProjectRules = [
-  body('name')
-    .trim()
-    .notEmpty().withMessage('Project name is required.')
-    .isLength({ max: 200 }).withMessage('Project name must not exceed 200 characters.'),
-
-  body('code')
-    .trim()
-    .notEmpty().withMessage('Project code is required.')
-    .isLength({ max: 50 }).withMessage('Project code must not exceed 50 characters.')
-    .matches(/^[\p{L}0-9_-]+$/u).withMessage('Project code can only contain letters, numbers, hyphens, and underscores.'),
-
-  body('description')
-    .optional({ nullable: true })
-    .trim(),
-
-  body('clientId')
-    .optional({ nullable: true })
-    .isInt({ min: 1 }).withMessage('Client ID must be a positive integer.')
-    .toInt(),
-
-  body('startDate')
-    .notEmpty().withMessage('Start date is required.')
-    .isDate({ format: 'YYYY-MM-DD' }).withMessage('Start date must be a valid date (YYYY-MM-DD).'),
-
-  body('endDate')
-    .optional({ nullable: true })
-    .isDate({ format: 'YYYY-MM-DD' }).withMessage('End date must be a valid date (YYYY-MM-DD).')
-    .custom((value, { req }) => {
-      if (value && req.body.startDate && value < req.body.startDate) {
-        throw new Error('End date must be after start date.');
-      }
-      return true;
-    }),
-
-  body('status')
-    .optional()
-    .isIn(validStatuses).withMessage(`Status must be one of: ${validStatuses.join(', ')}.`),
-
-  body('budget')
-    .optional({ nullable: true })
-    .isFloat({ min: 0 }).withMessage('Budget must be a positive number.')
-    .toFloat(),
-
-  body('confirmationOfGoodPerformance')
-    .optional({ nullable: true })
-    .trim()
-    .isLength({ max: 500 }).withMessage('Confirmation text must not exceed 500 characters.'),
+  body('name').trim().notEmpty().withMessage('Project name is required.').isLength({ max: 200 }),
+  body('acronym').trim().notEmpty().withMessage('Acronym is required.').isLength({ max: 50 }),
+  body('description').optional({ nullable: true }).trim(),
+  body('clientId').optional({ nullable: true }).isInt({ min: 1 }).toInt(),
 ];
 
 export const updateProjectRules = [
-  body('name')
-    .optional()
-    .trim()
-    .notEmpty().withMessage('Project name cannot be empty.')
-    .isLength({ max: 200 }).withMessage('Project name must not exceed 200 characters.'),
-
-  body('code')
-    .optional()
-    .trim()
-    .notEmpty().withMessage('Project code cannot be empty.')
-    .isLength({ max: 50 }).withMessage('Project code must not exceed 50 characters.')
-    .matches(/^[\p{L}0-9_-]+$/u).withMessage('Project code can only contain letters, numbers, hyphens, and underscores.'),
-
-  body('description')
-    .optional({ nullable: true })
-    .trim(),
-
-  body('clientId')
-    .optional({ nullable: true })
-    .isInt({ min: 1 }).withMessage('Client ID must be a positive integer.')
-    .toInt(),
-
-  body('startDate')
-    .optional()
-    .isDate({ format: 'YYYY-MM-DD' }).withMessage('Start date must be a valid date (YYYY-MM-DD).'),
-
-  body('endDate')
-    .optional({ nullable: true })
-    .isDate({ format: 'YYYY-MM-DD' }).withMessage('End date must be a valid date (YYYY-MM-DD).')
-    .custom((value, { req }) => {
-      const start = req.body.startDate;
-      if (value && start && value < start) {
-        throw new Error('End date must be after start date.');
-      }
-      return true;
-    }),
-
-  body('status')
-    .optional()
-    .isIn(validStatuses).withMessage(`Status must be one of: ${validStatuses.join(', ')}.`),
-
-  body('budget')
-    .optional({ nullable: true })
-    .isFloat({ min: 0 }).withMessage('Budget must be a positive number.')
-    .toFloat(),
-
-  body('confirmationOfGoodPerformance')
-    .optional({ nullable: true })
-    .trim()
-    .isLength({ max: 500 }).withMessage('Confirmation text must not exceed 500 characters.'),
+  body('name').optional().trim().notEmpty().withMessage('Project name cannot be empty.').isLength({ max: 200 }),
+  body('acronym').optional().trim().notEmpty().withMessage('Acronym cannot be empty.').isLength({ max: 50 }),
+  body('description').optional({ nullable: true }).trim(),
+  body('clientId').optional({ nullable: true }).isInt({ min: 1 }).toInt(),
 ];

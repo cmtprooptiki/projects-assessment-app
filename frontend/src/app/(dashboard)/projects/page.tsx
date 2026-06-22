@@ -24,40 +24,23 @@ export default function ProjectsPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <ProjectFilters
-          filters={filters}
-          onChange={setFilters}
-          onReset={() => setFilters(defaultFilters)}
-        />
+        <ProjectFilters filters={filters} onChange={setFilters} onReset={() => setFilters(defaultFilters)} />
         <Link href="/projects/new">
-          <Button>
-            <Plus size={16} />
-            Add Project
-          </Button>
+          <Button><Plus size={16} />New Project</Button>
         </Link>
       </div>
-
       <Card>
-        {isLoading ? (
-          <PageSpinner />
-        ) : error ? (
-          <div className="p-8 text-center text-sm text-red-500">
-            Failed to load projects. Please try again.
-          </div>
-        ) : (
-          <>
-            <ProjectTable projects={projects} />
-            {meta && (
-              <Pagination
-                page={meta.page}
-                totalPages={meta.totalPages}
-                total={meta.total}
-                limit={meta.limit}
-                onPageChange={(page) => setFilters((f) => ({ ...f, page }))}
-              />
-            )}
-          </>
-        )}
+        {isLoading ? <PageSpinner />
+          : error ? <div className="p-8 text-center text-sm text-red-500">Failed to load projects. Please try again.</div>
+          : (
+            <>
+              <ProjectTable projects={projects} />
+              {meta && (
+                <Pagination page={meta.page} totalPages={meta.totalPages} total={meta.total} limit={meta.limit}
+                  onPageChange={(page) => setFilters((f) => ({ ...f, page }))} />
+              )}
+            </>
+          )}
       </Card>
     </div>
   );

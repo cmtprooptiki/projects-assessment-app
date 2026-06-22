@@ -1,5 +1,6 @@
 import Employee from './Employee';
 import Project from './Project';
+import Contract from './Contract';
 import Role from './Role';
 import ProjectParticipation from './ProjectParticipation';
 import User from './User';
@@ -12,9 +13,15 @@ import EmployeeAvailabilityPeriod from './EmployeeAvailabilityPeriod';
 // Client associations
 Client.hasMany(Project, { foreignKey: 'clientId', as: 'projects' });
 Project.belongsTo(Client, { foreignKey: 'clientId', as: 'client' });
+Client.hasMany(Contract, { foreignKey: 'clientId', as: 'contracts' });
+Contract.belongsTo(Client, { foreignKey: 'clientId', as: 'client' });
 
-// Project associations
-Project.hasMany(ProjectParticipation, { foreignKey: 'projectId', as: 'participations', onDelete: 'CASCADE' });
+// Project → Contract associations
+Project.hasMany(Contract, { foreignKey: 'projectId', as: 'contracts', onDelete: 'SET NULL' });
+Contract.belongsTo(Project, { foreignKey: 'projectId', as: 'project' });
+
+// Contract (was Project) associations
+Contract.hasMany(ProjectParticipation, { foreignKey: 'projectId', as: 'participations', onDelete: 'CASCADE' });
 
 // Employee associations
 Employee.hasMany(ProjectParticipation, { foreignKey: 'employeeId', as: 'participations', onDelete: 'CASCADE' });
@@ -28,9 +35,12 @@ EmployeeAvailabilityPeriod.belongsTo(Employee, { foreignKey: 'employeeId', as: '
 // Role associations
 Role.hasMany(ProjectParticipation, { foreignKey: 'roleId', as: 'participations', onDelete: 'RESTRICT' });
 
-// ProjectParticipation associations
+// ProjectParticipation associations — 'project' alias kept so API responses are unchanged
+ProjectParticipation.belongsTo(Contract, { foreignKey: 'projectId', as: 'project' });
 ProjectParticipation.belongsTo(Employee, { foreignKey: 'employeeId', as: 'employee' });
-ProjectParticipation.belongsTo(Project, { foreignKey: 'projectId', as: 'project' });
 ProjectParticipation.belongsTo(Role, { foreignKey: 'roleId', as: 'role' });
 
-export { Employee, Project, Role, ProjectParticipation, User, Client, Department, Education, Language, EmployeeAvailabilityPeriod };
+export {
+  Employee, Project, Contract, Role, ProjectParticipation,
+  User, Client, Department, Education, Language, EmployeeAvailabilityPeriod,
+};

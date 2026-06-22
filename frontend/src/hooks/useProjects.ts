@@ -17,18 +17,15 @@ export const useProject = (id: number | null) =>
 
 type ProjectPayload = {
   name: string;
-  code: string;
-  description: string;
-  clientId: number | null;
-  startDate: string;
-  endDate: string | null;
+  acronym: string;
+  description?: string | null;
+  clientId?: number | null;
 };
 
 export const useCreateProject = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: ProjectPayload) =>
-      api.post('/projects', data).then((r) => r.data),
+    mutationFn: (data: ProjectPayload) => api.post('/projects', data).then((r) => r.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['projects'] }),
   });
 };
