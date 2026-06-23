@@ -89,6 +89,8 @@ export const updateProject = async (id: number, data: Partial<Omit<ProjectCreati
 export const deleteProject = async (id: number) => {
   const project = await Project.findByPk(id);
   if (!project) throw new AppError('Project not found.', 404);
+  // Unlink contracts so they are not deleted with the project
+  await Contract.update({ projectId: null } as any, { where: { projectId: id } });
   await project.destroy();
 };
 
