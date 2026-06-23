@@ -108,6 +108,7 @@ export interface CashflowErgo {
   name: string;
   erga_code?: string | null;
   sign_date?: string | null;
+  end_date?: string | null;
   ammount_total?: number | null;
   status: string;
   customer_id?: number | null;
@@ -134,6 +135,7 @@ export const syncFromCashflow = async (ergo: CashflowErgo) => {
     code,
     clientId,
     startDate,
+    endDate: ergo.end_date ? ergo.end_date.split('T')[0] : null,
     status: ergo.status as ContractStatus,
     budget: ergo.ammount_total ?? null,
   };
