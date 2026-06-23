@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { Op } from 'sequelize';
-import { Employee, ProjectParticipation, Project, Role, EmployeeAvailabilityPeriod } from '../models';
+import { Employee, ProjectParticipation, Contract, Role, EmployeeAvailabilityPeriod } from '../models';
 import { AppError } from '../middleware/errorHandler';
 import { EmployeeAttributes, EmployeeCreationAttributes } from '../models/Employee';
 import { calcYearsOfService } from './availabilityService';
@@ -61,7 +61,7 @@ export const getEmployeeById = async (id: number) => {
         model: ProjectParticipation,
         as: 'participations',
         include: [
-          { model: Project, as: 'project' },
+          { model: Contract, as: 'project' },
           { model: Role, as: 'role' },
         ],
       },

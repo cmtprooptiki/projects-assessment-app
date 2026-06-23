@@ -32,8 +32,11 @@ const ensureAdminExists = async (): Promise<void> => {
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+const corsOrigins = process.env.CORS_ORIGIN;
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || '*',
+  origin: corsOrigins
+    ? corsOrigins.split(',').map((o) => o.trim()).filter(Boolean)
+    : true,
   credentials: true,
 }));
 app.use(express.json());
