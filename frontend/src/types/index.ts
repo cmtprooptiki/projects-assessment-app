@@ -90,6 +90,8 @@ export interface Project {
   clientId?: number | null;
   client?: Client | null;
   contracts?: Contract[];
+  startDate?: string | null;
+  endDate?: string | null;
   createdAt: string;
   updatedAt: string;
 }

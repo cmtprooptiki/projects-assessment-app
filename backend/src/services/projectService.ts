@@ -9,6 +9,24 @@ const generateProjectCode = async (): Promise<string> => {
   return `PRJ-${String(nextNum).padStart(5, '0')}`;
 };
 
+// startDate = earliest contract startDate
+// endDate   = latest contract endDate, or null if any contract is ongoing
+const computeProjectDates = (contracts: Array<{ startDate: string; endDate?: string | null }>) => {
+  if (!contracts || contracts.length === 0) return { startDate: null, endDate: null };
+  const starts = contracts.map((c) => c.startDate).filter(Boolean) as string[];
+  const hasOngoing = contracts.some((c) => c.endDate == null);
+  const ends = contracts.map((c) => c.endDate).filter(Boolean) as string[];
+  return {
+    startDate: starts.length ? starts.reduce((min, d) => (d < min ? d : min)) : null,
+    endDate: hasOngoing ? null : ends.length ? ends.reduce((max, d) => (d > max ? d : max)) : null,
+  };
+};
+
+const withDates = (p: any) => {
+  const json = p.toJSON ? p.toJSON() : p;
+  return { ...json, ...computeProjectDates(json.contracts ?? []) };
+};
+
 export const getAllProjects = async (filters: {
   clientId?: string;
   search?: string;
@@ -45,7 +63,7 @@ export const getAllProjects = async (filters: {
   });
 
   return {
-    data: rows,
+    data: rows.map(withDates),
     meta: { total: count, page, limit, totalPages: Math.ceil(count / limit) },
   };
 };
@@ -58,7 +76,7 @@ export const getProjectById = async (id: number) => {
     ],
   });
   if (!project) throw new AppError('Project not found.', 404);
-  return project;
+  return withDates(project);
 };
 
 export const createProject = async (data: Omit<ProjectCreationAttributes, 'projectCode'>) => {
@@ -68,9 +86,10 @@ export const createProject = async (data: Omit<ProjectCreationAttributes, 'proje
   }
   const projectCode = await generateProjectCode();
   const project = await Project.create({ ...data, projectCode });
-  return Project.findByPk(project.id, {
+  const full = await Project.findByPk(project.id, {
     include: [{ model: Client, as: 'client' }, { model: Contract, as: 'contracts' }],
   });
+  return withDates(full!);
 };
 
 export const updateProject = async (id: number, data: Partial<Omit<ProjectCreationAttributes, 'projectCode'>>) => {
@@ -81,9 +100,10 @@ export const updateProject = async (id: number, data: Partial<Omit<ProjectCreati
     if (!client) throw new AppError('Client not found.', 404);
   }
   await project.update(data);
-  return Project.findByPk(id, {
+  const full = await Project.findByPk(id, {
     include: [{ model: Client, as: 'client' }, { model: Contract, as: 'contracts' }],
   });
+  return withDates(full!);
 };
 
 export const deleteProject = async (id: number) => {
@@ -97,13 +117,12 @@ export const deleteProject = async (id: number) => {
 export const linkContractsToProject = async (projectId: number, contractIds: number[]) => {
   const project = await Project.findByPk(projectId);
   if (!project) throw new AppError('Project not found.', 404);
-  // Unlink all contracts currently linked to this project
   await Contract.update({ projectId: null } as any, { where: { projectId } });
-  // Link the selected contracts
   if (contractIds.length > 0) {
     await Contract.update({ projectId } as any, { where: { id: contractIds } });
   }
-  return Project.findByPk(projectId, {
+  const full = await Project.findByPk(projectId, {
     include: [{ model: Client, as: 'client' }, { model: Contract, as: 'contracts' }],
   });
+  return withDates(full!);
 };

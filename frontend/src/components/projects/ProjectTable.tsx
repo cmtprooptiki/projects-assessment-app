@@ -8,6 +8,7 @@ import Modal from '@/components/ui/Modal';
 import EmptyState from '@/components/ui/EmptyState';
 import { Project } from '@/types';
 import { useDeleteProject } from '@/hooks/useProjects';
+import { formatDate } from '@/lib/utils';
 
 interface Props { projects: Project[]; onDeleted?: () => void; }
 
@@ -35,6 +36,7 @@ export default function ProjectTable({ projects, onDeleted }: Props) {
               <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Name</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Acronym</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Client</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Period</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Contracts</th>
               <th className="px-4 py-3" />
             </tr>
@@ -46,6 +48,17 @@ export default function ProjectTable({ projects, onDeleted }: Props) {
                 <td className="px-4 py-3 font-medium text-gray-900">{p.name}</td>
                 <td className="px-4 py-3 text-gray-600">{p.acronym}</td>
                 <td className="px-4 py-3 text-gray-600">{p.client?.name ?? <span className="text-gray-300">—</span>}</td>
+                <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
+                  {p.startDate ? (
+                    <span>
+                      {formatDate(p.startDate)}
+                      <span className="text-gray-400"> – </span>
+                      {p.endDate ? formatDate(p.endDate) : <span className="text-green-600 font-medium">Present</span>}
+                    </span>
+                  ) : (
+                    <span className="text-gray-300">—</span>
+                  )}
+                </td>
                 <td className="px-4 py-3">
                   {p.contracts?.length
                     ? <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600"><FileText size={11} />{p.contracts.length}</span>
