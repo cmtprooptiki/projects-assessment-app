@@ -7,17 +7,19 @@ export const getAllContracts = async (filters: {
   status?: string;
   clientId?: string;
   projectId?: string;
+  unlinked?: string;
   search?: string;
   page?: number;
   limit?: number;
 }) => {
-  const { status, clientId, projectId, search, page = 1, limit = 20 } = filters;
+  const { status, clientId, projectId, unlinked, search, page = 1, limit = 20 } = filters;
   const offset = (page - 1) * limit;
 
   const where: Record<string, unknown> = {};
   if (status) where.status = status;
   if (clientId) where.clientId = parseInt(clientId, 10);
   if (projectId) where.projectId = parseInt(projectId, 10);
+  if (unlinked === 'true') where.projectId = { [Op.is]: null };
   if (search) {
     const like = { [Op.like]: `%${search}%` };
     where[Op.or as unknown as string] = [

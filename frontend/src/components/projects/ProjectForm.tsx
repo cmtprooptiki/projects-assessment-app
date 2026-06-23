@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
@@ -44,6 +44,13 @@ export default function ProjectForm({ defaultValues, clients, onSubmit, submitLa
 
   const linkContracts = useLinkContracts();
 
+  // Fetch all unlinked contracts upfront to know which clients have available ones
+  const { data: unlinkedContractsData } = useContracts({ unlinked: 'true', limit: 999 });
+  const unlinkedClientIds = new Set(
+    (unlinkedContractsData?.data ?? []).map((c) => c.clientId).filter((id): id is number => id != null)
+  );
+
+  // Contracts for the currently selected client (includes already-linked ones for this project)
   const { data: contractsData, isLoading: contractsLoading } = useContracts(
     form.clientId ? { clientId: String(form.clientId), limit: 999 } : { limit: 0 },
     { enabled: form.clientId != null }
@@ -91,7 +98,10 @@ export default function ProjectForm({ defaultValues, clients, onSubmit, submitLa
     }
   };
 
-  const clientOptions = clients.map((c) => ({ value: String(c.id), label: c.name }));
+  // Only show clients that have at least one unlinked contract, plus the current project's client in edit mode
+  const clientOptions = clients
+    .filter((c) => unlinkedClientIds.has(c.id) || c.id === defaultValues?.clientId)
+    .map((c) => ({ value: String(c.id), label: c.name }));
 
   return (
     <form onSubmit={handleSubmit}>

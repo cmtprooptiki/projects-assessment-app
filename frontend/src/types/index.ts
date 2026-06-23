@@ -194,6 +194,7 @@ export interface ContractFilters {
   status?: string;
   clientId?: string;
   projectId?: string;
+  unlinked?: string;
   search?: string;
   page?: number;
   limit?: number;
