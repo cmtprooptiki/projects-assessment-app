@@ -1,16 +1,15 @@
 'use client';
 
-import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Button from '@/components/ui/Button';
-import type { ParticipationFilters } from '@/types';
+import type { ParticipationFilters, Project } from '@/types';
 
 interface Props {
   filters: ParticipationFilters;
   onChange: (filters: ParticipationFilters) => void;
   onReset: () => void;
   employees: Array<{ id: number; firstName: string; lastName: string; department: string }>;
-  projects: Array<{ id: number; name: string }>;
+  projects: Project[];
   roles: Array<{ id: number; name: string }>;
 }
 
@@ -19,11 +18,6 @@ const departmentOptions = [
   { value: 'Design', label: 'Design' },
   { value: 'Product', label: 'Product' },
   { value: 'Marketing', label: 'Marketing' },
-];
-
-const statusOptions = [
-  { value: 'active', label: 'Active' },
-  { value: 'completed', label: 'Completed' },
 ];
 
 export default function ParticipationFilters({
@@ -51,13 +45,13 @@ export default function ParticipationFilters({
           onChange={(e) => update('employeeId', e.target.value)}
         />
       </div>
-      <div className="w-40">
+      <div className="w-48">
         <Select
           label="Project"
           placeholder="All projects"
           options={projects.map((p) => ({
             value: p.id.toString(),
-            label: p.name,
+            label: `${p.projectCode} – ${p.name}`,
           }))}
           value={filters.projectId ?? ''}
           onChange={(e) => update('projectId', e.target.value)}

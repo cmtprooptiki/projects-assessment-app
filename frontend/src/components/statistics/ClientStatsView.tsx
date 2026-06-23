@@ -2,16 +2,13 @@
 
 import { Briefcase, Users, Link2, TrendingUp } from 'lucide-react';
 import Card from '@/components/ui/Card';
-import Badge from '@/components/ui/Badge';
 import ApexChart from '@/components/ui/ApexChart';
 import { useClientDashboard } from '@/hooks/useDashboard';
 import { useTheme } from '@/lib/theme';
 import { hBarOptions, donutOptions, COLORS } from '@/lib/chartConfig';
-import { formatDate, statusLabel, statusVariant } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
 
-const STATUS_COLORS: Record<string, string> = {
-  active: '#10B981', completed: '#6366F1',
-};
+const TIMELINE_COLORS = ['#10B981', '#6366F1'];
 
 interface Props { clientId: number; }
 
@@ -57,14 +54,11 @@ export default function ClientStatsView({ clientId }: Props) {
     tooltip: { theme: isDark ? 'dark' : 'light', y: { formatter: (v: number) => `${v} participations` } },
   };
 
-  const statusEntries = Object.entries(
-    projects.reduce((acc: Record<string, number>, p: any) => {
-      acc[p.status] = (acc[p.status] ?? 0) + 1; return acc;
-    }, {})
-  );
-  const statusColors = statusEntries.map(([s]) => STATUS_COLORS[s] ?? '#6366F1');
-  const statusLabels = statusEntries.map(([s]) => statusLabel(s as any));
-  const statusValues = statusEntries.map(([, v]) => v as number);
+  const today = new Date().toISOString().slice(0, 10);
+  const ongoingCount = projects.filter((p: any) => !p.endDate || p.endDate >= today).length;
+  const completedCount = projects.length - ongoingCount;
+  const timelineLabels = ['Ongoing', 'Completed'];
+  const timelineValues = [ongoingCount, completedCount];
 
   const empBarOpts = {
     ...hBarOptions(isDark, topEmployees.map((e: any) => `${e.employee.firstName} ${e.employee.lastName}`)),
@@ -108,9 +102,9 @@ export default function ClientStatsView({ clientId }: Props) {
               <ApexChart type="bar" series={[{ name: 'Participations', data: projects.map((p: any) => p.participationCount) }]} options={projBarOpts} height={Math.max(200, projects.length * 52)} />
             </Card>
             <Card className="p-6">
-              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1">Projects by Status</h3>
-              <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">Current status breakdown</p>
-              <ApexChart type="donut" series={statusValues} options={donutOptions(isDark, statusLabels, statusColors, 'Projects')} height={240} />
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1">Projects by Timeline</h3>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">Ongoing vs completed projects</p>
+              <ApexChart type="donut" series={timelineValues} options={donutOptions(isDark, timelineLabels, TIMELINE_COLORS, 'Projects')} height={240} />
             </Card>
           </div>
 
@@ -128,15 +122,14 @@ export default function ClientStatsView({ clientId }: Props) {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-100 dark:border-slate-700">
-                    {['Project', 'Code', 'Status', 'Start', 'End', 'Participants', 'Months'].map((h) => <th key={h} className={th}>{h}</th>)}
+                    {['Project', 'Code', 'Start', 'End', 'Participants', 'Months'].map((h) => <th key={h} className={th}>{h}</th>)}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50 dark:divide-slate-700">
                   {projects.map((p: any) => (
                     <tr key={p.id} className={tableRow}>
                       <td className={`${tdBase} font-semibold text-slate-800 dark:text-slate-200`}>{p.name}</td>
-                      <td className={`${tdBase} text-slate-400 dark:text-slate-500 font-mono text-xs`}>{p.code}</td>
-                      <td className={tdBase}><Badge variant={statusVariant(p.status)}>{statusLabel(p.status)}</Badge></td>
+                      <td className={`${tdBase} text-indigo-600 dark:text-indigo-400 font-mono text-xs font-bold`}>{p.projectCode}</td>
                       <td className={`${tdBase} text-slate-500 dark:text-slate-400`}>{formatDate(p.startDate)}</td>
                       <td className={tdBase}>{p.endDate ? <span className="text-slate-500 dark:text-slate-400">{formatDate(p.endDate)}</span> : <span className="text-emerald-600 dark:text-emerald-400 font-semibold text-xs">Ongoing</span>}</td>
                       <td className={`${tdBase} text-slate-500 dark:text-slate-400`}>{p.uniqueEmployees}</td>

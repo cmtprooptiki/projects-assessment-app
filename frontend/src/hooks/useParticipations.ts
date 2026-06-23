@@ -23,15 +23,12 @@ export const useParticipation = (id: number | null) =>
 
 export const useCreateParticipation = () => {
   const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (data: {
-      employeeId: number;
-      projectId: number;
-      roleId: number;
-      startDate: string;
-      endDate?: string;
-      notes?: string;
-    }) => api.post('/participations', data).then((r) => r.data),
+  return useMutation<
+    { success: boolean; data: ProjectParticipation[] },
+    Error,
+    { employeeId: number; projectId: number; roleId: number; notes?: string | null }
+  >({
+    mutationFn: (data) => api.post('/participations', data).then((r) => r.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['participations'] }),
   });
 };

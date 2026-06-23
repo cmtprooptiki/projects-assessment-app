@@ -11,7 +11,7 @@ import ParticipationTable from '@/components/participations/ParticipationTable';
 import ParticipationFilters from '@/components/participations/ParticipationFilters';
 import { useParticipations } from '@/hooks/useParticipations';
 import { useEmployees } from '@/hooks/useEmployees';
-import { useContracts } from '@/hooks/useContracts';
+import { useProjects } from '@/hooks/useProjects';
 import { useRoles } from '@/hooks/useRoles';
 import { ParticipationFilters as IParticipationFilters } from '@/types';
 
@@ -21,7 +21,7 @@ export default function ParticipationsPage() {
   const [filters, setFilters] = useState<IParticipationFilters>(defaultFilters);
   const { data, isLoading, error } = useParticipations(filters);
   const { data: employeesData } = useEmployees({ limit: 999 });
-  const { data: projectsData } = useContracts({ limit: 999 });
+  const { data: projectsData } = useProjects({ limit: 999 });
   const { data: rolesData } = useRoles();
 
   const participations = data?.data ?? [];

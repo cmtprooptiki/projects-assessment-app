@@ -1,40 +1,28 @@
 import { Op } from 'sequelize';
-import { ProjectParticipation, Employee, Contract, Role } from '../models';
+import { ProjectParticipation, Employee, Project, Contract, Role, EmployeeAvailabilityPeriod } from '../models';
 import { AppError } from '../middleware/errorHandler';
 import { ProjectParticipationCreationAttributes } from '../models/ProjectParticipation';
 import { ParticipationFilterQuery } from '../types';
 
-const validateDatesAgainstContract = (
-  startDate: string,
-  endDate: string | null,
-  contract: Contract
-) => {
-  const today = new Date().toISOString().slice(0, 10);
-  const contractStart = contract.startDate;
-  const contractEnd = contract.endDate ?? today;
-
-  if (startDate < contractStart)
-    throw new AppError(`Start date cannot be before the contract start date (${contractStart}).`, 422);
-  if (startDate > contractEnd)
-    throw new AppError(`Start date cannot be after the contract end date (${contractEnd}).`, 422);
-  if (endDate) {
-    if (endDate < contractStart)
-      throw new AppError(`End date cannot be before the contract start date (${contractStart}).`, 422);
-    if (endDate > contractEnd)
-      throw new AppError(`End date cannot be after the contract end date (${contractEnd}).`, 422);
-  }
+const computeProjectStartEnd = (contracts: Array<{ startDate: string; endDate?: string | null }>) => {
+  if (!contracts || contracts.length === 0) return { startDate: null, endDate: null };
+  const starts = contracts.map((c) => c.startDate).filter(Boolean) as string[];
+  const hasOngoing = contracts.some((c) => c.endDate == null);
+  const ends = contracts.map((c) => c.endDate).filter(Boolean) as string[];
+  return {
+    startDate: starts.length ? starts.reduce((min, d) => (d < min ? d : min)) : null,
+    endDate: hasOngoing ? null : ends.length ? ends.reduce((max, d) => (d > max ? d : max)) : null,
+  };
 };
 
 const buildParticipationWhere = (filters: ParticipationFilterQuery) => {
   const where: Record<string, unknown> = {};
   const employeeWhere: Record<string, unknown> = {};
-  const contractWhere: Record<string, unknown> = {};
 
   if (filters.employeeId) where.employeeId = parseInt(filters.employeeId, 10);
   if (filters.projectId) where.projectId = parseInt(filters.projectId, 10);
   if (filters.roleId) where.roleId = parseInt(filters.roleId, 10);
   if (filters.department) employeeWhere.department = filters.department;
-  if (filters.status) contractWhere.status = filters.status;
 
   if (filters.startDate || filters.endDate) {
     const dateFilter: Record<string, unknown> = {};
@@ -65,7 +53,7 @@ const buildParticipationWhere = (filters: ParticipationFilterQuery) => {
     }
   }
 
-  return { where, employeeWhere, contractWhere };
+  return { where, employeeWhere };
 };
 
 export const getAllParticipations = async (filters: ParticipationFilterQuery) => {
@@ -73,13 +61,13 @@ export const getAllParticipations = async (filters: ParticipationFilterQuery) =>
   const limit = parseInt(filters.limit || '20', 10);
   const offset = (page - 1) * limit;
 
-  const { where, employeeWhere, contractWhere } = buildParticipationWhere(filters);
+  const { where, employeeWhere } = buildParticipationWhere(filters);
 
   const { count, rows } = await ProjectParticipation.findAndCountAll({
     where,
     include: [
       { model: Employee, as: 'employee', where: Object.keys(employeeWhere).length ? employeeWhere : undefined },
-      { model: Contract, as: 'project', where: Object.keys(contractWhere).length ? contractWhere : undefined },
+      { model: Project, as: 'project' },
       { model: Role, as: 'role' },
     ],
     limit,
@@ -98,7 +86,7 @@ export const getParticipationById = async (id: number) => {
   const participation = await ProjectParticipation.findByPk(id, {
     include: [
       { model: Employee, as: 'employee' },
-      { model: Contract, as: 'project' },
+      { model: Project, as: 'project' },
       { model: Role, as: 'role' },
     ],
   });
@@ -106,59 +94,119 @@ export const getParticipationById = async (id: number) => {
   return participation;
 };
 
-export const createParticipation = async (data: ProjectParticipationCreationAttributes) => {
-  const [employee, contract, role] = await Promise.all([
-    Employee.findByPk(data.employeeId),
-    Contract.findByPk(data.projectId),
+export const createParticipations = async (data: {
+  employeeId: number;
+  projectId: number;
+  roleId: number;
+  notes?: string | null;
+}) => {
+  const [employeeWithPeriods, projectWithContracts, role] = await Promise.all([
+    Employee.findByPk(data.employeeId, {
+      include: [{ model: EmployeeAvailabilityPeriod, as: 'availabilityPeriods' }],
+    }),
+    Project.findByPk(data.projectId, {
+      include: [{ model: Contract, as: 'contracts' }],
+    }),
     Role.findByPk(data.roleId),
   ]);
 
-  if (!employee) throw new AppError('Employee not found.', 404);
-  if (!contract) throw new AppError('Contract not found.', 404);
+  if (!employeeWithPeriods) throw new AppError('Employee not found.', 404);
+  if (!projectWithContracts) throw new AppError('Project not found.', 404);
   if (!role) throw new AppError('Role not found.', 404);
 
-  validateDatesAgainstContract(data.startDate, data.endDate ?? null, contract);
+  const employeeJson = employeeWithPeriods.toJSON() as any;
+  const projectJson = projectWithContracts.toJSON() as any;
 
-  const participation = await ProjectParticipation.create(data);
-  return ProjectParticipation.findByPk(participation.id, {
+  const availabilityPeriods: Array<{ startDate: string; endDate: string | null }> =
+    (employeeJson.availabilityPeriods ?? []).sort((a: any, b: any) =>
+      a.startDate.localeCompare(b.startDate)
+    );
+
+  if (availabilityPeriods.length === 0) {
+    throw new AppError('Employee has no availability periods defined.', 422);
+  }
+
+  const { startDate: projectStart, endDate: projectEnd } = computeProjectStartEnd(
+    projectJson.contracts ?? []
+  );
+
+  if (!projectStart) {
+    throw new AppError('Project has no linked contracts with dates.', 422);
+  }
+
+  // Replace all existing participations for this employee-project pair
+  await ProjectParticipation.destroy({
+    where: { employeeId: data.employeeId, projectId: data.projectId },
+  });
+
+  const rows: ProjectParticipationCreationAttributes[] = [];
+
+  for (const avail of availabilityPeriods) {
+    const availStart = avail.startDate;
+    const availEnd = avail.endDate; // null = ongoing
+
+    // Skip if no overlap
+    const projectAfterAvail = availEnd !== null && projectStart > availEnd;
+    const availAfterProject = projectEnd !== null && availStart > projectEnd;
+    if (projectAfterAvail || availAfterProject) continue;
+
+    const overlapStart = availStart > projectStart ? availStart : projectStart;
+    let overlapEnd: string | null;
+
+    if (projectEnd === null && availEnd === null) {
+      overlapEnd = null;
+    } else if (projectEnd === null) {
+      overlapEnd = availEnd;
+    } else if (availEnd === null) {
+      overlapEnd = projectEnd;
+    } else {
+      overlapEnd = projectEnd < availEnd ? projectEnd : availEnd;
+    }
+
+    rows.push({
+      employeeId: data.employeeId,
+      projectId: data.projectId,
+      roleId: data.roleId,
+      startDate: overlapStart,
+      endDate: overlapEnd,
+      notes: data.notes ?? null,
+    });
+  }
+
+  if (rows.length === 0) {
+    throw new AppError('No availability periods overlap with the project dates.', 422);
+  }
+
+  const created = await ProjectParticipation.bulkCreate(rows);
+
+  return ProjectParticipation.findAll({
+    where: { id: { [Op.in]: created.map((p) => p.id) } },
     include: [
       { model: Employee, as: 'employee' },
-      { model: Contract, as: 'project' },
+      { model: Project, as: 'project' },
       { model: Role, as: 'role' },
     ],
+    order: [['startDate', 'ASC']],
   });
 };
 
-export const updateParticipation = async (id: number, data: Partial<ProjectParticipationCreationAttributes>) => {
+export const updateParticipation = async (
+  id: number,
+  data: { roleId?: number; notes?: string | null; startDate?: string; endDate?: string | null }
+) => {
   const participation = await ProjectParticipation.findByPk(id);
   if (!participation) throw new AppError('Participation record not found.', 404);
 
-  if (data.employeeId) {
-    const employee = await Employee.findByPk(data.employeeId);
-    if (!employee) throw new AppError('Employee not found.', 404);
-  }
-  let resolvedContract: Contract | null = null;
-  if (data.projectId) {
-    resolvedContract = await Contract.findByPk(data.projectId);
-    if (!resolvedContract) throw new AppError('Contract not found.', 404);
-  }
   if (data.roleId) {
     const role = await Role.findByPk(data.roleId);
     if (!role) throw new AppError('Role not found.', 404);
-  }
-
-  const effectiveStartDate = data.startDate ?? participation.startDate;
-  const effectiveEndDate = 'endDate' in data ? (data.endDate ?? null) : participation.endDate;
-  const contractForValidation = resolvedContract ?? await Contract.findByPk(participation.projectId);
-  if (contractForValidation && (data.startDate || 'endDate' in data)) {
-    validateDatesAgainstContract(effectiveStartDate, effectiveEndDate, contractForValidation);
   }
 
   await participation.update(data);
   return ProjectParticipation.findByPk(id, {
     include: [
       { model: Employee, as: 'employee' },
-      { model: Contract, as: 'project' },
+      { model: Project, as: 'project' },
       { model: Role, as: 'role' },
     ],
   });

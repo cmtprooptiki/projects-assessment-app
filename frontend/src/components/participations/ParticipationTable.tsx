@@ -7,7 +7,7 @@ import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import EmptyState from '@/components/ui/EmptyState';
 import { ProjectParticipation } from '@/types';
-import { formatDate, fullName, calcMonths, statusLabel, statusVariant } from '@/lib/utils';
+import { formatDate, fullName, calcMonths } from '@/lib/utils';
 import { useDeleteParticipation } from '@/hooks/useParticipations';
 
 interface Props {
@@ -69,7 +69,9 @@ export default function ParticipationTable({
                   {p.employee ? fullName(p.employee) : `Employee #${p.employeeId}`}
                 </td>
                 <td className="px-4 py-3 text-gray-600">
-                  {p.project?.name ?? `Project #${p.projectId}`}
+                  {p.project
+                    ? <><span className="font-mono text-xs font-bold text-indigo-600 mr-1">{p.project.projectCode}</span>{p.project.name}</>
+                    : `Project #${p.projectId}`}
                 </td>
                 <td className="px-4 py-3 text-gray-600">
                   {p.role?.name ?? `Role #${p.roleId}`}

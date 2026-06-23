@@ -53,7 +53,7 @@ ProjectParticipation.init(
       type: DataTypes.INTEGER.UNSIGNED,
       allowNull: false,
       references: {
-        model: 'contracts',
+        model: 'projects',
         key: 'id',
       },
     },

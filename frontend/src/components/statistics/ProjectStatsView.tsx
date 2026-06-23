@@ -9,7 +9,7 @@ import Select from '@/components/ui/Select';
 import { useProjectDashboard } from '@/hooks/useDashboard';
 import { useTheme } from '@/lib/theme';
 import { hBarOptions, donutOptions, COLORS, FONT } from '@/lib/chartConfig';
-import { formatDate, statusLabel, statusVariant } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
 
 interface Props { projectId: number; }
 
@@ -242,11 +242,13 @@ export default function ProjectStatsView({ projectId }: Props) {
         <div>
           <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">{project.name}</h2>
           <p className="text-sm text-slate-400 dark:text-slate-500">
-            {project.client?.name ?? project.clientName ?? ''} &middot;{' '}
-            <span className="font-mono text-xs">{project.code}</span>
+            {project.client?.name ?? ''}
+          {project.acronym ? <> &middot; <span className="italic">{project.acronym}</span></> : ''}
           </p>
         </div>
-        <Badge variant={statusVariant(project.status)}>{statusLabel(project.status)}</Badge>
+        {project.projectCode && (
+          <Badge variant="info">{project.projectCode}</Badge>
+        )}
       </div>
 
       {/* Stat cards */}

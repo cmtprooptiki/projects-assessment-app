@@ -10,7 +10,7 @@ import EmployeeAvatar from '@/components/ui/EmployeeAvatar';
 import { useEmployeeDashboard } from '@/hooks/useDashboard';
 import { useTheme } from '@/lib/theme';
 import { hBarOptions, COLORS, FONT } from '@/lib/chartConfig';
-import { formatDate, statusVariant, statusLabel } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
 
 interface Props { employeeId: number; }
 
@@ -310,15 +310,16 @@ export default function EmployeeStatsView({ employeeId }: Props) {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-100 dark:border-slate-700">
-                    {['Project', 'Role', 'Status', 'Start Date', 'End Date', 'Months'].map((h) => <th key={h} className={th}>{h}</th>)}
+                    {['Project', 'Role', 'Start Date', 'End Date', 'Months'].map((h) => <th key={h} className={th}>{h}</th>)}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50 dark:divide-slate-700">
                   {participations.map((p: any) => (
                     <tr key={p.id} className={tableRow}>
-                      <td className={`${tdBase} font-semibold text-slate-800 dark:text-slate-200`}>{p.project.name}</td>
-                      <td className={`${tdBase} text-slate-500 dark:text-slate-400`}>{p.role.name}</td>
-                      <td className={tdBase}><Badge variant={statusVariant(p.project.status)}>{statusLabel(p.project.status)}</Badge></td>
+                      <td className={`${tdBase} font-semibold text-slate-800 dark:text-slate-200`}>
+                        <span className="font-mono text-xs text-indigo-600 dark:text-indigo-400 mr-1">{p.project?.projectCode}</span>{p.project?.name}
+                      </td>
+                      <td className={`${tdBase} text-slate-500 dark:text-slate-400`}>{p.role?.name}</td>
                       <td className={`${tdBase} text-slate-500 dark:text-slate-400`}>{formatDate(p.startDate)}</td>
                       <td className={tdBase}>{p.endDate ? <span className="text-slate-500 dark:text-slate-400">{formatDate(p.endDate)}</span> : <span className="text-emerald-600 dark:text-emerald-400 font-semibold text-xs">Ongoing</span>}</td>
                       <td className={`${tdBase} font-semibold text-indigo-600 dark:text-indigo-400`}>{p.totalMonths}</td>

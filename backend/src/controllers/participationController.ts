@@ -37,10 +37,8 @@ export const create = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const participation = await participationService.createParticipation(
-      req.body
-    );
-    res.status(201).json({ success: true, data: participation });
+    const participations = await participationService.createParticipations(req.body);
+    res.status(201).json({ success: true, data: participations });
   } catch (err) {
     next(err);
   }

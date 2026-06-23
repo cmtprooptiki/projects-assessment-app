@@ -78,7 +78,6 @@ export interface Contract {
   confirmationOfGoodPerformance?: string | null;
   createdAt: string;
   updatedAt: string;
-  participations?: ProjectParticipation[];
 }
 
 export interface Project {
@@ -127,7 +126,7 @@ export interface ProjectParticipation {
   notes?: string | null;
   totalMonths?: number;
   employee?: Employee;
-  project?: Contract;
+  project?: Project;
   role?: Role;
   createdAt: string;
   updatedAt: string;

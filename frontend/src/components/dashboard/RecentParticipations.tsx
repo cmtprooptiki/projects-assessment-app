@@ -4,7 +4,7 @@ import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import EmployeeAvatar from '@/components/ui/EmployeeAvatar';
 import { useDashboardSummary } from '@/hooks/useDashboard';
-import { formatDate, fullName, statusVariant, statusLabel } from '@/lib/utils';
+import { formatDate, fullName } from '@/lib/utils';
 
 export default function RecentParticipations() {
   const { data, isLoading } = useDashboardSummary();
@@ -61,10 +61,8 @@ export default function RecentParticipations() {
                   </p>
                 </div>
                 <div className="shrink-0">
-                  {p.project?.status && (
-                    <Badge variant={statusVariant(p.project.status)}>
-                      {statusLabel(p.project.status)}
-                    </Badge>
+                  {p.project?.projectCode && (
+                    <Badge variant="info">{p.project.projectCode}</Badge>
                   )}
                 </div>
               </div>

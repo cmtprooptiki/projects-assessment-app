@@ -1,5 +1,5 @@
 import { Op } from 'sequelize';
-import { Contract, ProjectParticipation, Employee, Role, Client } from '../models';
+import { Contract, Client } from '../models';
 import { AppError } from '../middleware/errorHandler';
 import { ContractCreationAttributes, ContractStatus } from '../models/Contract';
 
@@ -53,17 +53,7 @@ export const getAllContracts = async (filters: {
 
 export const getContractById = async (id: number) => {
   const contract = await Contract.findByPk(id, {
-    include: [
-      { model: Client, as: 'client' },
-      {
-        model: ProjectParticipation,
-        as: 'participations',
-        include: [
-          { model: Employee, as: 'employee' },
-          { model: Role, as: 'role' },
-        ],
-      },
-    ],
+    include: [{ model: Client, as: 'client' }],
   });
   if (!contract) throw new AppError('Contract not found.', 404);
   return contract;

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { BarChart2, Users, Briefcase, Building2 } from 'lucide-react';
-import { useContracts } from '@/hooks/useContracts';
+import { useProjects } from '@/hooks/useProjects';
 import { useEmployees } from '@/hooks/useEmployees';
 import { useClients } from '@/hooks/useClients';
 import ProjectStatsView from '@/components/statistics/ProjectStatsView';
@@ -24,7 +24,7 @@ export default function StatisticsPage() {
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | null>(null);
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
 
-  const { data: projectsData } = useContracts({ limit: 999 });
+  const { data: projectsData } = useProjects({ limit: 999 });
   const { data: employeesData } = useEmployees({ limit: 999 });
   const { data: clientsData } = useClients({ limit: 999 });
 
@@ -78,7 +78,7 @@ export default function StatisticsPage() {
               <Select
                 placeholder="— Choose a project —"
                 value={selectedProjectId ?? ''}
-                options={projects.map((p) => ({ value: p.id, label: `${p.name} (${p.code})` }))}
+                options={projects.map((p) => ({ value: p.id, label: `${p.projectCode} – ${p.name}` }))}
                 onChange={(e) => setSelectedProjectId(e.target.value ? parseInt(e.target.value, 10) : null)}
               />
             </div>
