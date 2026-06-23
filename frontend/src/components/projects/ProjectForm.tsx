@@ -48,7 +48,11 @@ export default function ProjectForm({ defaultValues, clients, onSubmit, submitLa
     form.clientId ? { clientId: String(form.clientId), limit: 999 } : { limit: 0 },
     { enabled: form.clientId != null }
   );
-  const availableContracts: Contract[] = form.clientId ? (contractsData?.data ?? []) : [];
+  const availableContracts: Contract[] = form.clientId
+    ? (contractsData?.data ?? []).filter(
+        (c) => c.projectId == null || c.projectId === defaultValues?.id
+      )
+    : [];
 
   // When client changes, clear linked contracts
   const handleClientChange = (clientId: number | null) => {
