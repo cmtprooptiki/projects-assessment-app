@@ -53,7 +53,9 @@ export const getAllProjects = async (filters: {
     where,
     include: [
       { model: Client, as: 'client', required: false },
-      { model: Contract, as: 'contracts', required: false },
+      // separate:true fetches contracts in a second query so LIMIT applies to projects,
+      // not to JOIN rows (which would truncate contracts for projects beyond the first few)
+      { model: Contract, as: 'contracts', required: false, separate: true },
     ],
     limit,
     offset,
