@@ -8,8 +8,9 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import { Client, Project, Contract } from '@/types';
+import { useQueryClient } from '@tanstack/react-query';
 import { useContracts } from '@/hooks/useContracts';
-import { useLinkContracts } from '@/hooks/useProjects';
+import { useLinkContracts, refetchProjectsAndContracts } from '@/hooks/useProjects';
 import { statusLabel, statusVariant } from '@/lib/utils';
 
 interface FormValues {
@@ -28,6 +29,7 @@ interface Props {
 
 export default function ProjectForm({ defaultValues, clients, onSubmit, submitLabel = 'Save Project' }: Props) {
   const router = useRouter();
+  const qc = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -90,6 +92,7 @@ export default function ProjectForm({ defaultValues, clients, onSubmit, submitLa
         description: form.description || null as any,
       });
       await linkContracts.mutateAsync({ id: projectId, contractIds: linkedContractIds });
+      await refetchProjectsAndContracts(qc);
       router.push('/projects');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong.');
