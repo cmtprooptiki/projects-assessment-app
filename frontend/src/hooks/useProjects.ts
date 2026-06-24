@@ -35,7 +35,13 @@ export const useUpdateProject = () => {
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<ProjectPayload> }) =>
       api.put(`/projects/${id}`, data).then((r) => r.data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['projects'] }),
+    // Skip list invalidation here: useLinkContracts always runs next and invalidates
+    // after contracts are committed. Invalidating early triggers a refetch that returns
+    // the old contract count, which staleTime (60 s) then treats as fresh — blocking
+    // the subsequent invalidation from actually refreshing the list.
+    onSuccess: (responseData, { id }) => {
+      qc.setQueryData(['projects', id], responseData);
+    },
   });
 };
 
@@ -52,7 +58,10 @@ export const useLinkContracts = () => {
   return useMutation({
     mutationFn: ({ id, contractIds }: { id: number; contractIds: number[] }) =>
       api.patch(`/projects/${id}/contracts`, { contractIds }).then((r) => r.data),
-    onSuccess: () => {
+    onSuccess: (responseData, { id }) => {
+      // Seed the single-project cache immediately so the edit page is fresh too
+      qc.setQueryData(['projects', id], responseData);
+      // Invalidate the list — contracts are now committed so the refetch returns correct counts
       qc.invalidateQueries({ queryKey: ['projects'] });
       qc.invalidateQueries({ queryKey: ['contracts'] });
     },
