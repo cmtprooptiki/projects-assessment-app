@@ -1,11 +1,10 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Briefcase, Link2, Clock } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import ApexChart from '@/components/ui/ApexChart';
-import Select from '@/components/ui/Select';
 import EmployeeAvatar from '@/components/ui/EmployeeAvatar';
 import { useEmployeeDashboard } from '@/hooks/useDashboard';
 import { useTheme } from '@/lib/theme';
@@ -37,22 +36,9 @@ export default function EmployeeStatsView({ employeeId }: Props) {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
-  const currentYear = new Date().getFullYear();
-  const [selectedYear, setSelectedYear] = useState(currentYear);
-
   // Pull participations out before early returns so hooks are always called in the same order
   const rawData = (data as any)?.data ?? data as any;
   const participations: any[] = rawData?.participations ?? [];
-
-  const availableYears = useMemo(() => {
-    const years = new Set<number>();
-    years.add(currentYear);
-    participations.forEach((p) => {
-      years.add(new Date(p.startDate).getFullYear());
-      if (p.endDate) years.add(new Date(p.endDate).getFullYear());
-    });
-    return Array.from(years).sort((a, b) => b - a);
-  }, [participations, currentYear]);
 
   // Assign a stable color to each unique project (by id)
   const projectColorMap = useMemo<Record<number, string>>(() => {
@@ -65,31 +51,23 @@ export default function EmployeeStatsView({ employeeId }: Props) {
     return map;
   }, [participations]);
 
-  // Gantt data: filter to selected year and clip start/end
+  // Full-span Gantt: no year clipping, show complete participation history
   const ganttRows = useMemo(() => {
-    const yearStart = new Date(selectedYear, 0, 1).getTime();
-    const yearEnd   = new Date(selectedYear, 11, 31, 23, 59, 59).getTime();
-    const today     = Date.now();
-
+    const today = Date.now();
     return participations
-      .filter((p) => {
-        const start = new Date(p.startDate).getTime();
-        const end   = p.endDate ? new Date(p.endDate).getTime() : today;
-        return start <= yearEnd && end >= yearStart;
-      })
       .map((p) => {
-        const projId   = p.project?.id ?? p.projectId;
-        const clipStart = Math.max(new Date(p.startDate).getTime(), yearStart);
-        const clipEnd   = Math.min(p.endDate ? new Date(p.endDate).getTime() : today, yearEnd);
-        const mStart = new Date(p.startDate);
-        const mEnd   = p.endDate ? new Date(p.endDate) : new Date();
-        const months = Math.max(1,
+        const projId = p.project?.id ?? p.projectId;
+        const startTs = new Date(p.startDate).getTime();
+        const endTs   = p.endDate ? new Date(p.endDate).getTime() : today;
+        const mStart  = new Date(p.startDate);
+        const mEnd    = p.endDate ? new Date(p.endDate) : new Date();
+        const months  = Math.max(1,
           (mEnd.getFullYear() - mStart.getFullYear()) * 12 +
           (mEnd.getMonth() - mStart.getMonth()) + 1
         );
         return {
           x: p.project.name as string,
-          y: [clipStart, clipEnd] as [number, number],
+          y: [startTs, endTs] as [number, number],
           fillColor: projectColorMap[projId] ?? COLORS[0],
           role: (p.role?.name ?? '') as string,
           originalStart: p.startDate as string,
@@ -97,9 +75,14 @@ export default function EmployeeStatsView({ employeeId }: Props) {
           months,
         };
       })
-      // Sort by project name so same-project bars are visually grouped
       .sort((a, b) => a.x.localeCompare(b.x));
-  }, [participations, selectedYear, projectColorMap]);
+  }, [participations, projectColorMap]);
+
+  const ganttMinMax = useMemo(() => {
+    if (ganttRows.length === 0) return { min: undefined, max: undefined };
+    const allTs = ganttRows.flatMap((r) => [r.y[0], r.y[1]]);
+    return { min: Math.min(...allTs), max: Math.max(...allTs) };
+  }, [ganttRows]);
 
   const uniqueGanttProjects = useMemo(
     () => new Set(ganttRows.map((r) => r.x)).size,
@@ -179,10 +162,10 @@ export default function EmployeeStatsView({ employeeId }: Props) {
     },
     xaxis: {
       type: 'datetime',
-      min: new Date(selectedYear, 0, 1).getTime(),
-      max: new Date(selectedYear, 11, 31).getTime(),
+      min: ganttMinMax.min,
+      max: ganttMinMax.max,
       labels: {
-        format: 'MMM',
+        format: "MMM 'yy",
         datetimeUTC: false,
         style: { colors: isDark ? '#94a3b8' : '#64748b', fontFamily: FONT, fontSize: '12px' },
       },
@@ -262,24 +245,14 @@ export default function EmployeeStatsView({ employeeId }: Props) {
 
           {/* Gantt section */}
           <Card className="p-6">
-            <div className="flex items-center justify-between flex-wrap gap-3 mb-5">
-              <div>
-                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Project Timeline</h3>
-                <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Participation periods across the year</p>
-              </div>
-              <div className="w-28">
-                <Select
-                  value={selectedYear}
-                  options={availableYears.map((y) => ({ value: y, label: String(y) }))}
-                  onChange={(e) => setSelectedYear(parseInt(e.target.value, 10))}
-                />
-              </div>
+            <div className="mb-5">
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Project Timeline</h3>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Full participation history across all projects</p>
             </div>
 
             {ganttRows.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-slate-400">
-                <p className="text-sm font-medium">No participations in {selectedYear}</p>
-                <p className="text-xs mt-1 text-slate-400 dark:text-slate-500">Try selecting a different year</p>
+                <p className="text-sm font-medium">No project participations found</p>
               </div>
             ) : (
               <>
