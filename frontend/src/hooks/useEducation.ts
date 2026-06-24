@@ -12,7 +12,7 @@ export const useEducation = (employeeId: number) =>
 export const useCreateEducation = (employeeId: number) => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: { institutionName: string; degreeTitle: string; specialization?: string; dateAwarded?: string }) =>
+    mutationFn: (data: { institutionName: string; degreeTitle: string; degreeType?: string; specialization?: string; dateAwarded?: string }) =>
       api.post(`/employees/${employeeId}/education`, data).then((r) => r.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['education', employeeId] }),
   });

@@ -24,6 +24,7 @@ export interface Education {
   specialization?: string | null;
   dateAwarded?: string | null;
   recognized?: 'yes' | 'no' | null;
+  degreeType?: string | null;
   createdAt: string;
   updatedAt: string;
 }

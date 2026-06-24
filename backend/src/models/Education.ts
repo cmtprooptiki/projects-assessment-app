@@ -11,12 +11,13 @@ export interface EducationAttributes {
   specialization?: string | null;
   dateAwarded?: string | null;
   recognized?: RecognizedValue | null;
+  degreeType?: string | null;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
 export interface EducationCreationAttributes
-  extends Optional<EducationAttributes, 'id' | 'specialization' | 'dateAwarded' | 'recognized'> {}
+  extends Optional<EducationAttributes, 'id' | 'specialization' | 'dateAwarded' | 'recognized' | 'degreeType'> {}
 
 class Education
   extends Model<EducationAttributes, EducationCreationAttributes>
@@ -29,6 +30,7 @@ class Education
   public specialization!: string | null;
   public dateAwarded!: string | null;
   public recognized!: RecognizedValue | null;
+  public degreeType!: string | null;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }
@@ -42,6 +44,7 @@ Education.init(
     specialization: { type: DataTypes.STRING(200), allowNull: true, defaultValue: null },
     dateAwarded: { type: DataTypes.DATEONLY, allowNull: true, defaultValue: null },
     recognized: { type: DataTypes.ENUM('yes', 'no'), allowNull: true, defaultValue: null },
+    degreeType: { type: DataTypes.STRING(200), allowNull: true, defaultValue: null },
   },
   { sequelize, tableName: 'employee_education', modelName: 'Education' }
 );

@@ -18,7 +18,51 @@ import { useLanguages, useCreateLanguage, useUpdateLanguage, useDeleteLanguage }
 import { useAvailability, useCreateAvailability, useUpdateAvailability, useDeleteAvailability } from '@/hooks/useAvailability';
 import type { Education, Language, AvailabilityPeriod } from '@/types';
 
-const emptyEdu = { institutionName: '', degreeTitle: '', specialization: '', dateAwarded: '', recognized: '' };
+const GREEK_INSTITUTIONS = [
+  'Εθνικό και Καποδιστριακό Πανεπιστήμιο Αθηνών',
+  'Εθνικό Μετσόβιο Πολυτεχνείο',
+  'Οικονομικό Πανεπιστήμιο Αθηνών',
+  'Γεωπονικό Πανεπιστήμιο Αθηνών',
+  'Πάντειο Πανεπιστήμιο',
+  'Πανεπιστήμιο Δυτικής Αττικής',
+  'Χαροκόπειο Πανεπιστήμιο',
+  'Πανεπιστήμιο Πειραιώς',
+  'Αριστοτέλειο Πανεπιστήμιο Θεσσαλονίκης',
+  'Πανεπιστήμιο Μακεδονίας',
+  'Πανεπιστήμιο Δυτικής Μακεδονίας',
+  'Διεθνές Πανεπιστήμιο της Ελλάδος',
+  'Δημοκρίτειο Πανεπιστήμιο Θράκης',
+  'Πανεπιστήμιο Ιωαννίνων',
+  'Πανεπιστήμιο Θεσσαλίας',
+  'Πανεπιστήμιο Πελοποννήσου',
+  'Πανεπιστήμιο Πατρών',
+  'Πανεπιστήμιο Αιγαίου',
+  'Ιόνιο Πανεπιστήμιο',
+  'Πανεπιστήμιο Κρήτης',
+  'Πολυτεχνείο Κρήτης',
+  'Ελληνικό Μεσογειακό Πανεπιστήμιο',
+  'Ελληνικό Ανοικτό Πανεπιστήμιο',
+  'Ανώτατη Σχολή Καλών Τεχνών',
+  'Ανώτατη Σχολή Παιδαγωγικής και Τεχνολογικής Εκπαίδευσης',
+  'Ανώτατη Σχολή Τουριστικής Εκπαίδευσης',
+  'Ανώτατη Εκκλησιαστική Ακαδημία',
+  'Μεσογειακό Αγρονομικό Ινστιτούτο Χανίων',
+  'Στρατιωτικές Σχολές',
+  'Σχολές Σωμάτων Ασφαλείας',
+];
+
+const institutionOptions = [
+  { value: '', label: 'Επιλογή ιδρύματος...' },
+  ...GREEK_INSTITUTIONS.map((name) => ({ value: name, label: name })),
+];
+
+const emptyEdu = { institutionName: '', degreeTitle: '', specialization: '', dateAwarded: '', recognized: '', degreeType: '' };
+const degreeTypeOptions = [
+  { value: '', label: '—' },
+  { value: 'Πτυχίο', label: 'Πτυχίο' },
+  { value: 'Μεταπτυχιακός Τίτλος Σπουδών', label: 'Μεταπτυχιακός Τίτλος Σπουδών' },
+  { value: 'Διδακτορικός Τίτλος Σπουδών', label: 'Διδακτορικός Τίτλος Σπουδών' },
+];
 const recognizedOptions = [
   { value: '', label: '—' },
   { value: 'yes', label: 'Yes' },
@@ -61,6 +105,7 @@ export default function EditEmployeePage() {
   const [eduMode, setEduMode] = useState<EduMode>(null);
   const [deletingEdu, setDeletingEdu] = useState<Education | null>(null);
   const [eduForm, setEduForm] = useState(emptyEdu);
+  const [eduInstMode, setEduInstMode] = useState<'text' | 'list'>('text');
   const [eduError, setEduError] = useState('');
   const [eduSaving, setEduSaving] = useState(false);
   const createEducation = useCreateEducation(id);
@@ -96,15 +141,17 @@ export default function EditEmployeePage() {
   const isEditingAvail = availMode && typeof availMode === 'object';
 
   // Education handlers
-  const handleOpenCreateEdu = () => { setEduForm(emptyEdu); setEduError(''); setEduMode('create'); };
+  const handleOpenCreateEdu = () => { setEduForm(emptyEdu); setEduInstMode('text'); setEduError(''); setEduMode('create'); };
   const handleOpenEditEdu = (edu: Education) => {
-    setEduForm({ institutionName: edu.institutionName, degreeTitle: edu.degreeTitle, specialization: edu.specialization ?? '', dateAwarded: edu.dateAwarded ? edu.dateAwarded.slice(0, 10) : '', recognized: edu.recognized ?? '' });
+    const isKnownInst = GREEK_INSTITUTIONS.includes(edu.institutionName);
+    setEduForm({ institutionName: edu.institutionName, degreeTitle: edu.degreeTitle, specialization: edu.specialization ?? '', dateAwarded: edu.dateAwarded ? edu.dateAwarded.slice(0, 10) : '', recognized: edu.recognized ?? '', degreeType: edu.degreeType ?? '' });
+    setEduInstMode(isKnownInst ? 'list' : 'text');
     setEduError(''); setEduMode({ edit: edu });
   };
   const handleEduSave = async (e: React.FormEvent) => {
     e.preventDefault(); setEduError(''); setEduSaving(true);
     try {
-      const payload = { institutionName: eduForm.institutionName, degreeTitle: eduForm.degreeTitle, specialization: eduForm.specialization || undefined, dateAwarded: eduForm.dateAwarded || undefined, recognized: (eduForm.recognized as 'yes' | 'no' | '') || undefined };
+      const payload = { institutionName: eduForm.institutionName, degreeTitle: eduForm.degreeTitle, degreeType: eduForm.degreeType || undefined, specialization: eduForm.specialization || undefined, dateAwarded: eduForm.dateAwarded || undefined, recognized: (eduForm.recognized as 'yes' | 'no' | '') || undefined };
       if (eduMode === 'create') await createEducation.mutateAsync(payload);
       else if (isEditingEdu) await updateEducation.mutateAsync({ id: eduMode.edit.id, data: payload });
       setEduMode(null);
@@ -236,6 +283,7 @@ export default function EditEmployeePage() {
                 {educationList.map((edu) => (
                   <div key={edu.id} className="px-6 py-4 flex items-center justify-between group hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                     <div className="min-w-0">
+                      {edu.degreeType && <p className="text-xs font-medium text-indigo-600 dark:text-indigo-400 mb-0.5">{edu.degreeType}</p>}
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{edu.degreeTitle}</p>
                         {edu.recognized === 'yes' && <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">Recognized</span>}
@@ -313,8 +361,39 @@ export default function EditEmployeePage() {
       {/* Education Modals */}
       <Modal open={!!eduMode} onClose={() => setEduMode(null)} title={isEditingEdu ? 'Edit Education' : 'Add Education'}>
         <form onSubmit={handleEduSave} className="space-y-4">
-          <Input label="Institution Name" value={eduForm.institutionName} onChange={(e) => setEduForm(f => ({ ...f, institutionName: e.target.value }))} placeholder="University of Athens" required autoFocus />
-          <Input label="Degree Title" value={eduForm.degreeTitle} onChange={(e) => setEduForm(f => ({ ...f, degreeTitle: e.target.value }))} placeholder="Bachelor of Science" required />
+          <Select label="Degree Type" options={degreeTypeOptions} value={eduForm.degreeType} onChange={(e) => setEduForm(f => ({ ...f, degreeType: e.target.value }))} />
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Institution Name <span className="text-red-500">*</span></label>
+              <div className="flex items-center gap-1 text-xs">
+                <button
+                  type="button"
+                  onClick={() => { setEduInstMode('text'); if (eduInstMode === 'list') setEduForm(f => ({ ...f, institutionName: '' })); }}
+                  className={`px-2 py-0.5 rounded transition-colors ${eduInstMode === 'text' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-400 font-semibold' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                >
+                  Ελεύθερο κείμενο
+                </button>
+                <span className="text-slate-300 dark:text-slate-600">|</span>
+                <button
+                  type="button"
+                  onClick={() => { setEduInstMode('list'); if (eduInstMode === 'text') setEduForm(f => ({ ...f, institutionName: '' })); }}
+                  className={`px-2 py-0.5 rounded transition-colors ${eduInstMode === 'list' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-400 font-semibold' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                >
+                  Από λίστα
+                </button>
+              </div>
+            </div>
+            {eduInstMode === 'text' ? (
+              <Input value={eduForm.institutionName} onChange={(e) => setEduForm(f => ({ ...f, institutionName: e.target.value }))} placeholder="πχ. Πανεπιστήμιο Αθηνών" required autoFocus />
+            ) : (
+              <Select
+                options={institutionOptions}
+                value={eduForm.institutionName}
+                onChange={(e) => setEduForm(f => ({ ...f, institutionName: e.target.value }))}
+              />
+            )}
+          </div>
+          <Input label="Degree Title" value={eduForm.degreeTitle} onChange={(e) => setEduForm(f => ({ ...f, degreeTitle: e.target.value }))} placeholder="πχ. Πολιτικός Μηχανικός" required />
           <Input label="Specialization" value={eduForm.specialization} onChange={(e) => setEduForm(f => ({ ...f, specialization: e.target.value }))} placeholder="Computer Science" />
           <Input label="Date Awarded" type="date" value={eduForm.dateAwarded} onChange={(e) => setEduForm(f => ({ ...f, dateAwarded: e.target.value }))} />
           <Select label="Recognized" options={recognizedOptions} value={eduForm.recognized} onChange={(e) => setEduForm(f => ({ ...f, recognized: e.target.value }))} />

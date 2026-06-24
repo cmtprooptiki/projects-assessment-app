@@ -6,4 +6,5 @@ export const educationRules = [
   body('specialization').optional().trim().isLength({ max: 200 }),
   body('dateAwarded').optional({ nullable: true }).isISO8601().withMessage('Invalid date format.'),
   body('recognized').optional({ nullable: true }).isIn(['yes', 'no']).withMessage('Recognized must be yes or no.'),
+  body('degreeType').optional({ nullable: true }).trim().isLength({ max: 200 }),
 ];
