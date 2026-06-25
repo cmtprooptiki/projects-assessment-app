@@ -17,6 +17,7 @@ import { useEducation, useCreateEducation, useUpdateEducation, useDeleteEducatio
 import { useLanguages, useCreateLanguage, useUpdateLanguage, useDeleteLanguage } from '@/hooks/useLanguages';
 import { useAvailability, useCreateAvailability, useUpdateAvailability, useDeleteAvailability } from '@/hooks/useAvailability';
 import type { Education, Language, AvailabilityPeriod } from '@/types';
+import { INSTITUTION_HIERARCHY } from '@/data/institutionHierarchy';
 
 const GREEK_INSTITUTIONS = [
   'Εθνικό και Καποδιστριακό Πανεπιστήμιο Αθηνών',
@@ -56,7 +57,7 @@ const institutionOptions = [
   ...GREEK_INSTITUTIONS.map((name) => ({ value: name, label: name })),
 ];
 
-const emptyEdu = { institutionName: '', degreeTitle: '', specialization: '', dateAwarded: '', recognized: '', degreeType: '' };
+const emptyEdu = { institutionName: '', schoolName: '', departmentName: '', degreeTitle: '', specialization: '', dateAwarded: '', recognized: '', degreeType: '' };
 const degreeTypeOptions = [
   { value: '', label: '—' },
   { value: 'Πτυχίο', label: 'Πτυχίο' },
@@ -106,6 +107,8 @@ export default function EditEmployeePage() {
   const [deletingEdu, setDeletingEdu] = useState<Education | null>(null);
   const [eduForm, setEduForm] = useState(emptyEdu);
   const [eduInstMode, setEduInstMode] = useState<'text' | 'list'>('text');
+  const [eduSchoolMode, setEduSchoolMode] = useState<'text' | 'list'>('text');
+  const [eduDeptMode, setEduDeptMode] = useState<'text' | 'list'>('text');
   const [eduError, setEduError] = useState('');
   const [eduSaving, setEduSaving] = useState(false);
   const createEducation = useCreateEducation(id);
@@ -141,17 +144,27 @@ export default function EditEmployeePage() {
   const isEditingAvail = availMode && typeof availMode === 'object';
 
   // Education handlers
-  const handleOpenCreateEdu = () => { setEduForm(emptyEdu); setEduInstMode('text'); setEduError(''); setEduMode('create'); };
+  const handleOpenCreateEdu = () => { setEduForm(emptyEdu); setEduInstMode('text'); setEduSchoolMode('text'); setEduDeptMode('text'); setEduError(''); setEduMode('create'); };
   const handleOpenEditEdu = (edu: Education) => {
     const isKnownInst = GREEK_INSTITUTIONS.includes(edu.institutionName);
-    setEduForm({ institutionName: edu.institutionName, degreeTitle: edu.degreeTitle, specialization: edu.specialization ?? '', dateAwarded: edu.dateAwarded ? edu.dateAwarded.slice(0, 10) : '', recognized: edu.recognized ?? '', degreeType: edu.degreeType ?? '' });
+    const schoolName = edu.schoolName ?? '';
+    const departmentName = edu.departmentName ?? '';
+    const isKnownSchool = isKnownInst && schoolName
+      ? Object.keys(INSTITUTION_HIERARCHY[edu.institutionName] ?? {}).includes(schoolName)
+      : false;
+    const isKnownDept = isKnownSchool && departmentName
+      ? (INSTITUTION_HIERARCHY[edu.institutionName]?.[schoolName] ?? []).includes(departmentName)
+      : false;
+    setEduForm({ institutionName: edu.institutionName, schoolName, departmentName, degreeTitle: edu.degreeTitle, specialization: edu.specialization ?? '', dateAwarded: edu.dateAwarded ? edu.dateAwarded.slice(0, 10) : '', recognized: edu.recognized ?? '', degreeType: edu.degreeType ?? '' });
     setEduInstMode(isKnownInst ? 'list' : 'text');
+    setEduSchoolMode(isKnownSchool ? 'list' : 'text');
+    setEduDeptMode(isKnownDept ? 'list' : 'text');
     setEduError(''); setEduMode({ edit: edu });
   };
   const handleEduSave = async (e: React.FormEvent) => {
     e.preventDefault(); setEduError(''); setEduSaving(true);
     try {
-      const payload = { institutionName: eduForm.institutionName, degreeTitle: eduForm.degreeTitle, degreeType: eduForm.degreeType || undefined, specialization: eduForm.specialization || undefined, dateAwarded: eduForm.dateAwarded || undefined, recognized: (eduForm.recognized as 'yes' | 'no' | '') || undefined };
+      const payload = { institutionName: eduForm.institutionName, schoolName: eduForm.schoolName || undefined, departmentName: eduForm.departmentName || undefined, degreeTitle: eduForm.degreeTitle, degreeType: eduForm.degreeType || undefined, specialization: eduForm.specialization || undefined, dateAwarded: eduForm.dateAwarded || undefined, recognized: (eduForm.recognized as 'yes' | 'no' | '') || undefined };
       if (eduMode === 'create') await createEducation.mutateAsync(payload);
       else if (isEditingEdu) await updateEducation.mutateAsync({ id: eduMode.edit.id, data: payload });
       setEduMode(null);
@@ -289,7 +302,7 @@ export default function EditEmployeePage() {
                         {edu.recognized === 'yes' && <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">Recognized</span>}
                         {edu.recognized === 'no' && <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400">Not recognized</span>}
                       </div>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{edu.institutionName}{edu.specialization ? ` · ${edu.specialization}` : ''}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{edu.institutionName}{edu.schoolName ? ` · ${edu.schoolName}` : ''}{edu.departmentName ? ` · ${edu.departmentName}` : ''}{edu.specialization ? ` · ${edu.specialization}` : ''}</p>
                       {edu.dateAwarded && <p className="text-xs text-slate-400 mt-0.5">{new Date(edu.dateAwarded).getFullYear()}</p>}
                     </div>
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-4">
@@ -360,49 +373,107 @@ export default function EditEmployeePage() {
 
       {/* Education Modals */}
       <Modal open={!!eduMode} onClose={() => setEduMode(null)} title={isEditingEdu ? 'Edit Education' : 'Add Education'}>
-        <form onSubmit={handleEduSave} className="space-y-4">
-          <Select label="Degree Type" options={degreeTypeOptions} value={eduForm.degreeType} onChange={(e) => setEduForm(f => ({ ...f, degreeType: e.target.value }))} />
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Institution Name <span className="text-red-500">*</span></label>
-              <div className="flex items-center gap-1 text-xs">
-                <button
-                  type="button"
-                  onClick={() => { setEduInstMode('text'); if (eduInstMode === 'list') setEduForm(f => ({ ...f, institutionName: '' })); }}
-                  className={`px-2 py-0.5 rounded transition-colors ${eduInstMode === 'text' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-400 font-semibold' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-                >
-                  Ελεύθερο κείμενο
-                </button>
-                <span className="text-slate-300 dark:text-slate-600">|</span>
-                <button
-                  type="button"
-                  onClick={() => { setEduInstMode('list'); if (eduInstMode === 'text') setEduForm(f => ({ ...f, institutionName: '' })); }}
-                  className={`px-2 py-0.5 rounded transition-colors ${eduInstMode === 'list' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-400 font-semibold' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-                >
-                  Από λίστα
-                </button>
+        {(() => {
+          const schoolsForInst = eduInstMode === 'list' && eduForm.institutionName
+            ? Object.keys(INSTITUTION_HIERARCHY[eduForm.institutionName] ?? {})
+            : [];
+          const deptsForSchool = eduSchoolMode === 'list' && eduForm.institutionName && eduForm.schoolName
+            ? INSTITUTION_HIERARCHY[eduForm.institutionName]?.[eduForm.schoolName] ?? []
+            : [];
+          return (
+            <form onSubmit={handleEduSave} className="space-y-4">
+              <Select label="Degree Type" options={degreeTypeOptions} value={eduForm.degreeType} onChange={(e) => setEduForm(f => ({ ...f, degreeType: e.target.value }))} />
+              {/* Institution */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Ίδρυμα <span className="text-red-500">*</span></label>
+                  <div className="flex items-center gap-1 text-xs">
+                    <button type="button" onClick={() => { setEduInstMode('text'); if (eduInstMode === 'list') setEduForm(f => ({ ...f, institutionName: '', schoolName: '', departmentName: '' })); setEduSchoolMode('text'); setEduDeptMode('text'); }}
+                      className={`px-2 py-0.5 rounded transition-colors ${eduInstMode === 'text' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-400 font-semibold' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}>
+                      Ελεύθερο κείμενο
+                    </button>
+                    <span className="text-slate-300 dark:text-slate-600">|</span>
+                    <button type="button" onClick={() => { setEduInstMode('list'); if (eduInstMode === 'text') setEduForm(f => ({ ...f, institutionName: '', schoolName: '', departmentName: '' })); setEduSchoolMode('text'); setEduDeptMode('text'); }}
+                      className={`px-2 py-0.5 rounded transition-colors ${eduInstMode === 'list' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-400 font-semibold' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}>
+                      Από λίστα
+                    </button>
+                  </div>
+                </div>
+                {eduInstMode === 'text' ? (
+                  <Input value={eduForm.institutionName} onChange={(e) => setEduForm(f => ({ ...f, institutionName: e.target.value }))} placeholder="πχ. Πανεπιστήμιο Αθηνών" required autoFocus />
+                ) : (
+                  <Select options={institutionOptions} value={eduForm.institutionName}
+                    onChange={(e) => { setEduForm(f => ({ ...f, institutionName: e.target.value, schoolName: '', departmentName: '' })); setEduSchoolMode('text'); setEduDeptMode('text'); }} />
+                )}
               </div>
-            </div>
-            {eduInstMode === 'text' ? (
-              <Input value={eduForm.institutionName} onChange={(e) => setEduForm(f => ({ ...f, institutionName: e.target.value }))} placeholder="πχ. Πανεπιστήμιο Αθηνών" required autoFocus />
-            ) : (
-              <Select
-                options={institutionOptions}
-                value={eduForm.institutionName}
-                onChange={(e) => setEduForm(f => ({ ...f, institutionName: e.target.value }))}
-              />
-            )}
-          </div>
-          <Input label="Degree Title" value={eduForm.degreeTitle} onChange={(e) => setEduForm(f => ({ ...f, degreeTitle: e.target.value }))} placeholder="πχ. Πολιτικός Μηχανικός" required />
-          <Input label="Specialization" value={eduForm.specialization} onChange={(e) => setEduForm(f => ({ ...f, specialization: e.target.value }))} placeholder="Computer Science" />
-          <Input label="Date Awarded" type="date" value={eduForm.dateAwarded} onChange={(e) => setEduForm(f => ({ ...f, dateAwarded: e.target.value }))} />
-          <Select label="Recognized" options={recognizedOptions} value={eduForm.recognized} onChange={(e) => setEduForm(f => ({ ...f, recognized: e.target.value }))} />
-          {eduError && <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-lg">{eduError}</div>}
-          <div className="flex justify-end gap-3">
-            <Button type="button" variant="secondary" onClick={() => setEduMode(null)}>Cancel</Button>
-            <Button type="submit" loading={eduSaving}>{isEditingEdu ? 'Update' : 'Add'}</Button>
-          </div>
-        </form>
+              {/* School */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Σχολή</label>
+                  {schoolsForInst.length > 0 && (
+                    <div className="flex items-center gap-1 text-xs">
+                      <button type="button" onClick={() => { setEduSchoolMode('text'); if (eduSchoolMode === 'list') setEduForm(f => ({ ...f, schoolName: '', departmentName: '' })); setEduDeptMode('text'); }}
+                        className={`px-2 py-0.5 rounded transition-colors ${eduSchoolMode === 'text' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-400 font-semibold' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}>
+                        Ελεύθερο κείμενο
+                      </button>
+                      <span className="text-slate-300 dark:text-slate-600">|</span>
+                      <button type="button" onClick={() => { setEduSchoolMode('list'); if (eduSchoolMode === 'text') setEduForm(f => ({ ...f, schoolName: '', departmentName: '' })); setEduDeptMode('text'); }}
+                        className={`px-2 py-0.5 rounded transition-colors ${eduSchoolMode === 'list' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-400 font-semibold' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}>
+                        Από λίστα
+                      </button>
+                    </div>
+                  )}
+                </div>
+                {eduSchoolMode === 'list' && schoolsForInst.length > 0 ? (
+                  <Select
+                    options={[{ value: '', label: 'Επιλογή σχολής...' }, ...schoolsForInst.map(s => ({ value: s, label: s }))]}
+                    value={eduForm.schoolName}
+                    onChange={(e) => { setEduForm(f => ({ ...f, schoolName: e.target.value, departmentName: '' })); setEduDeptMode('text'); }}
+                  />
+                ) : (
+                  <Input value={eduForm.schoolName} onChange={(e) => setEduForm(f => ({ ...f, schoolName: e.target.value }))} placeholder="πχ. Πολυτεχνική Σχολή" />
+                )}
+              </div>
+              {/* Department */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Τμήμα</label>
+                  {deptsForSchool.length > 0 && (
+                    <div className="flex items-center gap-1 text-xs">
+                      <button type="button" onClick={() => { setEduDeptMode('text'); if (eduDeptMode === 'list') setEduForm(f => ({ ...f, departmentName: '' })); }}
+                        className={`px-2 py-0.5 rounded transition-colors ${eduDeptMode === 'text' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-400 font-semibold' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}>
+                        Ελεύθερο κείμενο
+                      </button>
+                      <span className="text-slate-300 dark:text-slate-600">|</span>
+                      <button type="button" onClick={() => { setEduDeptMode('list'); if (eduDeptMode === 'text') setEduForm(f => ({ ...f, departmentName: '' })); }}
+                        className={`px-2 py-0.5 rounded transition-colors ${eduDeptMode === 'list' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-400 font-semibold' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}>
+                        Από λίστα
+                      </button>
+                    </div>
+                  )}
+                </div>
+                {eduDeptMode === 'list' && deptsForSchool.length > 0 ? (
+                  <Select
+                    options={[{ value: '', label: 'Επιλογή τμήματος...' }, ...deptsForSchool.map(d => ({ value: d, label: d }))]}
+                    value={eduForm.departmentName}
+                    onChange={(e) => setEduForm(f => ({ ...f, departmentName: e.target.value }))}
+                  />
+                ) : (
+                  <Input value={eduForm.departmentName} onChange={(e) => setEduForm(f => ({ ...f, departmentName: e.target.value }))} placeholder="πχ. Ηλεκτρολόγων Μηχανικών" />
+                )}
+              </div>
+              <Input label="Degree Title" value={eduForm.degreeTitle} onChange={(e) => setEduForm(f => ({ ...f, degreeTitle: e.target.value }))} placeholder="πχ. Πολιτικός Μηχανικός" required />
+              <Input label="Specialization" value={eduForm.specialization} onChange={(e) => setEduForm(f => ({ ...f, specialization: e.target.value }))} placeholder="Computer Science" />
+              <Input label="Date Awarded" type="date" value={eduForm.dateAwarded} onChange={(e) => setEduForm(f => ({ ...f, dateAwarded: e.target.value }))} />
+              <Select label="Recognized" options={recognizedOptions} value={eduForm.recognized} onChange={(e) => setEduForm(f => ({ ...f, recognized: e.target.value }))} />
+              {eduError && <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-lg">{eduError}</div>}
+              <div className="flex justify-end gap-3">
+                <Button type="button" variant="secondary" onClick={() => setEduMode(null)}>Cancel</Button>
+                <Button type="submit" loading={eduSaving}>{isEditingEdu ? 'Update' : 'Add'}</Button>
+              </div>
+            </form>
+          );
+        })()}
       </Modal>
       <Modal open={!!deletingEdu} onClose={() => setDeletingEdu(null)} title="Delete Education Record">
         <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">Delete <span className="font-semibold">{deletingEdu?.degreeTitle}</span>?</p>

@@ -20,6 +20,8 @@ export interface Education {
   id: number;
   employeeId: number;
   institutionName: string;
+  schoolName?: string | null;
+  departmentName?: string | null;
   degreeTitle: string;
   specialization?: string | null;
   dateAwarded?: string | null;
