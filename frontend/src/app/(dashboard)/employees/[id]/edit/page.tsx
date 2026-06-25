@@ -294,18 +294,27 @@ export default function EditEmployeePage() {
             : (
               <div className="divide-y divide-slate-100 dark:divide-slate-700">
                 {educationList.map((edu) => (
-                  <div key={edu.id} className="px-6 py-4 flex items-center justify-between group hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                    <div className="min-w-0">
-                      {edu.degreeType && <p className="text-xs font-medium text-indigo-600 dark:text-indigo-400 mb-0.5">{edu.degreeType}</p>}
-                      <div className="flex items-center gap-2">
+                  <div key={edu.id} className="px-6 py-4 flex items-start justify-between group hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                    <div className="min-w-0 flex-1 space-y-1">
+                      {edu.degreeType && (
+                        <p className="text-[11px] font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide">{edu.degreeType}</p>
+                      )}
+                      <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{edu.degreeTitle}</p>
                         {edu.recognized === 'yes' && <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">Recognized</span>}
                         {edu.recognized === 'no' && <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400">Not recognized</span>}
                       </div>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{edu.institutionName}{edu.schoolName ? ` · ${edu.schoolName}` : ''}{edu.departmentName ? ` · ${edu.departmentName}` : ''}{edu.specialization ? ` · ${edu.specialization}` : ''}</p>
-                      {edu.dateAwarded && <p className="text-xs text-slate-400 mt-0.5">{new Date(edu.dateAwarded).getFullYear()}</p>}
+                      <p className="text-xs font-medium text-slate-600 dark:text-slate-300">{edu.institutionName}</p>
+                      {(edu.schoolName || edu.departmentName) && (
+                        <div className="ml-3 pl-2 border-l-2 border-slate-200 dark:border-slate-600 space-y-0.5">
+                          {edu.schoolName && <p className="text-xs text-slate-500 dark:text-slate-400">{edu.schoolName}</p>}
+                          {edu.departmentName && <p className="text-xs text-slate-500 dark:text-slate-400">{edu.departmentName}</p>}
+                        </div>
+                      )}
+                      {edu.specialization && <p className="text-xs text-slate-400 dark:text-slate-500 italic">{edu.specialization}</p>}
+                      {edu.dateAwarded && <p className="text-xs text-slate-400 dark:text-slate-500">{new Date(edu.dateAwarded).getFullYear()}</p>}
                     </div>
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-4">
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-4 shrink-0 mt-0.5">
                       <Button variant="ghost" size="sm" onClick={() => handleOpenEditEdu(edu)}><Pencil size={14} /></Button>
                       <Button variant="ghost" size="sm" onClick={() => setDeletingEdu(edu)} className="text-red-500 hover:bg-red-50 hover:text-red-600"><Trash2 size={14} /></Button>
                     </div>
@@ -464,7 +473,7 @@ export default function EditEmployeePage() {
               </div>
               <Input label="Degree Title" value={eduForm.degreeTitle} onChange={(e) => setEduForm(f => ({ ...f, degreeTitle: e.target.value }))} placeholder="πχ. Πολιτικός Μηχανικός" required />
               <Input label="Specialization" value={eduForm.specialization} onChange={(e) => setEduForm(f => ({ ...f, specialization: e.target.value }))} placeholder="Computer Science" />
-              <Input label="Date Awarded" type="date" value={eduForm.dateAwarded} onChange={(e) => setEduForm(f => ({ ...f, dateAwarded: e.target.value }))} />
+              <DatePicker label="Date Awarded" value={eduForm.dateAwarded} onChange={(v) => setEduForm(f => ({ ...f, dateAwarded: v }))} />
               <Select label="Recognized" options={recognizedOptions} value={eduForm.recognized} onChange={(e) => setEduForm(f => ({ ...f, recognized: e.target.value }))} />
               {eduError && <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-lg">{eduError}</div>}
               <div className="flex justify-end gap-3">
