@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import {
   LayoutDashboard, Users, Briefcase, Link2, Shield,
-  LogOut, BarChart3, BarChart2, Building2, Building, UserCog, FileText,
+  LogOut, BarChart3, BarChart2, Building2, Building, UserCog, FileText, FileDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { decodeToken } from '@/lib/auth';
@@ -21,6 +21,7 @@ const navItems: { href: string; label: string; icon: React.ElementType; exact?: 
   { href: '/participations', label: 'Participations', icon: Link2 },
   { href: '/roles', label: 'Roles', icon: Shield },
   { href: '/statistics', label: 'Statistics', icon: BarChart2 },
+  { href: '/cv', label: 'CV Export', icon: FileDown },
   { href: '/users', label: 'Users', icon: UserCog, adminOnly: true },
 ];
 

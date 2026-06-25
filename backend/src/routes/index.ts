@@ -12,6 +12,7 @@ import dashboardRoutes from './dashboardRoutes';
 import educationRoutes from './educationRoutes';
 import languageRoutes from './languageRoutes';
 import availabilityRoutes from './availabilityRoutes';
+import cvRoutes from './cvRoutes';
 
 const router = Router();
 
@@ -28,5 +29,6 @@ router.use('/dashboard', dashboardRoutes);
 router.use('/employees/:employeeId/education', educationRoutes);
 router.use('/employees/:employeeId/languages', languageRoutes);
 router.use('/employees/:employeeId/availability', availabilityRoutes);
+router.use('/cv', cvRoutes);
 
 export default router;
