@@ -33,7 +33,7 @@ Project.init(
   {
     id: { type: DataTypes.INTEGER.UNSIGNED, autoIncrement: true, primaryKey: true },
     projectCode: { type: DataTypes.STRING(20), allowNull: false, unique: true },
-    name: { type: DataTypes.STRING(200), allowNull: false },
+    name: { type: DataTypes.STRING(800), allowNull: false },
     acronym: { type: DataTypes.STRING(50), allowNull: false },
     description: { type: DataTypes.TEXT, allowNull: true },
     clientId: {
