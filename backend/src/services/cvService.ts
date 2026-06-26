@@ -252,7 +252,7 @@ export async function generateCVBuffer(employeeId: number): Promise<Buffer> {
 
   const expBodyRows: TableRow[] = participations.map((pp) => {
     const proj = pp.project;
-    const projectText = pp.notes || proj?.description || (proj ? `${proj.name} (${proj.acronym})` : '—');
+    const projectText = pp.notes || proj?.description || proj?.name || '—';
     const period = `${fmtMY(pp.startDate)} - ${fmtMY(pp.endDate)}`;
     return new TableRow({
       children: [
