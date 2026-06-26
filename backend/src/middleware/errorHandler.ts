@@ -62,10 +62,10 @@ export const errorHandler = (
     return;
   }
 
-  console.error('[Unhandled Error]', err);
+  console.error('[Unhandled Error]', err.message, err.stack);
   res.status(500).json({
     success: false,
-    message: 'Internal server error.',
+    message: process.env.NODE_ENV === 'production' ? 'Internal server error.' : err.message,
   });
 };
 

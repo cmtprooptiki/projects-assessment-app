@@ -1,10 +1,13 @@
-import Docxtemplater from 'docxtemplater';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const Docxtemplater = require('docxtemplater');
 import PizZip from 'pizzip';
 import fs from 'fs';
 import path from 'path';
 import { Education, Employee, Language, ProjectParticipation, Project, Role } from '../models';
 
-const TEMPLATE_PATH = path.join(__dirname, '../../templates/cv_template_placeholders.docx');
+// Works for both ts-node (src/services) and compiled (dist/services) because
+// the templates/ folder lives two levels up from either location.
+const TEMPLATE_PATH = path.resolve(__dirname, '../../templates/cv_template_placeholders.docx');
 
 function fmtFull(s?: string | null): string {
   if (!s) return '';
@@ -79,10 +82,13 @@ export async function generateCVBuffer(employeeId: number): Promise<Buffer> {
     experienceRows,
   };
 
+  if (!fs.existsSync(TEMPLATE_PATH)) {
+    throw new Error(`CV template not found at: ${TEMPLATE_PATH}`);
+  }
+
   const content = fs.readFileSync(TEMPLATE_PATH, 'binary');
   const zip     = new PizZip(content);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const doc     = new (Docxtemplater as any)(zip, { paragraphLoop: true, linebreaks: true });
+  const doc     = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
 
   doc.render(data);
 
