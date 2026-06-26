@@ -3,9 +3,9 @@ import * as projectService from '../services/projectService';
 
 export const getAll = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { clientId, search, page, limit } = req.query as Record<string, string>;
+    const { clientId, search, page, limit, sortBy, sortOrder } = req.query as Record<string, string>;
     const result = await projectService.getAllProjects({
-      clientId, search,
+      clientId, search, sortBy, sortOrder,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
     });

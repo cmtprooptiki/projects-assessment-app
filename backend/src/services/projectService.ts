@@ -1,4 +1,4 @@
-import { Op } from 'sequelize';
+import { Op, literal } from 'sequelize';
 import { Project, Contract, Client } from '../models';
 import { AppError } from '../middleware/errorHandler';
 import { ProjectCreationAttributes } from '../models/Project';
@@ -27,14 +27,31 @@ const withDates = (p: any) => {
   return { ...json, ...computeProjectDates(json.contracts ?? []) };
 };
 
+const ALLOWED_SORT = new Set(['projectCode', 'name', 'acronym', 'client', 'startDate', 'contracts']);
+
 export const getAllProjects = async (filters: {
   clientId?: string;
   search?: string;
   page?: number;
   limit?: number;
+  sortBy?: string;
+  sortOrder?: string;
 }) => {
-  const { clientId, search, page = 1, limit = 20 } = filters;
+  const { clientId, search, page = 1, limit = 20, sortBy = 'projectCode', sortOrder = 'asc' } = filters;
   const offset = (page - 1) * limit;
+  const dir = sortOrder === 'desc' ? 'DESC' : 'ASC';
+  const field = ALLOWED_SORT.has(sortBy) ? sortBy : 'projectCode';
+
+  const order: any[] = (() => {
+    switch (field) {
+      case 'name':       return [['name', dir]];
+      case 'acronym':    return [['acronym', dir]];
+      case 'client':     return [[{ model: Client, as: 'client' }, 'name', dir]];
+      case 'startDate':  return [[literal('(SELECT MIN(startDate) FROM contracts WHERE projectId = Project.id)'), dir]];
+      case 'contracts':  return [[literal('(SELECT COUNT(*) FROM contracts WHERE projectId = Project.id)'), dir]];
+      default:           return [['projectCode', dir]];
+    }
+  })();
 
   const where: Record<string, unknown> = {};
   if (clientId) where.clientId = parseInt(clientId, 10);
@@ -59,7 +76,7 @@ export const getAllProjects = async (filters: {
     ],
     limit,
     offset,
-    order: [['projectCode', 'ASC']],
+    order,
     distinct: true,
     subQuery: false,
   });

@@ -13,11 +13,20 @@ import { useProjects } from '@/hooks/useProjects';
 import { useContracts } from '@/hooks/useContracts';
 import { ProjectFilters as IProjectFilters } from '@/types';
 
-const defaultFilters: IProjectFilters = { page: 1, limit: 15 };
+const defaultFilters: IProjectFilters = { page: 1, limit: 50, sortBy: 'projectCode', sortOrder: 'asc' };
 
 export default function ProjectsPage() {
   const [filters, setFilters] = useState<IProjectFilters>(defaultFilters);
   const { data, isLoading, error } = useProjects(filters);
+
+  const handleSort = (field: string) => {
+    setFilters((f) => ({
+      ...f,
+      page: 1,
+      sortBy: field,
+      sortOrder: f.sortBy === field && f.sortOrder === 'asc' ? 'desc' : 'asc',
+    }));
+  };
   const { data: unlinkedData } = useContracts({ unlinked: 'true', limit: 1 });
 
   const projects = data?.data ?? [];
@@ -44,7 +53,12 @@ export default function ProjectsPage() {
           : error ? <div className="p-8 text-center text-sm text-red-500">Failed to load projects. Please try again.</div>
           : (
             <>
-              <ProjectTable projects={projects} />
+              <ProjectTable
+                projects={projects}
+                sortBy={filters.sortBy}
+                sortOrder={filters.sortOrder}
+                onSort={handleSort}
+              />
               {meta && (
                 <Pagination page={meta.page} totalPages={meta.totalPages} total={meta.total} limit={meta.limit}
                   onPageChange={(page) => setFilters((f) => ({ ...f, page }))} />
