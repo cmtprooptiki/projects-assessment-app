@@ -1,6 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const Docxtemplater = require('docxtemplater');
-import PizZip from 'pizzip';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const PizZip = require('pizzip');
 import fs from 'fs';
 import path from 'path';
 import { Education, Employee, Language, ProjectParticipation, Project, Role } from '../models';

@@ -20,6 +20,8 @@ export const exportCV = async (req: Request, res: Response, next: NextFunction):
     });
     res.send(buffer);
   } catch (err) {
-    next(err);
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('[CV Export Error] employeeId=%s', req.params.employeeId, message, err instanceof Error ? err.stack : '');
+    res.status(500).json({ success: false, message });
   }
 };
