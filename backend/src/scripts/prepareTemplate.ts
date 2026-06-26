@@ -1,6 +1,13 @@
 /**
  * One-time script to create cv_template_placeholders.docx from cv_template.docx.
  * Run with: npx ts-node src/scripts/prepareTemplate.ts
+ *
+ * The original template has THREE tables:
+ *   Table[0]  — personal info + education (all rows)
+ *   Table[1]  — standalone "ΕΠΑΓΓΕΛΜΑΤΙΚΗ ΕΜΠΕΙΡΙΑ" section header
+ *   Table[2]  — experience column headers + data rows
+ *
+ * We modify ONLY inside each table; we never cut across table boundaries.
  */
 import PizZip from 'pizzip';
 import fs from 'fs';
@@ -9,16 +16,17 @@ import path from 'path';
 const templatePath = path.join(__dirname, '../../templates/cv_template.docx');
 const outputPath   = path.join(__dirname, '../../templates/cv_template_placeholders.docx');
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const content = fs.readFileSync(templatePath, 'binary');
-const zip = new PizZip(content);
+const zip = new (PizZip as any)(content);
 
-let xml = zip.files['word/document.xml'].asText();
+let xml: string = zip.files['word/document.xml'].asText();
 
 // ──────────────────────────────────────────────────────────────────────────────
 // 1. Personal info — simple text replacements
 // ──────────────────────────────────────────────────────────────────────────────
 const personalReplacements: [string, string][] = [
-  ['Μαρκάτου ',          '{lastName} '],  // trailing space preserved
+  ['Μαρκάτου ',          '{lastName} '],
   ['Άρτεμις',            '{firstName}'],
   ['Διονύσιος',          '{fatherName}'],
   ['Ναταλία',            '{motherName}'],
@@ -28,16 +36,15 @@ const personalReplacements: [string, string][] = [
   ['amark@cmtprooptiki.gr', '{email}'],
   [' Αρτάκης 6, Άνω Ηλιούπολη , Αθήνα Τ.Κ. 16345', '{homeAddress}'],
 ];
-
 for (const [find, replace] of personalReplacements) {
   xml = xml.split(find).join(replace);
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// 2. Locate all <w:tr …> start positions
+// Helpers
 // ──────────────────────────────────────────────────────────────────────────────
-function getTrPositions(src: string): number[] {
-  const re = /<w:tr[ >]/g;
+function allMatches(src: string, pattern: RegExp): number[] {
+  const re = new RegExp(pattern.source, pattern.flags.includes('g') ? pattern.flags : pattern.flags + 'g');
   const positions: number[] = [];
   let m: RegExpExecArray | null;
   while ((m = re.exec(src)) !== null) positions.push(m.index);
@@ -45,7 +52,16 @@ function getTrPositions(src: string): number[] {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// 3. Education template row (replaces TR[17]–TR[20])
+// 2. Locate table boundaries
+// ──────────────────────────────────────────────────────────────────────────────
+const tblOpen  = allMatches(xml, /<w:tbl>/);
+const tblClose = allMatches(xml, /<\/w:tbl>/);
+// Table[0]: personal info + education   — tblOpen[0] … tblClose[0]
+// Table[1]: ΕΠΑΓΓΕΛΜΑΤΙΚΗ ΕΜΠΕΙΡΙΑ      — tblOpen[1] … tblClose[1]
+// Table[2]: experience col headers + data — tblOpen[2] … tblClose[2]
+
+// ──────────────────────────────────────────────────────────────────────────────
+// 3. Education template row
 // ──────────────────────────────────────────────────────────────────────────────
 const eduTemplateRow =
   `<w:tr w:rsidR="00806261" w14:paraId="EDU00001" w14:textId="77777777">` +
@@ -102,7 +118,7 @@ const eduTemplateRow =
   `<w:t>{dateAwarded}{/educationRows}</w:t></w:r></w:p></w:tc></w:tr>`;
 
 // ──────────────────────────────────────────────────────────────────────────────
-// 4. Experience template row (replaces TR[24]–TR[41])
+// 4. Experience template row
 // ──────────────────────────────────────────────────────────────────────────────
 const expTemplateRow =
   `<w:tr w:rsidR="000E7407" w14:paraId="EXP00001" w14:textId="77777777">` +
@@ -140,38 +156,36 @@ const expTemplateRow =
   `<w:t>{period}{/experienceRows}</w:t></w:r></w:p></w:tc></w:tr>`;
 
 // ──────────────────────────────────────────────────────────────────────────────
-// 5. Replace education data rows TR[17]–TR[20] with the template row
+// 5. Replace education data rows INSIDE Table[0] only
+//    Table[0] closes at tblClose[0]. TR[17] is the first edu data row.
+//    We keep Table[0]'s </w:tbl> intact; Table[1] and Table[2] are untouched.
 // ──────────────────────────────────────────────────────────────────────────────
-let trPos = getTrPositions(xml);
-// TR[17] = first edu data row, TR[21] = experience section header (boundary)
-const eduDataStart = trPos[17];
-const eduDataEnd   = trPos[21];  // keep TR[21] onwards
+const trPos0 = allMatches(xml, /<w:tr[ >]/);
+const eduDataStart = trPos0[17];          // first edu data row
+const tbl0CloseTag = tblClose[0];        // position of </w:tbl> for Table[0]
 
-xml = xml.substring(0, eduDataStart) + eduTemplateRow + xml.substring(eduDataEnd);
+// Replace edu data rows; keep </w:tbl> of Table[0] (and everything after it)
+xml = xml.substring(0, eduDataStart) + eduTemplateRow + xml.substring(tbl0CloseTag);
 
 // ──────────────────────────────────────────────────────────────────────────────
-// 6. Replace experience data rows with the template row
-//    After edu replacement: TR count went from 42 → 39 (removed 3 extra rows)
-//    Original TR[24] is now TR[21] → new index 21
-//    Original TR[41] is now TR[38] → new index 38, but that's empty row at end
-//    We want TR[21..38] replaced: 18 rows → 1 template row
+// 6. Replace experience data rows INSIDE Table[2] only
+//    Table[2] now opens at tblOpen[2] (recalculated after step 5).
+//    It has 2 header TRs then data TRs. We replace from the 3rd TR to the end.
 // ──────────────────────────────────────────────────────────────────────────────
-trPos = getTrPositions(xml);
-const expDataStart = trPos[21];
-// TR[38] end = end of last TR in document (there's no TR after it before </w:tbl>)
-// So end = next </w:tr> after expDataStart ... actually we want to find TR[38] end
-// We have 39 TRs after edu replacement (0..38). Last TR is index 38.
-// expDataEnd = position of next thing after TR[38], which is end of table.
-// Since there's no TR[39], we find the end of the last TR:
-const expDataEndPos = trPos.length > 38
-  ? trPos[39]  // next TR (shouldn't exist)
-  : xml.length;  // go to end and find </w:tbl>
+const newTblOpen  = allMatches(xml, /<w:tbl>/);
+const newTblClose = allMatches(xml, /<\/w:tbl>/);
+const tbl2Start   = newTblOpen[2];
+const tbl2End     = newTblClose[2];      // position of </w:tbl> for Table[2]
 
-// Find the closing </w:tbl> after expDataStart
-const tblCloseIdx = xml.indexOf('</w:tbl>', expDataStart);
-if (tblCloseIdx < 0) throw new Error('Could not find </w:tbl>');
+// Find TRs that belong to Table[2]
+const allTrPos = allMatches(xml, /<w:tr[ >]/);
+const tbl2Trs  = allTrPos.filter((p) => p > tbl2Start && p < tbl2End);
 
-xml = xml.substring(0, expDataStart) + expTemplateRow + xml.substring(tblCloseIdx);
+if (tbl2Trs.length < 3) throw new Error(`Expected ≥3 TRs in Table[2], got ${tbl2Trs.length}`);
+const expDataStart = tbl2Trs[2];        // 3rd TR in Table[2] = first data row
+
+// Replace exp data rows; keep </w:tbl> of Table[2]
+xml = xml.substring(0, expDataStart) + expTemplateRow + xml.substring(tbl2End);
 
 // ──────────────────────────────────────────────────────────────────────────────
 // 7. Save the modified template
@@ -180,5 +194,16 @@ zip.file('word/document.xml', xml);
 const output = zip.generate({ type: 'nodebuffer', compression: 'DEFLATE' });
 fs.writeFileSync(outputPath, output);
 
+const origSize  = (fs.readFileSync(templatePath) as Buffer).length;
 console.log(`Template saved to: ${outputPath}`);
-console.log(`XML length: original=${content.length}, modified=${xml.length}`);
+console.log(`Sizes — original: ${origSize} B  →  placeholders: ${(output as Buffer).length} B`);
+
+// Quick sanity check
+const checkZip = new (PizZip as any)(output.toString('binary'));
+const checkXml: string = checkZip.files['word/document.xml'].asText();
+const check = (tag: string) => checkXml.includes(tag) ? '✓' : '✗ MISSING';
+console.log(`{#educationRows}  ${check('{#educationRows}')}`);
+console.log(`{/educationRows}  ${check('{/educationRows}')}`);
+console.log(`{#experienceRows} ${check('{#experienceRows}')}`);
+console.log(`{/experienceRows} ${check('{/experienceRows}')}`);
+console.log(`ΕΠΑΓΓΕΛΜΑΤΙΚΗ (standalone table) ${check('ΕΠΑΓΓΕΛΜΑΤΙΚΗ ΕΜΠΕΙΡΙΑ')}`);
