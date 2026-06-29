@@ -2,14 +2,14 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Plus } from 'lucide-react';
+import { Plus, RefreshCw } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Pagination from '@/components/ui/Pagination';
 import { PageSpinner } from '@/components/ui/Spinner';
 import ParticipationTable from '@/components/participations/ParticipationTable';
 import ParticipationFilters from '@/components/participations/ParticipationFilters';
-import { useParticipations } from '@/hooks/useParticipations';
+import { useParticipations, useRecalculateParticipations } from '@/hooks/useParticipations';
 import { useEmployees } from '@/hooks/useEmployees';
 import { useProjects } from '@/hooks/useProjects';
 import { useRoles } from '@/hooks/useRoles';
@@ -23,6 +23,7 @@ export default function ParticipationsPage() {
   const { data: employeesData } = useEmployees({ limit: 999 });
   const { data: projectsData } = useProjects({ limit: 999 });
   const { data: rolesData } = useRoles();
+  const recalculate = useRecalculateParticipations();
 
   const participations = data?.data ?? [];
   const meta = data?.meta;
@@ -38,12 +39,23 @@ export default function ParticipationsPage() {
           projects={projectsData?.data ?? []}
           roles={rolesData?.data ?? []}
         />
-        <Link href="/participations/new">
-          <Button>
-            <Plus size={16} />
-            Add Participation
+        <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            loading={recalculate.isPending}
+            onClick={() => recalculate.mutate()}
+            title="Cap all future end dates to today"
+          >
+            <RefreshCw size={16} />
+            Recalculate Dates
           </Button>
-        </Link>
+          <Link href="/participations/new">
+            <Button>
+              <Plus size={16} />
+              Add Participation
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <Card>

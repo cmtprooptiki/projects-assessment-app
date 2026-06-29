@@ -140,28 +140,29 @@ export const createParticipations = async (data: {
   });
 
   const rows: ProjectParticipationCreationAttributes[] = [];
+  const today = new Date().toISOString().split('T')[0];
 
   for (const avail of availabilityPeriods) {
     const availStart = avail.startDate;
-    const availEnd = avail.endDate; // null = ongoing
+    // null end = active up to today, not indefinitely into the future
+    const effectiveAvailEnd = avail.endDate ?? today;
 
     // Skip if no overlap
-    const projectAfterAvail = availEnd !== null && projectStart > availEnd;
+    const projectAfterAvail = projectStart > effectiveAvailEnd;
     const availAfterProject = projectEnd !== null && availStart > projectEnd;
     if (projectAfterAvail || availAfterProject) continue;
 
     const overlapStart = availStart > projectStart ? availStart : projectStart;
-    let overlapEnd: string | null;
 
-    if (projectEnd === null && availEnd === null) {
-      overlapEnd = null;
-    } else if (projectEnd === null) {
-      overlapEnd = availEnd;
-    } else if (availEnd === null) {
-      overlapEnd = projectEnd;
-    } else {
-      overlapEnd = projectEnd < availEnd ? projectEnd : availEnd;
-    }
+    let overlapEnd: string =
+      projectEnd === null
+        ? effectiveAvailEnd
+        : projectEnd < effectiveAvailEnd
+          ? projectEnd
+          : effectiveAvailEnd;
+
+    // Participation end date must never be in the future
+    if (overlapEnd > today) overlapEnd = today;
 
     rows.push({
       employeeId: data.employeeId,
@@ -216,4 +217,22 @@ export const deleteParticipation = async (id: number) => {
   const participation = await ProjectParticipation.findByPk(id);
   if (!participation) throw new AppError('Participation record not found.', 404);
   await participation.destroy();
+};
+
+export const recalculateParticipations = async (): Promise<{ updated: number }> => {
+  const today = new Date().toISOString().split('T')[0];
+
+  const [updated] = await ProjectParticipation.update(
+    { endDate: today },
+    {
+      where: {
+        [Op.or]: [
+          { endDate: null },
+          { endDate: { [Op.gt]: today } },
+        ],
+      },
+    }
+  );
+
+  return { updated };
 };

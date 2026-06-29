@@ -9,6 +9,7 @@ import { validate } from '../middleware/validate';
 const router = Router();
 
 router.get('/', controller.getAll);
+router.post('/recalculate', controller.recalculate);
 router.get('/:id', controller.getById);
 router.post('/', createParticipationRules, validate, controller.create);
 router.put('/:id', updateParticipationRules, validate, controller.update);

@@ -58,3 +58,11 @@ export const useDeleteParticipation = () => {
     },
   });
 };
+
+export const useRecalculateParticipations = () => {
+  const qc = useQueryClient();
+  return useMutation<{ success: boolean; updated: number }, Error>({
+    mutationFn: () => api.post('/participations/recalculate').then((r) => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['participations'] }),
+  });
+};

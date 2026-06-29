@@ -60,6 +60,19 @@ export const update = async (
   }
 };
 
+export const recalculate = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const result = await participationService.recalculateParticipations();
+    res.json({ success: true, ...result });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const remove = async (
   req: Request,
   res: Response,
