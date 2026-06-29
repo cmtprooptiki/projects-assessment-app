@@ -43,6 +43,7 @@ export default function EmployeeTable({ employees, onDeleted }: Props) {
               <th className={th}>Name</th>
               <th className={th}>Email</th>
               <th className={th}>Department</th>
+              <th className={th}>Type</th>
               <th className={th}>Status</th>
               <th className="px-4 py-3" />
             </tr>
@@ -58,6 +59,11 @@ export default function EmployeeTable({ employees, onDeleted }: Props) {
                 </td>
                 <td className="px-4 py-3 text-slate-500 dark:text-slate-400">{emp.email}</td>
                 <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{emp.department}</td>
+                <td className="px-4 py-3">
+                  <Badge variant={emp.isExternal ? 'warning' : 'info'}>
+                    {emp.isExternal ? 'External' : 'Internal'}
+                  </Badge>
+                </td>
                 <td className="px-4 py-3">
                   <Badge variant={emp.isActive ? 'success' : 'default'}>
                     {emp.isActive ? 'Active' : 'Inactive'}

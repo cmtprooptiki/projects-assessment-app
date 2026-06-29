@@ -15,16 +15,18 @@ const deletePhotoFile = (photoPath: string | null | undefined) => {
 export const getAllEmployees = async (filters: {
   department?: string;
   isActive?: string;
+  isExternal?: string;
   search?: string;
   page?: number;
   limit?: number;
 }) => {
-  const { department, isActive, search, page = 1, limit = 20 } = filters;
+  const { department, isActive, isExternal, search, page = 1, limit = 20 } = filters;
   const offset = (page - 1) * limit;
 
   const where: Record<string, unknown> = {};
   if (department) where.department = department;
   if (isActive !== undefined) where.isActive = isActive === 'true';
+  if (isExternal !== undefined) where.isExternal = isExternal === 'true';
   if (search) {
     where[Op.or as unknown as string] = [
       { firstName: { [Op.like]: `%${search}%` } },

@@ -34,6 +34,7 @@ export default function EmployeeForm({ defaultValues, onSubmit, submitLabel = 'S
     email: defaultValues?.email ?? '',
     department: defaultValues?.department ?? '',
     isActive: defaultValues?.isActive ?? true,
+    isExternal: defaultValues?.isExternal ?? false,
     fatherName: defaultValues?.fatherName ?? '',
     motherName: defaultValues?.motherName ?? '',
     dateOfBirth: defaultValues?.dateOfBirth ? defaultValues.dateOfBirth.slice(0, 10) : '',
@@ -81,6 +82,7 @@ export default function EmployeeForm({ defaultValues, onSubmit, submitLabel = 'S
       fd.append('email', form.email.trim());
       fd.append('department', form.department);
       fd.append('isActive', String(form.isActive));
+      fd.append('isExternal', String(form.isExternal));
       if (form.fatherName) fd.append('fatherName', form.fatherName.trim());
       if (form.motherName) fd.append('motherName', form.motherName.trim());
       if (form.dateOfBirth) fd.append('dateOfBirth', form.dateOfBirth);
@@ -145,10 +147,17 @@ export default function EmployeeForm({ defaultValues, onSubmit, submitLabel = 'S
           required
         />
 
-        <div className="flex items-center gap-3">
-          <input id="isActive" type="checkbox" checked={form.isActive} onChange={(e) => set('isActive', e.target.checked)}
-            className="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500" />
-          <label htmlFor="isActive" className="text-sm font-medium text-slate-700 dark:text-slate-300">Active employee</label>
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3">
+            <input id="isActive" type="checkbox" checked={form.isActive} onChange={(e) => set('isActive', e.target.checked)}
+              className="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500" />
+            <label htmlFor="isActive" className="text-sm font-medium text-slate-700 dark:text-slate-300">Active</label>
+          </div>
+          <div className="flex items-center gap-3">
+            <input id="isExternal" type="checkbox" checked={form.isExternal} onChange={(e) => set('isExternal', e.target.checked)}
+              className="w-4 h-4 text-amber-500 rounded border-gray-300 focus:ring-amber-500" />
+            <label htmlFor="isExternal" className="text-sm font-medium text-slate-700 dark:text-slate-300">External partner</label>
+          </div>
         </div>
       </Card>
 

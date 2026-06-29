@@ -9,6 +9,7 @@ import Department from './Department';
 import Education from './Education';
 import Language from './Language';
 import EmployeeAvailabilityPeriod from './EmployeeAvailabilityPeriod';
+import EmployeeHistoryProject from './EmployeeHistoryProject';
 
 // Client associations
 Client.hasMany(Project, { foreignKey: 'clientId', as: 'projects' });
@@ -31,6 +32,8 @@ Employee.hasMany(Language, { foreignKey: 'employeeId', as: 'languages', onDelete
 Language.belongsTo(Employee, { foreignKey: 'employeeId', as: 'employee' });
 Employee.hasMany(EmployeeAvailabilityPeriod, { foreignKey: 'employeeId', as: 'availabilityPeriods', onDelete: 'CASCADE' });
 EmployeeAvailabilityPeriod.belongsTo(Employee, { foreignKey: 'employeeId', as: 'employee' });
+Employee.hasMany(EmployeeHistoryProject, { foreignKey: 'employeeId', as: 'historyProjects', onDelete: 'CASCADE' });
+EmployeeHistoryProject.belongsTo(Employee, { foreignKey: 'employeeId', as: 'employee' });
 
 // Role associations
 Role.hasMany(ProjectParticipation, { foreignKey: 'roleId', as: 'participations', onDelete: 'RESTRICT' });
@@ -42,5 +45,5 @@ ProjectParticipation.belongsTo(Role, { foreignKey: 'roleId', as: 'role' });
 
 export {
   Employee, Project, Contract, Role, ProjectParticipation,
-  User, Client, Department, Education, Language, EmployeeAvailabilityPeriod,
+  User, Client, Department, Education, Language, EmployeeAvailabilityPeriod, EmployeeHistoryProject,
 };

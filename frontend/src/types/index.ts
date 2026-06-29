@@ -41,6 +41,19 @@ export interface AvailabilityPeriod {
   updatedAt: string;
 }
 
+export interface EmployeeHistoryProject {
+  id: number;
+  employeeId: number;
+  projectName: string;
+  role?: string | null;
+  employerName?: string | null;
+  startDate: string;
+  endDate?: string | null;
+  description?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Employee {
   id: number;
   firstName: string;
@@ -48,6 +61,7 @@ export interface Employee {
   email: string;
   department: string;
   isActive: boolean;
+  isExternal: boolean;
   photo?: string | null;
   fatherName?: string | null;
   motherName?: string | null;
@@ -183,6 +197,7 @@ export interface DashboardSummary {
 export interface EmployeeFilters {
   department?: string;
   isActive?: string;
+  isExternal?: string;
   search?: string;
   page?: number;
   limit?: number;

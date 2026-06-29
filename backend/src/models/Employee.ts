@@ -9,6 +9,7 @@ export interface EmployeeAttributes {
   email: string;
   department: string;
   isActive: boolean;
+  isExternal: boolean;
   photo?: string | null;
   fatherName?: string | null;
   motherName?: string | null;
@@ -21,7 +22,7 @@ export interface EmployeeAttributes {
 }
 
 export interface EmployeeCreationAttributes
-  extends Optional<EmployeeAttributes, 'id' | 'azureId' | 'isActive' | 'photo' | 'fatherName' | 'motherName' | 'dateOfBirth' | 'placeOfBirth' | 'phone' | 'homeAddress'> {}
+  extends Optional<EmployeeAttributes, 'id' | 'azureId' | 'isActive' | 'isExternal' | 'photo' | 'fatherName' | 'motherName' | 'dateOfBirth' | 'placeOfBirth' | 'phone' | 'homeAddress'> {}
 
 class Employee
   extends Model<EmployeeAttributes, EmployeeCreationAttributes>
@@ -34,6 +35,7 @@ class Employee
   public email!: string;
   public department!: string;
   public isActive!: boolean;
+  public isExternal!: boolean;
   public photo!: string | null;
   public fatherName!: string | null;
   public motherName!: string | null;
@@ -54,6 +56,7 @@ Employee.init(
     email: { type: DataTypes.STRING(255), allowNull: false, unique: true },
     department: { type: DataTypes.STRING(100), allowNull: false },
     isActive: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+    isExternal: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     photo: { type: DataTypes.STRING(500), allowNull: true, defaultValue: null },
     fatherName: { type: DataTypes.STRING(100), allowNull: true, defaultValue: null },
     motherName: { type: DataTypes.STRING(100), allowNull: true, defaultValue: null },

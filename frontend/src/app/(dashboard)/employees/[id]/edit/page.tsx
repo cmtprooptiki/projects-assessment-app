@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Plus, Pencil, Trash2, GraduationCap, Languages, CalendarDays } from 'lucide-react';
+import { Plus, Pencil, Trash2, GraduationCap, Languages, CalendarDays, Briefcase } from 'lucide-react';
 import { PageSpinner } from '@/components/ui/Spinner';
 import EmployeeForm from '@/components/employees/EmployeeForm';
 import Card from '@/components/ui/Card';
@@ -16,7 +16,8 @@ import { useEmployee, useUpdateEmployee } from '@/hooks/useEmployees';
 import { useEducation, useCreateEducation, useUpdateEducation, useDeleteEducation } from '@/hooks/useEducation';
 import { useLanguages, useCreateLanguage, useUpdateLanguage, useDeleteLanguage } from '@/hooks/useLanguages';
 import { useAvailability, useCreateAvailability, useUpdateAvailability, useDeleteAvailability } from '@/hooks/useAvailability';
-import type { Education, Language, AvailabilityPeriod } from '@/types';
+import { useHistoryProjects, useCreateHistoryProject, useUpdateHistoryProject, useDeleteHistoryProject } from '@/hooks/useHistoryProjects';
+import type { Education, Language, AvailabilityPeriod, EmployeeHistoryProject } from '@/types';
 import { INSTITUTION_HIERARCHY } from '@/data/institutionHierarchy';
 
 const GREEK_INSTITUTIONS = [
@@ -71,10 +72,12 @@ const recognizedOptions = [
 ];
 const emptyLang = { language: '', degreeTitle: '', level: '' };
 const emptyAvail = { startDate: '', endDate: '', notes: '' };
+const emptyHistory = { projectName: '', role: '', employerName: '', startDate: '', endDate: '', description: '' };
 
 type EduMode = null | 'create' | { edit: Education };
 type LangMode = null | 'create' | { edit: Language };
 type AvailMode = null | 'create' | { edit: AvailabilityPeriod };
+type HistoryMode = null | 'create' | { edit: EmployeeHistoryProject };
 
 function formatDate(d: string) {
   return new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -139,9 +142,22 @@ export default function EditEmployeePage() {
   const updateAvailability = useUpdateAvailability(id);
   const deleteAvailability = useDeleteAvailability(id);
 
+  // History project state
+  const { data: historyData, isLoading: loadingHistory } = useHistoryProjects(id);
+  const historyList = historyData?.data ?? [];
+  const [historyMode, setHistoryMode] = useState<HistoryMode>(null);
+  const [deletingHistory, setDeletingHistory] = useState<EmployeeHistoryProject | null>(null);
+  const [historyForm, setHistoryForm] = useState(emptyHistory);
+  const [historyError, setHistoryError] = useState('');
+  const [historySaving, setHistorySaving] = useState(false);
+  const createHistory = useCreateHistoryProject(id);
+  const updateHistory = useUpdateHistoryProject(id);
+  const deleteHistory = useDeleteHistoryProject(id);
+
   const isEditingEdu = eduMode && typeof eduMode === 'object';
   const isEditingLang = langMode && typeof langMode === 'object';
   const isEditingAvail = availMode && typeof availMode === 'object';
+  const isEditingHistory = historyMode && typeof historyMode === 'object';
 
   // Education handlers
   const handleOpenCreateEdu = () => { setEduForm(emptyEdu); setEduInstMode('text'); setEduSchoolMode('text'); setEduDeptMode('text'); setEduError(''); setEduMode('create'); };
@@ -218,6 +234,30 @@ export default function EditEmployeePage() {
   const handleAvailDelete = async () => {
     if (!deletingAvail) return;
     try { await deleteAvailability.mutateAsync(deletingAvail.id); setDeletingAvail(null); } catch {}
+  };
+
+  // History handlers
+  const handleOpenCreateHistory = () => { setHistoryForm(emptyHistory); setHistoryError(''); setHistoryMode('create'); };
+  const handleOpenEditHistory = (h: EmployeeHistoryProject) => {
+    setHistoryForm({ projectName: h.projectName, role: h.role ?? '', employerName: h.employerName ?? '', startDate: h.startDate.slice(0, 10), endDate: h.endDate ? h.endDate.slice(0, 10) : '', description: h.description ?? '' });
+    setHistoryError(''); setHistoryMode({ edit: h });
+  };
+  const handleHistorySave = async (e: React.FormEvent) => {
+    e.preventDefault(); setHistoryError('');
+    if (!historyForm.projectName.trim()) { setHistoryError('Project name is required.'); return; }
+    if (!historyForm.startDate) { setHistoryError('Start date is required.'); return; }
+    setHistorySaving(true);
+    try {
+      const payload = { projectName: historyForm.projectName.trim(), role: historyForm.role || undefined, employerName: historyForm.employerName || undefined, startDate: historyForm.startDate, endDate: historyForm.endDate || undefined, description: historyForm.description || undefined };
+      if (historyMode === 'create') await createHistory.mutateAsync(payload);
+      else if (isEditingHistory) await updateHistory.mutateAsync({ id: historyMode.edit.id, data: payload });
+      setHistoryMode(null);
+    } catch (err) { setHistoryError(err instanceof Error ? err.message : 'Something went wrong.'); }
+    finally { setHistorySaving(false); }
+  };
+  const handleHistoryDelete = async () => {
+    if (!deletingHistory) return;
+    try { await deleteHistory.mutateAsync(deletingHistory.id); setDeletingHistory(null); } catch {}
   };
 
   if (isLoading) return <PageSpinner />;
@@ -348,6 +388,42 @@ export default function EditEmployeePage() {
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-4">
                       <Button variant="ghost" size="sm" onClick={() => handleOpenEditLang(lang)}><Pencil size={14} /></Button>
                       <Button variant="ghost" size="sm" onClick={() => setDeletingLang(lang)} className="text-red-500 hover:bg-red-50 hover:text-red-600"><Trash2 size={14} /></Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+        </Card>
+      </div>
+
+      {/* History Projects Section */}
+      <div className="max-w-3xl space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Briefcase size={18} className="text-indigo-600" />
+            <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200 uppercase tracking-wide">Project History</h2>
+          </div>
+          <Button size="sm" onClick={handleOpenCreateHistory}><Plus size={14} />Add Project</Button>
+        </div>
+        <Card>
+          {loadingHistory ? <div className="p-6"><PageSpinner /></div>
+            : historyList.length === 0 ? <EmptyState title="No project history" description="Add past projects this person worked on before joining." />
+            : (
+              <div className="divide-y divide-slate-100 dark:divide-slate-700">
+                {historyList.map((h) => (
+                  <div key={h.id} className="px-6 py-4 flex items-start justify-between group hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                    <div className="min-w-0 flex-1 space-y-0.5">
+                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{h.projectName}</p>
+                      {h.employerName && <p className="text-xs font-medium text-indigo-600 dark:text-indigo-400">{h.employerName}</p>}
+                      {h.role && <p className="text-xs text-slate-500 dark:text-slate-400">{h.role}</p>}
+                      <p className="text-xs text-slate-400 dark:text-slate-500">
+                        {formatDate(h.startDate)} → {h.endDate ? formatDate(h.endDate) : <span className="text-emerald-600 dark:text-emerald-400">Present</span>}
+                      </p>
+                      {h.description && <p className="text-xs text-slate-400 dark:text-slate-500 italic mt-1">{h.description}</p>}
+                    </div>
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-4 shrink-0 mt-0.5">
+                      <Button variant="ghost" size="sm" onClick={() => handleOpenEditHistory(h)}><Pencil size={14} /></Button>
+                      <Button variant="ghost" size="sm" onClick={() => setDeletingHistory(h)} className="text-red-500 hover:bg-red-50 hover:text-red-600"><Trash2 size={14} /></Button>
                     </div>
                   </div>
                 ))}
@@ -510,6 +586,41 @@ export default function EditEmployeePage() {
         <div className="flex justify-end gap-3">
           <Button variant="secondary" onClick={() => setDeletingLang(null)}>Cancel</Button>
           <Button variant="danger" loading={deleteLanguage.isPending} onClick={handleLangDelete}>Delete</Button>
+        </div>
+      </Modal>
+
+      {/* History Project Modals */}
+      <Modal open={!!historyMode} onClose={() => setHistoryMode(null)} title={isEditingHistory ? 'Edit Project' : 'Add Project'}>
+        <form onSubmit={handleHistorySave} className="space-y-4">
+          <Input label="Project Name" value={historyForm.projectName} onChange={(e) => setHistoryForm(f => ({ ...f, projectName: e.target.value }))} placeholder="Project title" required autoFocus />
+          <Input label="Employer / Organization" value={historyForm.employerName} onChange={(e) => setHistoryForm(f => ({ ...f, employerName: e.target.value }))} placeholder="Company or organization name" />
+          <Input label="Role" value={historyForm.role} onChange={(e) => setHistoryForm(f => ({ ...f, role: e.target.value }))} placeholder="e.g. Software Engineer" />
+          <div className="grid grid-cols-2 gap-4">
+            <DatePicker label="Start Date" value={historyForm.startDate} onChange={(v) => setHistoryForm(f => ({ ...f, startDate: v }))} required />
+            <DatePicker label="End Date" value={historyForm.endDate} onChange={(v) => setHistoryForm(f => ({ ...f, endDate: v }))} hint="Leave empty if ongoing" />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">Description</label>
+            <textarea
+              value={historyForm.description}
+              onChange={(e) => setHistoryForm(f => ({ ...f, description: e.target.value }))}
+              placeholder="Brief description of the project or responsibilities"
+              rows={3}
+              className="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 bg-white dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+            />
+          </div>
+          {historyError && <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-lg">{historyError}</div>}
+          <div className="flex justify-end gap-3">
+            <Button type="button" variant="secondary" onClick={() => setHistoryMode(null)}>Cancel</Button>
+            <Button type="submit" loading={historySaving}>{isEditingHistory ? 'Update' : 'Add'}</Button>
+          </div>
+        </form>
+      </Modal>
+      <Modal open={!!deletingHistory} onClose={() => setDeletingHistory(null)} title="Delete History Project">
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">Delete <span className="font-semibold">{deletingHistory?.projectName}</span>?</p>
+        <div className="flex justify-end gap-3">
+          <Button variant="secondary" onClick={() => setDeletingHistory(null)}>Cancel</Button>
+          <Button variant="danger" loading={deleteHistory.isPending} onClick={handleHistoryDelete}>Delete</Button>
         </div>
       </Modal>
     </div>

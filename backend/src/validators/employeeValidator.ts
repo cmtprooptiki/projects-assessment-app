@@ -18,6 +18,7 @@ export const createEmployeeRules = [
   body('email').trim().notEmpty().withMessage('Email is required.').isEmail().normalizeEmail(),
   body('department').trim().notEmpty().withMessage('Department is required.').isLength({ max: 100 }),
   body('isActive').optional().isBoolean({ strict: false }),
+  body('isExternal').optional().isBoolean({ strict: false }),
   ...personalRules(),
 ];
 
@@ -27,5 +28,6 @@ export const updateEmployeeRules = [
   body('email').optional().trim().isEmail().normalizeEmail(),
   body('department').optional().trim().notEmpty().withMessage('Department cannot be empty.').isLength({ max: 100 }),
   body('isActive').optional().isBoolean({ strict: false }),
+  body('isExternal').optional().isBoolean({ strict: false }),
   ...personalRules(true),
 ];

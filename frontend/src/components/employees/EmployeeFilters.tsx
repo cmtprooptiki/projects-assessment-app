@@ -17,6 +17,11 @@ const statusOptions = [
   { value: 'false', label: 'Inactive' },
 ];
 
+const typeOptions = [
+  { value: 'false', label: 'Internal' },
+  { value: 'true', label: 'External' },
+];
+
 export default function EmployeeFilters({ filters, onChange, onReset }: Props) {
   const { data } = useDepartments();
   const departments = data?.data ?? [];
@@ -41,6 +46,15 @@ export default function EmployeeFilters({ filters, onChange, onReset }: Props) {
           placeholder="All departments"
           value={filters.department ?? ''}
           onChange={(e) => update('department', e.target.value)}
+        />
+      </div>
+      <div className="w-36">
+        <Select
+          label="Type"
+          options={typeOptions}
+          placeholder="All types"
+          value={filters.isExternal ?? ''}
+          onChange={(e) => update('isExternal', e.target.value)}
         />
       </div>
       <div className="w-36">
