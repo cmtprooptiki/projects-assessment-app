@@ -22,12 +22,13 @@ export const getById = async (req: Request, res: Response, next: NextFunction): 
 
 export const create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { firstName, lastName, email, department, isActive, fatherName, motherName, dateOfBirth, placeOfBirth, phone, homeAddress } = req.body;
+    const { firstName, lastName, email, department, isActive, isExternal, fatherName, motherName, dateOfBirth, placeOfBirth, phone, homeAddress } = req.body;
     const photo = req.file ? `/uploads/employees/${req.file.filename}` : undefined;
 
     const employee = await employeeService.createEmployee({
       firstName, lastName, email, department,
       isActive: isActive === undefined ? true : (isActive === 'true' || isActive === true),
+      isExternal: isExternal === 'true' || isExternal === true,
       ...(photo !== undefined && { photo }),
       ...(fatherName && { fatherName }),
       ...(motherName && { motherName }),
@@ -42,7 +43,7 @@ export const create = async (req: Request, res: Response, next: NextFunction): P
 
 export const update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { firstName, lastName, email, department, isActive, clearPhoto, fatherName, motherName, dateOfBirth, placeOfBirth, phone, homeAddress } = req.body;
+    const { firstName, lastName, email, department, isActive, isExternal, clearPhoto, fatherName, motherName, dateOfBirth, placeOfBirth, phone, homeAddress } = req.body;
     const newPhoto = req.file ? `/uploads/employees/${req.file.filename}` : undefined;
 
     const data: Record<string, unknown> = {};
@@ -51,6 +52,7 @@ export const update = async (req: Request, res: Response, next: NextFunction): P
     if (email !== undefined) data.email = email;
     if (department !== undefined) data.department = department;
     if (isActive !== undefined) data.isActive = isActive === 'true' || isActive === true;
+    if (isExternal !== undefined) data.isExternal = isExternal === 'true' || isExternal === true;
     if (newPhoto) data.photo = newPhoto;
     else if (clearPhoto === 'true') data.photo = null;
     if (fatherName !== undefined) data.fatherName = fatherName || null;
