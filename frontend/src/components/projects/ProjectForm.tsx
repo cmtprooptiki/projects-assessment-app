@@ -165,7 +165,7 @@ export default function ProjectForm({ defaultValues, clients, onSubmit, submitLa
                       <span className="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400 shrink-0">
                         {c.code}
                       </span>
-                      <span className="text-sm text-slate-700 dark:text-slate-300 flex-1 truncate">{c.name}</span>
+                      <span className="text-sm text-slate-700 dark:text-slate-300 flex-1 truncate" title={c.name}>{c.name}</span>
                       <Badge variant={statusVariant(c.status)}>{statusLabel(c.status)}</Badge>
                     </label>
                   );
