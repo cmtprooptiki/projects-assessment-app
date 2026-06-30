@@ -9,12 +9,13 @@ export interface ProjectParticipationAttributes {
   startDate: string;
   endDate?: string | null;
   notes?: string | null;
+  isExternal: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
 export interface ProjectParticipationCreationAttributes
-  extends Optional<ProjectParticipationAttributes, 'id' | 'endDate' | 'notes'> {}
+  extends Optional<ProjectParticipationAttributes, 'id' | 'endDate' | 'notes' | 'isExternal'> {}
 
 class ProjectParticipation
   extends Model<
@@ -30,6 +31,7 @@ class ProjectParticipation
   public startDate!: string;
   public endDate!: string | null;
   public notes!: string | null;
+  public isExternal!: boolean;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }
@@ -76,6 +78,11 @@ ProjectParticipation.init(
     notes: {
       type: DataTypes.TEXT,
       allowNull: true,
+    },
+    isExternal: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
     },
   },
   {

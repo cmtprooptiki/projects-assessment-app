@@ -125,7 +125,9 @@ export const createParticipations = async (data: {
 
   let rows: ProjectParticipationCreationAttributes[];
 
-  if (employeeJson.isExternal) {
+  const isExternal: boolean = employeeJson.isExternal ?? false;
+
+  if (isExternal) {
     // External: use manually provided dates, no availability/contract logic
     if (!data.startDate) throw new AppError('Start date is required for external partners.', 422);
 
@@ -152,6 +154,7 @@ export const createParticipations = async (data: {
       startDate: data.startDate,
       endDate: data.endDate ?? null,
       notes: data.notes ?? null,
+      isExternal: true,
     }];
   } else {
     // Internal: auto-split by availability periods × project contract dates
@@ -203,6 +206,7 @@ export const createParticipations = async (data: {
         startDate: overlapStart,
         endDate: overlapEnd,
         notes: data.notes ?? null,
+        isExternal: false,
       });
     }
 
@@ -255,16 +259,11 @@ export const deleteParticipation = async (id: number) => {
 export const recalculateParticipations = async (): Promise<{ updated: number }> => {
   const today = new Date().toISOString().split('T')[0];
 
-  const internalEmployees = await Employee.findAll({ where: { isExternal: false }, attributes: ['id'] });
-  const internalIds = internalEmployees.map((e) => e.id);
-
-  if (internalIds.length === 0) return { updated: 0 };
-
   const [updated] = await ProjectParticipation.update(
     { endDate: today },
     {
       where: {
-        employeeId: { [Op.in]: internalIds },
+        isExternal: false,
         [Op.or]: [
           { endDate: null },
           { endDate: { [Op.gt]: today } },
