@@ -184,12 +184,15 @@ export interface DashboardSummary {
   overview: {
     totalEmployees: number;
     activeEmployees: number;
+    internalEmployees: number;
+    externalEmployees: number;
     totalProjects: number;
-    activeProjects: number;
+    totalContracts: number;
+    activeContracts: number;
     totalRoles: number;
     totalParticipations: number;
   };
-  projectsByStatus: Array<{ status: string; count: string }>;
+  contractsByStatus: Array<{ status: string; count: string }>;
   employeesByDepartment: Array<{ department: string; count: string }>;
   recentParticipations: ProjectParticipation[];
 }

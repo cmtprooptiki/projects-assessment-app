@@ -1,13 +1,78 @@
 'use client';
 
-import { Users, Briefcase, Link2, Shield } from 'lucide-react';
+import { Users, Briefcase, Link2, FolderKanban, Building2, UserCheck } from 'lucide-react';
 import { useDashboardSummary } from '@/hooks/useDashboard';
 
-const metrics = [
-  { key: 'totalEmployees' as const, sub: 'activeEmployees' as const, subLabel: 'active', label: 'Total Employees', icon: Users, gradient: 'from-teal-400 to-cyan-500', shadow: 'shadow-cyan-100 dark:shadow-cyan-900/20' },
-  { key: 'totalProjects' as const, sub: 'activeProjects' as const, subLabel: 'active', label: 'Total Projects', icon: Briefcase, gradient: 'from-violet-500 to-indigo-600', shadow: 'shadow-indigo-100 dark:shadow-indigo-900/20' },
-  { key: 'totalParticipations' as const, sub: null, subLabel: null, label: 'Participations', icon: Link2, gradient: 'from-orange-400 to-amber-500', shadow: 'shadow-orange-100 dark:shadow-orange-900/20' },
-  { key: 'totalRoles' as const, sub: null, subLabel: null, label: 'Roles', icon: Shield, gradient: 'from-blue-500 to-blue-600', shadow: 'shadow-blue-100 dark:shadow-blue-900/20' },
+type OverviewKey =
+  | 'totalEmployees' | 'activeEmployees'
+  | 'internalEmployees' | 'externalEmployees'
+  | 'totalProjects'
+  | 'totalContracts' | 'activeContracts'
+  | 'totalParticipations';
+
+const metrics: Array<{
+  key: OverviewKey;
+  sub: OverviewKey | null;
+  subLabel: string | null;
+  label: string;
+  icon: React.ElementType;
+  gradient: string;
+  shadow: string;
+}> = [
+  {
+    key: 'totalEmployees',
+    sub: 'activeEmployees',
+    subLabel: 'active',
+    label: 'Total Employees',
+    icon: Users,
+    gradient: 'from-teal-400 to-cyan-500',
+    shadow: 'shadow-cyan-100 dark:shadow-cyan-900/20',
+  },
+  {
+    key: 'internalEmployees',
+    sub: null,
+    subLabel: null,
+    label: 'Internal Employees',
+    icon: Building2,
+    gradient: 'from-indigo-500 to-violet-600',
+    shadow: 'shadow-indigo-100 dark:shadow-indigo-900/20',
+  },
+  {
+    key: 'externalEmployees',
+    sub: null,
+    subLabel: null,
+    label: 'External Partners',
+    icon: UserCheck,
+    gradient: 'from-amber-400 to-orange-500',
+    shadow: 'shadow-amber-100 dark:shadow-amber-900/20',
+  },
+  {
+    key: 'totalProjects',
+    sub: null,
+    subLabel: null,
+    label: 'Total Projects',
+    icon: FolderKanban,
+    gradient: 'from-emerald-400 to-green-500',
+    shadow: 'shadow-emerald-100 dark:shadow-emerald-900/20',
+  },
+  {
+    key: 'totalContracts',
+    sub: 'activeContracts',
+    subLabel: 'signed',
+    label: 'Total Contracts',
+    icon: Briefcase,
+    gradient: 'from-violet-500 to-indigo-600',
+    shadow: 'shadow-indigo-100 dark:shadow-indigo-900/20',
+  },
+  {
+    key: 'totalParticipations',
+    sub: null,
+    subLabel: null,
+    label: 'Participations',
+    icon: Link2,
+    gradient: 'from-orange-400 to-amber-500',
+    shadow: 'shadow-orange-100 dark:shadow-orange-900/20',
+  },
 ];
 
 function SkeletonCard() {
@@ -31,14 +96,14 @@ export default function SummaryCards() {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[...Array(4)].map((_, i) => <SkeletonCard key={i} />)}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
       {metrics.map(({ key, sub, subLabel, label, icon: Icon, gradient, shadow }) => (
         <div key={key} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm p-6">
           <div className="flex items-start justify-between gap-4">

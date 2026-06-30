@@ -172,17 +172,28 @@ export const getClientDashboard = async (clientId: number) => {
 
 export const getDashboardSummary = async () => {
   const [
-    totalEmployees, activeEmployees, totalContracts, activeContracts, totalRoles, totalParticipations,
+    totalEmployees,
+    activeEmployees,
+    internalEmployees,
+    externalEmployees,
+    totalContracts,
+    activeContracts,
+    totalProjects,
+    totalRoles,
+    totalParticipations,
   ] = await Promise.all([
     Employee.count(),
     Employee.count({ where: { isActive: true } }),
+    Employee.count({ where: { isExternal: false, isActive: true } }),
+    Employee.count({ where: { isExternal: true } }),
     Contract.count(),
     Contract.count({ where: { status: 'Υπογεγραμμένο' } }),
+    Project.count(),
     Role.count(),
     ProjectParticipation.count(),
   ]);
 
-  const projectsByStatus = await Contract.findAll({
+  const contractsByStatus = await Contract.findAll({
     attributes: ['status', [fn('COUNT', col('id')), 'count']],
     group: ['status'],
     raw: true,
@@ -190,6 +201,7 @@ export const getDashboardSummary = async () => {
 
   const employeesByDepartment = await Employee.findAll({
     attributes: ['department', [fn('COUNT', col('id')), 'count']],
+    where: { isActive: true },
     group: ['department'],
     order: [[literal('count'), 'DESC']],
     raw: true,
@@ -209,12 +221,15 @@ export const getDashboardSummary = async () => {
     overview: {
       totalEmployees,
       activeEmployees,
-      totalProjects: totalContracts,
-      activeProjects: activeContracts,
+      internalEmployees,
+      externalEmployees,
+      totalProjects,
+      totalContracts,
+      activeContracts,
       totalRoles,
       totalParticipations,
     },
-    projectsByStatus,
+    contractsByStatus,
     employeesByDepartment,
     recentParticipations,
   };

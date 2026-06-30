@@ -5,26 +5,22 @@ import ApexChart from '@/components/ui/ApexChart';
 import { useDashboardSummary } from '@/hooks/useDashboard';
 import { useTheme } from '@/lib/theme';
 import { donutOptions } from '@/lib/chartConfig';
-import { statusLabel } from '@/lib/utils';
 
-const STATUS_COLORS: Record<string, string> = {
-  'Υπογεγραμμένο': '#10B981',
-  'Ολοκληρωμένο': '#6366F1',
-  'Αποπληρωμένο': '#F59E0B',
-};
-
-export default function ProjectsByStatusChart() {
+export default function InternalExternalChart() {
   const { data, isLoading } = useDashboardSummary();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
-  const items = data?.data?.contractsByStatus ?? [];
-  const series = items.map((i) => parseInt(i.count, 10));
-  const labels = items.map((i) => statusLabel(i.status));
-  const colors = items.map((i) => STATUS_COLORS[i.status] ?? '#6366F1');
+  const overview = data?.data?.overview;
+  const internal = overview?.internalEmployees ?? 0;
+  const external = overview?.externalEmployees ?? 0;
+
+  const series = [internal, external];
+  const labels = ['Internal', 'External Partners'];
+  const colors = ['#6366F1', '#F59E0B'];
 
   const options = {
-    ...donutOptions(isDark, labels, colors, 'Projects'),
+    ...donutOptions(isDark, labels, colors, 'Total'),
     plotOptions: {
       pie: {
         donut: {
@@ -40,7 +36,12 @@ export default function ProjectsByStatusChart() {
               fontFamily: 'Outfit, sans-serif',
               formatter: (w: any) => w.globals.seriesTotals.reduce((a: number, b: number) => a + b, 0),
             },
-            value: { fontSize: '28px', fontWeight: 800, color: isDark ? '#F1F5F9' : '#1E293B', fontFamily: 'Outfit, sans-serif' },
+            value: {
+              fontSize: '28px',
+              fontWeight: 800,
+              color: isDark ? '#F1F5F9' : '#1E293B',
+              fontFamily: 'Outfit, sans-serif',
+            },
           },
         },
       },
@@ -49,12 +50,12 @@ export default function ProjectsByStatusChart() {
 
   return (
     <Card className="p-6">
-      <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1">Contracts by Status</h2>
-      <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">Distribution across all contract statuses</p>
+      <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1">Internal vs External</h2>
+      <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">Employee type breakdown</p>
       {isLoading ? (
         <div className="h-72 bg-slate-50 dark:bg-slate-700/30 rounded-xl animate-pulse" />
-      ) : series.length === 0 ? (
-        <div className="h-72 flex items-center justify-center text-sm text-slate-400">No project data available.</div>
+      ) : internal + external === 0 ? (
+        <div className="h-72 flex items-center justify-center text-sm text-slate-400">No employee data available.</div>
       ) : (
         <ApexChart type="donut" series={series} options={options} height={280} />
       )}
