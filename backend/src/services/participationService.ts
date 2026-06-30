@@ -255,10 +255,16 @@ export const deleteParticipation = async (id: number) => {
 export const recalculateParticipations = async (): Promise<{ updated: number }> => {
   const today = new Date().toISOString().split('T')[0];
 
+  const internalEmployees = await Employee.findAll({ where: { isExternal: false }, attributes: ['id'] });
+  const internalIds = internalEmployees.map((e) => e.id);
+
+  if (internalIds.length === 0) return { updated: 0 };
+
   const [updated] = await ProjectParticipation.update(
     { endDate: today },
     {
       where: {
+        employeeId: { [Op.in]: internalIds },
         [Op.or]: [
           { endDate: null },
           { endDate: { [Op.gt]: today } },
