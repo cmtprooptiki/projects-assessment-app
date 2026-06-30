@@ -224,7 +224,7 @@ export default function EditEmployeePage() {
     if (!availForm.startDate) { setAvailError('Start date is required.'); return; }
     setAvailSaving(true);
     try {
-      const payload = { startDate: availForm.startDate, endDate: availForm.endDate || undefined, notes: availForm.notes || undefined };
+      const payload = { startDate: availForm.startDate, endDate: availForm.endDate || null, notes: availForm.notes || undefined };
       if (availMode === 'create') await createAvailability.mutateAsync(payload);
       else if (isEditingAvail) await updateAvailability.mutateAsync({ id: availMode.edit.id, data: payload });
       setAvailMode(null);

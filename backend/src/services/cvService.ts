@@ -69,7 +69,7 @@ export async function generateCVBuffer(employeeId: number): Promise<Buffer> {
   // Experience rows: current project participations + history projects, sorted by startDate DESC
   const participationRows = participations.map((pp) => ({
     startDate:    pp.startDate,
-    projectText:  pp.notes || pp.project?.description || pp.project?.name || '—',
+    projectText:  pp.project?.name || '—',
     employerName: 'CMT ΠΡΟΟΠΤΙΚΗ ΕΠΕ',
     roleName:     pp.role?.name ?? '',
     period:       `${fmtMY(pp.startDate)} - ${fmtMY(pp.endDate)}`,
