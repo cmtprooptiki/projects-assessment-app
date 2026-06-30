@@ -258,21 +258,71 @@ export const deleteParticipation = async (id: number) => {
   await participation.destroy();
 };
 
-export const recalculateParticipations = async (): Promise<{ updated: number }> => {
+export const recalculateParticipations = async (): Promise<{ updated: number; skipped: number }> => {
   const today = new Date().toISOString().split('T')[0];
 
-  const [updated] = await ProjectParticipation.update(
-    { endDate: today },
-    {
-      where: {
-        isExternal: false,
-        [Op.or]: [
-          { endDate: null },
-          { endDate: { [Op.gt]: today } },
-        ],
-      },
-    }
-  );
+  // Collect all internal participations, deduplicate by (employeeId, projectId)
+  const all = await ProjectParticipation.findAll({
+    where: { isExternal: false },
+    order: [['createdAt', 'ASC']],
+  });
 
-  return { updated };
+  const pairs = new Map<string, { employeeId: number; projectId: number; roleId: number; notes: string | null }>();
+  for (const p of all) {
+    const key = `${p.employeeId}-${p.projectId}`;
+    if (!pairs.has(key)) {
+      pairs.set(key, { employeeId: p.employeeId, projectId: p.projectId, roleId: p.roleId, notes: p.notes ?? null });
+    }
+  }
+
+  let updated = 0;
+  let skipped = 0;
+
+  for (const { employeeId, projectId, roleId, notes } of pairs.values()) {
+    const [employee, project] = await Promise.all([
+      Employee.findByPk(employeeId, { include: [{ model: EmployeeAvailabilityPeriod, as: 'availabilityPeriods' }] }),
+      Project.findByPk(projectId,   { include: [{ model: Contract, as: 'contracts' }] }),
+    ]);
+
+    if (!employee || !project) { skipped++; continue; }
+
+    const employeeJson = employee.toJSON() as any;
+    const projectJson  = project.toJSON()  as any;
+
+    const availabilityPeriods: Array<{ startDate: string; endDate: string | null }> =
+      (employeeJson.availabilityPeriods ?? []).sort((a: any, b: any) => a.startDate.localeCompare(b.startDate));
+
+    if (availabilityPeriods.length === 0) { skipped++; continue; }
+
+    const { startDate: projectStart, endDate: projectEnd } = computeProjectStartEnd(projectJson.contracts ?? []);
+    if (!projectStart) { skipped++; continue; }
+
+    const rows: ProjectParticipationCreationAttributes[] = [];
+
+    for (const avail of availabilityPeriods) {
+      const availStart       = avail.startDate;
+      const effectiveAvailEnd = avail.endDate ?? today;
+
+      if (projectStart > effectiveAvailEnd) continue;
+      if (projectEnd !== null && availStart > projectEnd) continue;
+
+      const overlapStart = availStart > projectStart ? availStart : projectStart;
+      let overlapEnd: string =
+        projectEnd === null
+          ? effectiveAvailEnd
+          : projectEnd < effectiveAvailEnd ? projectEnd : effectiveAvailEnd;
+
+      if (overlapEnd > today) overlapEnd = today;
+
+      rows.push({ employeeId, projectId, roleId, startDate: overlapStart, endDate: overlapEnd, notes, isExternal: false });
+    }
+
+    if (rows.length === 0) { skipped++; continue; }
+
+    await ProjectParticipation.destroy({ where: { employeeId, projectId, isExternal: false } });
+    await ProjectParticipation.bulkCreate(rows);
+    updated++;
+  }
+
+  return { updated, skipped };
 };

@@ -40,11 +40,16 @@ export default function ParticipationsPage() {
           roles={rolesData?.data ?? []}
         />
         <div className="flex items-center gap-2">
+          {recalculate.data && !recalculate.isPending && (
+            <span className="text-xs text-gray-500">
+              {recalculate.data.updated} updated, {recalculate.data.skipped} skipped
+            </span>
+          )}
           <Button
             variant="secondary"
             loading={recalculate.isPending}
             onClick={() => recalculate.mutate()}
-            title="Cap all future end dates to today"
+            title="Re-run full availability × contract overlap for internal employees"
           >
             <RefreshCw size={16} />
             Recalculate Dates
