@@ -3,9 +3,9 @@ import * as employeeService from '../services/employeeService';
 
 export const getAll = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { department, isActive, search, page, limit } = req.query as Record<string, string>;
+    const { department, isActive, isExternal, search, page, limit } = req.query as Record<string, string>;
     const result = await employeeService.getAllEmployees({
-      department, isActive, search,
+      department, isActive, isExternal, search,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
     });
