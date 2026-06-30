@@ -137,7 +137,7 @@ const expTemplateRow =
   `<w:sz w:val="20"/><w:szCs w:val="20"/><w:lang w:val="el-GR"/></w:rPr></w:pPr>` +
   `<w:r><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/>` +
   `<w:sz w:val="20"/><w:szCs w:val="20"/><w:lang w:val="el-GR"/></w:rPr>` +
-  `<w:t>CMT ΠΡΟΟΠΤΙΚΗ ΕΠΕ</w:t></w:r></w:p></w:tc>` +
+  `<w:t>{employerName}</w:t></w:r></w:p></w:tc>` +
 
   `<w:tc><w:tcPr><w:tcW w:w="1316" w:type="pct"/><w:vAlign w:val="center"/></w:tcPr>` +
   `<w:p><w:pPr><w:jc w:val="center"/>` +
@@ -206,4 +206,5 @@ console.log(`{#educationRows}  ${check('{#educationRows}')}`);
 console.log(`{/educationRows}  ${check('{/educationRows}')}`);
 console.log(`{#experienceRows} ${check('{#experienceRows}')}`);
 console.log(`{/experienceRows} ${check('{/experienceRows}')}`);
+console.log(`{employerName}    ${check('{employerName}')}`);
 console.log(`ΕΠΑΓΓΕΛΜΑΤΙΚΗ (standalone table) ${check('ΕΠΑΓΓΕΛΜΑΤΙΚΗ ΕΜΠΕΙΡΙΑ')}`);
