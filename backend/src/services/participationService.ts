@@ -128,6 +128,23 @@ export const createParticipations = async (data: {
   if (employeeJson.isExternal) {
     // External: use manually provided dates, no availability/contract logic
     if (!data.startDate) throw new AppError('Start date is required for external partners.', 422);
+
+    const projectJson = projectWithContracts.toJSON() as any;
+    const { startDate: projectStart, endDate: projectEnd } = computeProjectStartEnd(projectJson.contracts ?? []);
+
+    if (projectStart && data.startDate < projectStart) {
+      throw new AppError(`Start date cannot be before the project start date (${projectStart}).`, 422);
+    }
+    if (projectEnd && data.startDate > projectEnd) {
+      throw new AppError(`Start date cannot be after the project end date (${projectEnd}).`, 422);
+    }
+    if (data.endDate && projectEnd && data.endDate > projectEnd) {
+      throw new AppError(`End date cannot be after the project end date (${projectEnd}).`, 422);
+    }
+    if (data.endDate && projectStart && data.endDate < projectStart) {
+      throw new AppError(`End date cannot be before the project start date (${projectStart}).`, 422);
+    }
+
     rows = [{
       employeeId: data.employeeId,
       projectId: data.projectId,

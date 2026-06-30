@@ -42,6 +42,9 @@ export default function ParticipationForm({
 
   const selectedEmployee = employees.find((e) => e.id === employeeId);
   const isExternal = selectedEmployee?.isExternal ?? false;
+  const selectedProject = projects.find((p) => p.id === projectId);
+  const projectStart = selectedProject?.startDate ?? null;
+  const projectEnd = selectedProject?.endDate ?? null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,6 +60,22 @@ export default function ParticipationForm({
     }
     if (!isEdit && isExternal && !startDate) {
       setError('Start date is required for external partners.');
+      return;
+    }
+    if (!isEdit && isExternal && projectStart && startDate < projectStart) {
+      setError(`Start date cannot be before the project start date (${formatDate(projectStart)}).`);
+      return;
+    }
+    if (!isEdit && isExternal && projectEnd && startDate > projectEnd) {
+      setError(`Start date cannot be after the project end date (${formatDate(projectEnd)}).`);
+      return;
+    }
+    if (!isEdit && isExternal && endDate && projectEnd && endDate > projectEnd) {
+      setError(`End date cannot be after the project end date (${formatDate(projectEnd)}).`);
+      return;
+    }
+    if (!isEdit && isExternal && endDate && projectStart && endDate < projectStart) {
+      setError(`End date cannot be before the project start date (${formatDate(projectStart)}).`);
       return;
     }
 
@@ -142,25 +161,44 @@ export default function ParticipationForm({
                 label: `${p.projectCode} – ${p.name}`,
               }))}
               value={projectId.toString()}
-              onChange={(e) => setProjectId(parseInt(e.target.value, 10))}
+              onChange={(e) => {
+                setProjectId(parseInt(e.target.value, 10));
+                setStartDate('');
+                setEndDate('');
+              }}
               required
             />
           </div>
         )}
 
         {!isEdit && isExternal && (
-          <div className="grid grid-cols-2 gap-4">
-            <DatePicker
-              label="Start Date"
-              value={startDate}
-              onChange={setStartDate}
-            />
-            <DatePicker
-              label="End Date"
-              value={endDate}
-              onChange={setEndDate}
-              hint="Leave empty if ongoing"
-            />
+          <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-4">
+              <DatePicker
+                label="Start Date"
+                value={startDate}
+                onChange={setStartDate}
+              />
+              <DatePicker
+                label="End Date"
+                value={endDate}
+                onChange={setEndDate}
+                hint="Leave empty if ongoing"
+              />
+            </div>
+            {(projectStart || projectEnd) && (
+              <p className="text-xs text-slate-400 dark:text-slate-500">
+                Project period:{' '}
+                <span className="font-medium text-slate-600 dark:text-slate-300">
+                  {projectStart ? formatDate(projectStart) : '—'}
+                </span>
+                {' → '}
+                <span className="font-medium text-slate-600 dark:text-slate-300">
+                  {projectEnd ? formatDate(projectEnd) : 'ongoing'}
+                </span>
+                {' '}— dates must fall within this range.
+              </p>
+            )}
           </div>
         )}
 
