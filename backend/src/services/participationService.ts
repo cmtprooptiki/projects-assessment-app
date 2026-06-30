@@ -240,7 +240,9 @@ export const updateParticipation = async (
     if (!role) throw new AppError('Role not found.', 404);
   }
 
-  await participation.update(data);
+  // isExternal is immutable — only stamp at creation, never update
+  const { roleId, notes, startDate, endDate } = data;
+  await participation.update({ roleId, notes, startDate, endDate });
   return ProjectParticipation.findByPk(id, {
     include: [
       { model: Employee, as: 'employee' },
