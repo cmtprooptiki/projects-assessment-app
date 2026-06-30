@@ -12,7 +12,7 @@ export const useAvailability = (employeeId: number) =>
 export const useCreateAvailability = (employeeId: number) => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: { startDate: string; endDate?: string; notes?: string }) =>
+    mutationFn: (data: { startDate: string; endDate?: string | null; notes?: string }) =>
       api.post(`/employees/${employeeId}/availability`, data).then((r) => r.data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['availability', employeeId] });
