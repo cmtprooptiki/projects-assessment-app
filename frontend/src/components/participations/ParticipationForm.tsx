@@ -3,8 +3,10 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Select from '@/components/ui/Select';
+import DatePicker from '@/components/ui/DatePicker';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
+import Badge from '@/components/ui/Badge';
 import { Employee, Project, Role, ProjectParticipation } from '@/types';
 import { fullName, formatDate } from '@/lib/utils';
 
@@ -32,9 +34,14 @@ export default function ParticipationForm({
   const [notes, setNotes] = useState(defaultValues?.notes ?? '');
   const [employeeId, setEmployeeId] = useState<number>(defaultValues?.employeeId ?? employees[0]?.id ?? 0);
   const [projectId, setProjectId] = useState<number>(defaultValues?.projectId ?? projects[0]?.id ?? 0);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const selectedEmployee = employees.find((e) => e.id === employeeId);
+  const isExternal = selectedEmployee?.isExternal ?? false;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,13 +55,23 @@ export default function ParticipationForm({
       setError('Please fill in all required fields.');
       return;
     }
+    if (!isEdit && isExternal && !startDate) {
+      setError('Start date is required for external partners.');
+      return;
+    }
 
     setLoading(true);
     try {
       if (isEdit) {
         await onSubmit({ roleId, notes: notes || null });
       } else {
-        await onSubmit({ employeeId, projectId, roleId, notes: notes || null });
+        await onSubmit({
+          employeeId,
+          projectId,
+          roleId,
+          notes: notes || null,
+          ...(isExternal && { startDate, endDate: endDate || null }),
+        });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong.');
@@ -97,16 +114,27 @@ export default function ParticipationForm({
 
         {!isEdit && (
           <div className="grid grid-cols-2 gap-4">
-            <Select
-              label="Employee"
-              options={employees.map((e) => ({
-                value: e.id.toString(),
-                label: fullName(e),
-              }))}
-              value={employeeId.toString()}
-              onChange={(e) => setEmployeeId(parseInt(e.target.value, 10))}
-              required
-            />
+            <div>
+              <Select
+                label="Employee"
+                options={employees.map((e) => ({
+                  value: e.id.toString(),
+                  label: `${fullName(e)}${e.isExternal ? ' (External)' : ''}`,
+                }))}
+                value={employeeId.toString()}
+                onChange={(e) => {
+                  setEmployeeId(parseInt(e.target.value, 10));
+                  setStartDate('');
+                  setEndDate('');
+                }}
+                required
+              />
+              {isExternal && (
+                <div className="mt-1.5">
+                  <Badge variant="warning">External partner — dates required</Badge>
+                </div>
+              )}
+            </div>
             <Select
               label="Project"
               options={projects.map((p) => ({
@@ -116,6 +144,22 @@ export default function ParticipationForm({
               value={projectId.toString()}
               onChange={(e) => setProjectId(parseInt(e.target.value, 10))}
               required
+            />
+          </div>
+        )}
+
+        {!isEdit && isExternal && (
+          <div className="grid grid-cols-2 gap-4">
+            <DatePicker
+              label="Start Date"
+              value={startDate}
+              onChange={setStartDate}
+            />
+            <DatePicker
+              label="End Date"
+              value={endDate}
+              onChange={setEndDate}
+              hint="Leave empty if ongoing"
             />
           </div>
         )}
@@ -144,7 +188,7 @@ export default function ParticipationForm({
           />
         </div>
 
-        {!isEdit && (
+        {!isEdit && !isExternal && (
           <p className="text-xs text-slate-400 dark:text-slate-500 italic">
             Participation periods will be computed automatically from the employee's availability periods and the project's contract dates.
           </p>

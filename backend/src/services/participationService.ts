@@ -99,6 +99,8 @@ export const createParticipations = async (data: {
   projectId: number;
   roleId: number;
   notes?: string | null;
+  startDate?: string;
+  endDate?: string | null;
 }) => {
   const [employeeWithPeriods, projectWithContracts, role] = await Promise.all([
     Employee.findByPk(data.employeeId, {
@@ -115,67 +117,81 @@ export const createParticipations = async (data: {
   if (!role) throw new AppError('Role not found.', 404);
 
   const employeeJson = employeeWithPeriods.toJSON() as any;
-  const projectJson = projectWithContracts.toJSON() as any;
-
-  const availabilityPeriods: Array<{ startDate: string; endDate: string | null }> =
-    (employeeJson.availabilityPeriods ?? []).sort((a: any, b: any) =>
-      a.startDate.localeCompare(b.startDate)
-    );
-
-  if (availabilityPeriods.length === 0) {
-    throw new AppError('Employee has no availability periods defined.', 422);
-  }
-
-  const { startDate: projectStart, endDate: projectEnd } = computeProjectStartEnd(
-    projectJson.contracts ?? []
-  );
-
-  if (!projectStart) {
-    throw new AppError('Project has no linked contracts with dates.', 422);
-  }
 
   // Replace all existing participations for this employee-project pair
   await ProjectParticipation.destroy({
     where: { employeeId: data.employeeId, projectId: data.projectId },
   });
 
-  const rows: ProjectParticipationCreationAttributes[] = [];
-  const today = new Date().toISOString().split('T')[0];
+  let rows: ProjectParticipationCreationAttributes[];
 
-  for (const avail of availabilityPeriods) {
-    const availStart = avail.startDate;
-    // null end = active up to today, not indefinitely into the future
-    const effectiveAvailEnd = avail.endDate ?? today;
-
-    // Skip if no overlap
-    const projectAfterAvail = projectStart > effectiveAvailEnd;
-    const availAfterProject = projectEnd !== null && availStart > projectEnd;
-    if (projectAfterAvail || availAfterProject) continue;
-
-    const overlapStart = availStart > projectStart ? availStart : projectStart;
-
-    let overlapEnd: string =
-      projectEnd === null
-        ? effectiveAvailEnd
-        : projectEnd < effectiveAvailEnd
-          ? projectEnd
-          : effectiveAvailEnd;
-
-    // Participation end date must never be in the future
-    if (overlapEnd > today) overlapEnd = today;
-
-    rows.push({
+  if (employeeJson.isExternal) {
+    // External: use manually provided dates, no availability/contract logic
+    if (!data.startDate) throw new AppError('Start date is required for external partners.', 422);
+    rows = [{
       employeeId: data.employeeId,
       projectId: data.projectId,
       roleId: data.roleId,
-      startDate: overlapStart,
-      endDate: overlapEnd,
+      startDate: data.startDate,
+      endDate: data.endDate ?? null,
       notes: data.notes ?? null,
-    });
-  }
+    }];
+  } else {
+    // Internal: auto-split by availability periods × project contract dates
+    const projectJson = projectWithContracts.toJSON() as any;
 
-  if (rows.length === 0) {
-    throw new AppError('No availability periods overlap with the project dates.', 422);
+    const availabilityPeriods: Array<{ startDate: string; endDate: string | null }> =
+      (employeeJson.availabilityPeriods ?? []).sort((a: any, b: any) =>
+        a.startDate.localeCompare(b.startDate)
+      );
+
+    if (availabilityPeriods.length === 0) {
+      throw new AppError('Employee has no availability periods defined.', 422);
+    }
+
+    const { startDate: projectStart, endDate: projectEnd } = computeProjectStartEnd(
+      projectJson.contracts ?? []
+    );
+
+    if (!projectStart) {
+      throw new AppError('Project has no linked contracts with dates.', 422);
+    }
+
+    rows = [];
+    const today = new Date().toISOString().split('T')[0];
+
+    for (const avail of availabilityPeriods) {
+      const availStart = avail.startDate;
+      const effectiveAvailEnd = avail.endDate ?? today;
+
+      const projectAfterAvail = projectStart > effectiveAvailEnd;
+      const availAfterProject = projectEnd !== null && availStart > projectEnd;
+      if (projectAfterAvail || availAfterProject) continue;
+
+      const overlapStart = availStart > projectStart ? availStart : projectStart;
+
+      let overlapEnd: string =
+        projectEnd === null
+          ? effectiveAvailEnd
+          : projectEnd < effectiveAvailEnd
+            ? projectEnd
+            : effectiveAvailEnd;
+
+      if (overlapEnd > today) overlapEnd = today;
+
+      rows.push({
+        employeeId: data.employeeId,
+        projectId: data.projectId,
+        roleId: data.roleId,
+        startDate: overlapStart,
+        endDate: overlapEnd,
+        notes: data.notes ?? null,
+      });
+    }
+
+    if (rows.length === 0) {
+      throw new AppError('No availability periods overlap with the project dates.', 422);
+    }
   }
 
   const created = await ProjectParticipation.bulkCreate(rows);

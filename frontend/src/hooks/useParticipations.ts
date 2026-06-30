@@ -26,7 +26,7 @@ export const useCreateParticipation = () => {
   return useMutation<
     { success: boolean; data: ProjectParticipation[] },
     Error,
-    { employeeId: number; projectId: number; roleId: number; notes?: string | null }
+    { employeeId: number; projectId: number; roleId: number; notes?: string | null; startDate?: string; endDate?: string | null }
   >({
     mutationFn: (data) => api.post('/participations', data).then((r) => r.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['participations'] }),
