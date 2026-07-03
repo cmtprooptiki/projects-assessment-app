@@ -1,8 +1,37 @@
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const XLSX = require('xlsx');
 import { Op } from 'sequelize';
 import { ProjectParticipation, Employee, Project, Contract, Role, EmployeeAvailabilityPeriod } from '../models';
 import { AppError } from '../middleware/errorHandler';
 import { ProjectParticipationCreationAttributes } from '../models/ProjectParticipation';
 import { ParticipationFilterQuery } from '../types';
+
+export interface BulkPreviewSuccessRow {
+  rowIndex: number;
+  employeeId: number;
+  employeeName: string;
+  projectId: number;
+  projectName: string;
+  roleId: number;
+  roleName: string;
+  periods: Array<{ startDate: string; endDate: string }>;
+}
+
+export interface BulkPreviewErrorRow {
+  rowIndex: number;
+  employeeId: number | null;
+  projectId: number | null;
+  roleId: number | null;
+  reason: string;
+}
+
+// Normalise column headers: "employee_id", "Employee ID" → "employeeid"
+const normKey = (k: string) => k.toLowerCase().replace(/[\s_-]/g, '');
+const normRow = (raw: Record<string, unknown>) => {
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(raw)) out[normKey(k)] = v;
+  return out;
+};
 
 const computeProjectStartEnd = (contracts: Array<{ startDate: string; endDate?: string | null }>) => {
   if (!contracts || contracts.length === 0) return { startDate: null, endDate: null };
@@ -325,4 +354,103 @@ export const recalculateParticipations = async (): Promise<{ updated: number; sk
   }
 
   return { updated, skipped };
+};
+
+export const bulkPreview = async (
+  fileBuffer: Buffer,
+): Promise<{ success: BulkPreviewSuccessRow[]; errors: BulkPreviewErrorRow[] }> => {
+  const today = new Date().toISOString().split('T')[0];
+
+  const workbook = XLSX.read(fileBuffer, { type: 'buffer' });
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  const rawRows: Record<string, unknown>[] = XLSX.utils.sheet_to_json(sheet, { defval: null });
+
+  const success: BulkPreviewSuccessRow[] = [];
+  const errors: BulkPreviewErrorRow[] = [];
+
+  for (let i = 0; i < rawRows.length; i++) {
+    const r = normRow(rawRows[i]);
+    const rowIndex = i + 2; // +2: 1-based + header row
+    const employeeId = parseInt(String(r.employeeid ?? r.employee ?? ''), 10);
+    const projectId  = parseInt(String(r.projectid  ?? r.project  ?? ''), 10);
+    const roleId     = parseInt(String(r.roleid     ?? r.role     ?? ''), 10);
+
+    if (isNaN(employeeId) || isNaN(projectId) || isNaN(roleId)) {
+      errors.push({ rowIndex, employeeId: isNaN(employeeId) ? null : employeeId, projectId: isNaN(projectId) ? null : projectId, roleId: isNaN(roleId) ? null : roleId, reason: 'Missing or invalid employeeId / projectId / roleId' });
+      continue;
+    }
+
+    const [employee, project, role] = await Promise.all([
+      Employee.findByPk(employeeId, { include: [{ model: EmployeeAvailabilityPeriod, as: 'availabilityPeriods' }] }),
+      Project.findByPk(projectId,   { include: [{ model: Contract, as: 'contracts' }] }),
+      Role.findByPk(roleId),
+    ]);
+
+    if (!employee) { errors.push({ rowIndex, employeeId, projectId, roleId, reason: `Employee #${employeeId} not found` }); continue; }
+    if (!project)  { errors.push({ rowIndex, employeeId, projectId, roleId, reason: `Project #${projectId} not found` });  continue; }
+    if (!role)     { errors.push({ rowIndex, employeeId, projectId, roleId, reason: `Role #${roleId} not found` });        continue; }
+
+    const empJson  = employee.toJSON() as any;
+    const projJson = project.toJSON()  as any;
+
+    if (empJson.isExternal) {
+      errors.push({ rowIndex, employeeId, projectId, roleId, reason: `Employee "${empJson.firstName} ${empJson.lastName}" is external — bulk import only supports internal employees` });
+      continue;
+    }
+
+    const availabilityPeriods: Array<{ startDate: string; endDate: string | null }> =
+      (empJson.availabilityPeriods ?? []).sort((a: any, b: any) => a.startDate.localeCompare(b.startDate));
+
+    if (availabilityPeriods.length === 0) {
+      errors.push({ rowIndex, employeeId, projectId, roleId, reason: `Employee "${empJson.firstName} ${empJson.lastName}" has no availability periods` });
+      continue;
+    }
+
+    const { startDate: projectStart, endDate: projectEnd } = computeProjectStartEnd(projJson.contracts ?? []);
+    if (!projectStart) {
+      errors.push({ rowIndex, employeeId, projectId, roleId, reason: `Project "${projJson.name}" has no linked contracts with dates` });
+      continue;
+    }
+
+    const periods: Array<{ startDate: string; endDate: string }> = [];
+    for (const avail of availabilityPeriods) {
+      const availStart        = avail.startDate;
+      const effectiveAvailEnd = avail.endDate ?? today;
+      if (projectStart > effectiveAvailEnd) continue;
+      if (projectEnd !== null && availStart > projectEnd) continue;
+      const overlapStart = availStart > projectStart ? availStart : projectStart;
+      let overlapEnd = projectEnd === null
+        ? effectiveAvailEnd
+        : projectEnd < effectiveAvailEnd ? projectEnd : effectiveAvailEnd;
+      if (overlapEnd > today) overlapEnd = today;
+      periods.push({ startDate: overlapStart, endDate: overlapEnd });
+    }
+
+    if (periods.length === 0) {
+      errors.push({ rowIndex, employeeId, projectId, roleId, reason: `No availability periods overlap with project "${projJson.name}" (${projectStart} → ${projectEnd ?? 'ongoing'})` });
+      continue;
+    }
+
+    success.push({ rowIndex, employeeId, employeeName: `${empJson.firstName} ${empJson.lastName}`, projectId, projectName: projJson.name, roleId, roleName: (role as any).name, periods });
+  }
+
+  return { success, errors };
+};
+
+export const bulkConfirm = async (
+  rows: Array<{ employeeId: number; projectId: number; roleId: number; periods: Array<{ startDate: string; endDate: string }> }>,
+): Promise<{ imported: number; participationsCreated: number }> => {
+  let imported = 0;
+  let participationsCreated = 0;
+
+  for (const { employeeId, projectId, roleId, periods } of rows) {
+    await ProjectParticipation.destroy({ where: { employeeId, projectId, isExternal: false } });
+    await ProjectParticipation.bulkCreate(
+      periods.map((p) => ({ employeeId, projectId, roleId, startDate: p.startDate, endDate: p.endDate, notes: null, isExternal: false }))
+    );
+    imported++;
+    participationsCreated += periods.length;
+  }
+
+  return { imported, participationsCreated };
 };

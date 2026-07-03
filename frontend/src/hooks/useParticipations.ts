@@ -5,6 +5,8 @@ import {
   ParticipationFilters,
   PaginatedResult,
   ApiResult,
+  BulkPreviewResult,
+  BulkPreviewSuccessRow,
 } from '@/types';
 
 export const useParticipations = (filters: ParticipationFilters = {}) =>
@@ -52,6 +54,29 @@ export const useDeleteParticipation = () => {
   return useMutation({
     mutationFn: (id: number) =>
       api.delete(`/participations/${id}`).then((r) => r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['participations'] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+  });
+};
+
+export const useBulkPreviewParticipations = () =>
+  useMutation<ApiResult<BulkPreviewResult>, Error, FormData>({
+    mutationFn: (formData) =>
+      api.post('/participations/bulk-preview', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }).then((r) => r.data),
+  });
+
+export const useBulkConfirmParticipations = () => {
+  const qc = useQueryClient();
+  return useMutation<
+    { success: boolean; imported: number; participationsCreated: number },
+    Error,
+    { rows: Array<{ employeeId: number; projectId: number; roleId: number; periods: Array<{ startDate: string; endDate: string }> }> }
+  >({
+    mutationFn: (body) => api.post('/participations/bulk-confirm', body).then((r) => r.data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['participations'] });
       qc.invalidateQueries({ queryKey: ['dashboard'] });

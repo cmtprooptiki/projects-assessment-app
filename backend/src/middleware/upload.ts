@@ -21,3 +21,20 @@ export const uploadEmployeePhoto = multer({
     else cb(new Error('Only image files are allowed.') as any, false);
   },
 }).single('photo');
+
+export const uploadImportFile = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const ok =
+      file.mimetype.includes('spreadsheet') ||
+      file.mimetype.includes('excel') ||
+      file.mimetype === 'text/csv' ||
+      file.mimetype === 'application/csv' ||
+      file.originalname.toLowerCase().endsWith('.xlsx') ||
+      file.originalname.toLowerCase().endsWith('.xls') ||
+      file.originalname.toLowerCase().endsWith('.csv');
+    if (ok) cb(null, true);
+    else cb(new Error('Only Excel (.xlsx/.xls) or CSV files are allowed.') as any, false);
+  },
+}).single('file');

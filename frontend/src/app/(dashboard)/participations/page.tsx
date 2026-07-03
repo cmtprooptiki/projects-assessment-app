@@ -2,13 +2,14 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Plus, RefreshCw } from 'lucide-react';
+import { Plus, RefreshCw, FileUp } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Pagination from '@/components/ui/Pagination';
 import { PageSpinner } from '@/components/ui/Spinner';
 import ParticipationTable from '@/components/participations/ParticipationTable';
 import ParticipationFilters from '@/components/participations/ParticipationFilters';
+import BulkImportModal from '@/components/participations/BulkImportModal';
 import { useParticipations, useRecalculateParticipations } from '@/hooks/useParticipations';
 import { useEmployees } from '@/hooks/useEmployees';
 import { useProjects } from '@/hooks/useProjects';
@@ -19,6 +20,7 @@ const defaultFilters: IParticipationFilters = { page: 1, limit: 15 };
 
 export default function ParticipationsPage() {
   const [filters, setFilters] = useState<IParticipationFilters>(defaultFilters);
+  const [bulkOpen, setBulkOpen] = useState(false);
   const { data, isLoading, error } = useParticipations(filters);
   const { data: employeesData } = useEmployees({ limit: 999 });
   const { data: projectsData } = useProjects({ limit: 999 });
@@ -54,6 +56,10 @@ export default function ParticipationsPage() {
             <RefreshCw size={16} />
             Recalculate Dates
           </Button>
+          <Button variant="secondary" onClick={() => setBulkOpen(true)}>
+            <FileUp size={16} />
+            Bulk Import
+          </Button>
           <Link href="/participations/new">
             <Button>
               <Plus size={16} />
@@ -85,6 +91,7 @@ export default function ParticipationsPage() {
           </>
         )}
       </Card>
+      <BulkImportModal open={bulkOpen} onClose={() => setBulkOpen(false)} />
     </div>
   );
 }

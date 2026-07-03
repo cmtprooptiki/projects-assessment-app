@@ -180,6 +180,30 @@ export interface ApiResult<T> {
   message?: string;
 }
 
+export interface BulkPreviewSuccessRow {
+  rowIndex: number;
+  employeeId: number;
+  employeeName: string;
+  projectId: number;
+  projectName: string;
+  roleId: number;
+  roleName: string;
+  periods: Array<{ startDate: string; endDate: string }>;
+}
+
+export interface BulkPreviewErrorRow {
+  rowIndex: number;
+  employeeId: number | null;
+  projectId: number | null;
+  roleId: number | null;
+  reason: string;
+}
+
+export interface BulkPreviewResult {
+  success: BulkPreviewSuccessRow[];
+  errors: BulkPreviewErrorRow[];
+}
+
 export interface DashboardSummary {
   overview: {
     totalEmployees: number;
