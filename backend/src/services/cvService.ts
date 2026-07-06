@@ -44,13 +44,13 @@ function removePhotoDrawing(zip: typeof PizZip): void {
 }
 import { Education, Employee, EmployeeHistoryProject, EmployeePublication, Language, ProjectParticipation, Project, Role } from '../models';
 
-// classic → original corporate template (CV export page)
-// navy / indigo / teal → job-application CV templates (employee table download)
+// process.cwd() = /app in Docker, .../backend/ locally — templates/ lives there in both envs
+const TEMPLATES_DIR = path.join(process.cwd(), 'templates');
 const TEMPLATE_PATHS: Record<string, string> = {
-  classic: path.resolve(__dirname, '../../templates/cv_template_placeholders.docx'),
-  navy:    path.resolve(__dirname, '../../templates/cv_job_navy_placeholders.docx'),
-  indigo:  path.resolve(__dirname, '../../templates/cv_job_indigo_placeholders.docx'),
-  teal:    path.resolve(__dirname, '../../templates/cv_job_teal_placeholders.docx'),
+  classic: path.join(TEMPLATES_DIR, 'cv_template_placeholders.docx'),
+  navy:    path.join(TEMPLATES_DIR, 'cv_job_navy_placeholders.docx'),
+  indigo:  path.join(TEMPLATES_DIR, 'cv_job_indigo_placeholders.docx'),
+  teal:    path.join(TEMPLATES_DIR, 'cv_job_teal_placeholders.docx'),
 };
 
 function fmtFull(s?: string | null): string {
