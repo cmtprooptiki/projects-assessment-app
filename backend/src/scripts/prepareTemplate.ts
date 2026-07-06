@@ -188,7 +188,60 @@ const expDataStart = tbl2Trs[2];        // 3rd TR in Table[2] = first data row
 xml = xml.substring(0, expDataStart) + expTemplateRow + xml.substring(tbl2End);
 
 // ──────────────────────────────────────────────────────────────────────────────
-// 7. Save the modified template
+// 7. Insert publications section before the body-level <w:sectPr>
+//    Mirrors the ΕΠΑΓΓΕΛΜΑΤΙΚΗ ΕΜΠΕΙΡΙΑ pattern: header table + data table.
+//    Wrapped in {#hasPublications}…{/hasPublications} so the section is hidden
+//    entirely when an employee has no publications.
+// ──────────────────────────────────────────────────────────────────────────────
+const tblProps =
+  `<w:tblPr><w:tblW w:w="5652" w:type="pct"/><w:tblInd w:w="-601" w:type="dxa"/>` +
+  `<w:tblBorders>` +
+  `<w:top w:val="single" w:sz="4" w:space="0" w:color="auto"/>` +
+  `<w:left w:val="single" w:sz="4" w:space="0" w:color="auto"/>` +
+  `<w:bottom w:val="single" w:sz="4" w:space="0" w:color="auto"/>` +
+  `<w:right w:val="single" w:sz="4" w:space="0" w:color="auto"/>` +
+  `<w:insideH w:val="single" w:sz="4" w:space="0" w:color="auto"/>` +
+  `<w:insideV w:val="single" w:sz="4" w:space="0" w:color="auto"/>` +
+  `</w:tblBorders>` +
+  `<w:tblLook w:val="0000" w:firstRow="0" w:lastRow="0" w:firstColumn="0" w:lastColumn="0" w:noHBand="0" w:noVBand="0"/>` +
+  `</w:tblPr><w:tblGrid><w:gridCol w:w="9640"/></w:tblGrid>`;
+
+const pubHeaderTable =
+  `<w:tbl>${tblProps}` +
+  `<w:tr w:rsidR="00PUB001" w14:paraId="PUB00001" w14:textId="77777777">` +
+  `<w:trPr><w:trHeight w:val="567"/></w:trPr>` +
+  `<w:tc><w:tcPr><w:tcW w:w="5000" w:type="pct"/>` +
+  `<w:shd w:val="pct10" w:color="auto" w:fill="auto"/><w:vAlign w:val="center"/></w:tcPr>` +
+  `<w:p><w:pPr><w:jc w:val="center"/><w:rPr><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr></w:pPr>` +
+  `<w:r><w:rPr><w:b/><w:sz w:val="18"/><w:szCs w:val="18"/><w:lang w:val="el-GR"/></w:rPr>` +
+  `<w:t>ΔΗΜΟΣΙΕΥΣΕΙΣ</w:t></w:r></w:p>` +
+  `</w:tc></w:tr></w:tbl>`;
+
+const pubDataTable =
+  `<w:tbl>${tblProps}` +
+  `<w:tr w:rsidR="00PUB002" w14:paraId="PUB00002" w14:textId="77777777">` +
+  `<w:trPr><w:cantSplit/></w:trPr>` +
+  `<w:tc><w:tcPr><w:tcW w:w="5000" w:type="pct"/><w:vAlign w:val="center"/></w:tcPr>` +
+  `<w:p><w:pPr><w:spacing w:before="0"/><w:rPr>` +
+  `<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/>` +
+  `<w:sz w:val="20"/><w:szCs w:val="20"/><w:lang w:val="el-GR"/></w:rPr></w:pPr>` +
+  `<w:r><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/>` +
+  `<w:sz w:val="20"/><w:szCs w:val="20"/><w:lang w:val="el-GR"/></w:rPr>` +
+  `<w:t>{#publicationRows}{publicationText}{/publicationRows}</w:t></w:r>` +
+  `</w:p></w:tc></w:tr></w:tbl>`;
+
+const emptyPara = `<w:p><w:pPr><w:rPr><w:sz w:val="18"/><w:szCs w:val="18"/><w:lang w:val="el-GR"/></w:rPr></w:pPr></w:p>`;
+const pubSection =
+  `<w:p><w:r><w:t>{#hasPublications}</w:t></w:r></w:p>` +
+  pubHeaderTable + emptyPara + pubDataTable +
+  `<w:p><w:r><w:t>{/hasPublications}</w:t></w:r></w:p>`;
+
+const sectPrPos = xml.lastIndexOf('<w:sectPr');
+if (sectPrPos === -1) throw new Error('Could not find body-level <w:sectPr>');
+xml = xml.substring(0, sectPrPos) + pubSection + xml.substring(sectPrPos);
+
+// ──────────────────────────────────────────────────────────────────────────────
+// 8. Save the modified template
 // ──────────────────────────────────────────────────────────────────────────────
 zip.file('word/document.xml', xml);
 const output = zip.generate({ type: 'nodebuffer', compression: 'DEFLATE' });
@@ -202,9 +255,14 @@ console.log(`Sizes — original: ${origSize} B  →  placeholders: ${(output as 
 const checkZip = new (PizZip as any)(output.toString('binary'));
 const checkXml: string = checkZip.files['word/document.xml'].asText();
 const check = (tag: string) => checkXml.includes(tag) ? '✓' : '✗ MISSING';
-console.log(`{#educationRows}  ${check('{#educationRows}')}`);
-console.log(`{/educationRows}  ${check('{/educationRows}')}`);
-console.log(`{#experienceRows} ${check('{#experienceRows}')}`);
-console.log(`{/experienceRows} ${check('{/experienceRows}')}`);
-console.log(`{employerName}    ${check('{employerName}')}`);
-console.log(`ΕΠΑΓΓΕΛΜΑΤΙΚΗ (standalone table) ${check('ΕΠΑΓΓΕΛΜΑΤΙΚΗ ΕΜΠΕΙΡΙΑ')}`);
+console.log(`{#educationRows}     ${check('{#educationRows}')}`);
+console.log(`{/educationRows}     ${check('{/educationRows}')}`);
+console.log(`{#experienceRows}    ${check('{#experienceRows}')}`);
+console.log(`{/experienceRows}    ${check('{/experienceRows}')}`);
+console.log(`{employerName}       ${check('{employerName}')}`);
+console.log(`ΕΠΑΓΓΕΛΜΑΤΙΚΗ        ${check('ΕΠΑΓΓΕΛΜΑΤΙΚΗ ΕΜΠΕΙΡΙΑ')}`);
+console.log(`{#hasPublications}   ${check('{#hasPublications}')}`);
+console.log(`{/hasPublications}   ${check('{/hasPublications}')}`);
+console.log(`{#publicationRows}   ${check('{#publicationRows}')}`);
+console.log(`{/publicationRows}   ${check('{/publicationRows}')}`);
+console.log(`ΔΗΜΟΣΙΕΥΣΕΙΣ         ${check('ΔΗΜΟΣΙΕΥΣΕΙΣ')}`);

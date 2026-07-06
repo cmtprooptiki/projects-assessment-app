@@ -4,7 +4,7 @@ const Docxtemplater = require('docxtemplater');
 const PizZip = require('pizzip');
 import fs from 'fs';
 import path from 'path';
-import { Education, Employee, EmployeeHistoryProject, Language, ProjectParticipation, Project, Role } from '../models';
+import { Education, Employee, EmployeeHistoryProject, EmployeePublication, Language, ProjectParticipation, Project, Role } from '../models';
 
 // Works for both ts-node (src/services) and compiled (dist/services) because
 // the templates/ folder lives two levels up from either location.
@@ -32,7 +32,7 @@ export async function generateCVBuffer(employeeId: number): Promise<Buffer> {
 
   if (!employee) throw new Error('Employee not found');
 
-  const [participations, historyProjects] = await Promise.all([
+  const [participations, historyProjects, publications] = await Promise.all([
     (ProjectParticipation.findAll({
       where: { employeeId },
       include: [
@@ -44,6 +44,10 @@ export async function generateCVBuffer(employeeId: number): Promise<Buffer> {
     EmployeeHistoryProject.findAll({
       where: { employeeId },
       order: [['startDate', 'DESC']],
+    }),
+    EmployeePublication.findAll({
+      where: { employeeId },
+      order: [['createdAt', 'ASC']],
     }),
   ]);
 
@@ -87,6 +91,8 @@ export async function generateCVBuffer(employeeId: number): Promise<Buffer> {
     .sort((a, b) => b.startDate.localeCompare(a.startDate))
     .map(({ startDate: _s, ...rest }) => rest);
 
+  const publicationRows = publications.map((pub) => ({ publicationText: pub.text }));
+
   const data = {
     // Personal info
     lastName:     employee.lastName   ?? '',
@@ -101,6 +107,8 @@ export async function generateCVBuffer(employeeId: number): Promise<Buffer> {
     // Repeating sections
     educationRows,
     experienceRows,
+    hasPublications: publications.length > 0,
+    publicationRows,
   };
 
   if (!fs.existsSync(TEMPLATE_PATH)) {
