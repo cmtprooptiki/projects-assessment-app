@@ -6,11 +6,13 @@ import fs from 'fs';
 import path from 'path';
 import { Education, Employee, EmployeeHistoryProject, EmployeePublication, Language, ProjectParticipation, Project, Role } from '../models';
 
+// classic → original corporate template (CV export page)
+// navy / indigo / teal → job-application CV templates (employee table download)
 const TEMPLATE_PATHS: Record<string, string> = {
   classic: path.resolve(__dirname, '../../templates/cv_template_placeholders.docx'),
-  navy:    path.resolve(__dirname, '../../templates/cv_modern_navy_placeholders.docx'),
-  indigo:  path.resolve(__dirname, '../../templates/cv_modern_indigo_placeholders.docx'),
-  teal:    path.resolve(__dirname, '../../templates/cv_modern_teal_placeholders.docx'),
+  navy:    path.resolve(__dirname, '../../templates/cv_job_navy_placeholders.docx'),
+  indigo:  path.resolve(__dirname, '../../templates/cv_job_indigo_placeholders.docx'),
+  teal:    path.resolve(__dirname, '../../templates/cv_job_teal_placeholders.docx'),
 };
 
 function fmtFull(s?: string | null): string {
@@ -54,7 +56,7 @@ export async function generateCVBuffer(employeeId: number, template = 'classic')
     }),
   ]);
 
-  // Education rows: combine formal education + language certificates
+  // ── educationRows (classic template): formal education merged with language certs
   const educationRows = [
     ...(employee.education ?? []).map((edu) => {
       const parts = [edu.institutionName, edu.schoolName, edu.departmentName].filter(Boolean);
@@ -73,7 +75,25 @@ export async function generateCVBuffer(employeeId: number, template = 'classic')
     })),
   ];
 
-  // Experience rows: current project participations + history projects, sorted by startDate DESC
+  // ── educationOnlyRows (job CV templates): formal education without language certs
+  const educationOnlyRows = (employee.education ?? []).map((edu) => {
+    const parts = [edu.institutionName, edu.schoolName, edu.departmentName].filter(Boolean);
+    return {
+      institutionFull: parts.join(' – '),
+      degreeTitle:     edu.degreeTitle ?? '',
+      specialization:  edu.specialization ?? '',
+      dateAwarded:     fmtMY(edu.dateAwarded),
+    };
+  });
+
+  // ── languageRows (job CV templates)
+  const languageRows = (employee.languages ?? []).map((lang) => ({
+    language:     lang.language,
+    degreeTitle:  lang.degreeTitle ?? '',
+    level:        lang.level ?? '',
+  }));
+
+  // ── Experience: participations + history projects sorted by startDate DESC
   const participationRows = participations.map((pp) => ({
     startDate:    pp.startDate,
     projectText:  pp.project?.name || '—',
@@ -98,17 +118,22 @@ export async function generateCVBuffer(employeeId: number, template = 'classic')
 
   const data = {
     // Personal info
-    lastName:     employee.lastName   ?? '',
-    firstName:    employee.firstName  ?? '',
-    fatherName:   employee.fatherName ?? '',
-    motherName:   employee.motherName ?? '',
+    lastName:     employee.lastName    ?? '',
+    firstName:    employee.firstName   ?? '',
+    fatherName:   employee.fatherName  ?? '',
+    motherName:   employee.motherName  ?? '',
     dateOfBirth:  fmtFull(employee.dateOfBirth),
     placeOfBirth: employee.placeOfBirth ?? '',
-    phone:        employee.phone      ?? '',
-    email:        employee.email      ?? '',
+    phone:        employee.phone       ?? '',
+    email:        employee.email       ?? '',
     homeAddress:  employee.homeAddress ?? '',
-    // Repeating sections
+    // Classic template sections (education + languages merged)
     educationRows,
+    // Job CV template sections (separated)
+    educationOnlyRows,
+    languageRows,
+    hasLanguages: languageRows.length > 0,
+    // Shared
     experienceRows,
     hasPublications: publications.length > 0,
     publicationRows,
