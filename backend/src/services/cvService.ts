@@ -4,6 +4,44 @@ const Docxtemplater = require('docxtemplater');
 const PizZip = require('pizzip');
 import fs from 'fs';
 import path from 'path';
+
+// ── Job CV templates embed photos at render-time ──────────────────────────────
+const JOB_TEMPLATES = new Set(['navy', 'indigo', 'teal']);
+const PHOTO_RID      = 'rId_employee_photo';
+const IMG_REL_TYPE   = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/image';
+
+function injectPhoto(zip: typeof PizZip, photoFilePath: string): void {
+  const ext  = path.extname(photoFilePath).toLowerCase().replace('.', '');
+  const mime = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
+  const mediaName = `employee_photo.${ext}`;
+
+  // 1. Embed the image binary
+  const imgBuf = fs.readFileSync(photoFilePath);
+  zip.file(`word/media/${mediaName}`, imgBuf);
+
+  // 2. Add relationship entry
+  let rels: string = zip.files['word/_rels/document.xml.rels'].asText();
+  rels = rels.replace(
+    '</Relationships>',
+    `<Relationship Id="${PHOTO_RID}" Type="${IMG_REL_TYPE}" Target="media/${mediaName}"/></Relationships>`,
+  );
+  zip.file('word/_rels/document.xml.rels', rels);
+
+  // 3. Add content type if missing
+  let ct: string = zip.files['[Content_Types].xml'].asText();
+  if (!ct.includes(mime)) {
+    const def = `<Default Extension="${ext === 'jpg' ? 'jpeg' : ext}" ContentType="${mime}"/>`;
+    ct = ct.replace('</Types>', `${def}</Types>`);
+    zip.file('[Content_Types].xml', ct);
+  }
+}
+
+function removePhotoDrawing(zip: typeof PizZip): void {
+  let xml: string = zip.files['word/document.xml'].asText();
+  // Remove the entire <w:drawing> element that references the placeholder rId
+  xml = xml.replace(/<w:drawing>(?:(?!<\/w:drawing>)[\s\S])*?rId_employee_photo(?:(?!<\/w:drawing>)[\s\S])*?<\/w:drawing>/g, '');
+  zip.file('word/document.xml', xml);
+}
 import { Education, Employee, EmployeeHistoryProject, EmployeePublication, Language, ProjectParticipation, Project, Role } from '../models';
 
 // classic → original corporate template (CV export page)
@@ -150,5 +188,20 @@ export async function generateCVBuffer(employeeId: number, template = 'classic')
 
   doc.render(data);
 
-  return doc.getZip().generate({ type: 'nodebuffer', compression: 'DEFLATE' }) as Buffer;
+  const renderedZip = doc.getZip() as typeof PizZip;
+
+  // Job-CV templates embed a photo drawing — inject the actual image at runtime
+  if (JOB_TEMPLATES.has(template)) {
+    const photoFilePath = employee.photo
+      ? path.join(process.cwd(), employee.photo)
+      : null;
+
+    if (photoFilePath && fs.existsSync(photoFilePath)) {
+      injectPhoto(renderedZip, photoFilePath);
+    } else {
+      removePhotoDrawing(renderedZip);
+    }
+  }
+
+  return renderedZip.generate({ type: 'nodebuffer', compression: 'DEFLATE' }) as Buffer;
 }

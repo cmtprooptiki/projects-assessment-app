@@ -1,4 +1,4 @@
-// Generates 3 job-application CV templates with distinct layouts.
+// Generates 3 modern job-application CV templates (no experience section).
 // Run: npx ts-node src/scripts/buildJobCVTemplates.ts
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const PizZip = require('pizzip');
@@ -9,16 +9,24 @@ const BASE_DOCX = path.resolve(__dirname, '../../templates/cv_template.docx');
 const OUT_DIR   = path.resolve(__dirname, '../../templates');
 const FONT      = 'Calibri';
 
-// Usable page width: A4 (11906) minus 2×1134 twip margins = 9638 twips
+// A4 with 2cm margins: usable page = 9638 twips
 const PW = 9638;
 
-// ─── Low-level OOXML helpers ──────────────────────────────────────────────────
+// Photo drawing (rId_employee_photo is injected at runtime by cvService)
+// 3.2cm × 4cm portrait:  cx=1152000 EMU, cy=1440000 EMU
+const PHOTO_RID = 'rId_employee_photo';
+const PHOTO_W   = 1152000;   // 3.2 cm in EMU (1 cm = 360000 EMU)
+const PHOTO_H   = 1440000;   // 4.0 cm in EMU
+
+// ─── Core OOXML helpers ──────────────────────────────────────────────────────
 
 function esc(s: string) {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-function rPr(o: { b?: boolean; i?: boolean; col?: string; sz?: number; font?: string; lang?: string }) {
+type RO = { b?: boolean; i?: boolean; col?: string; sz?: number; font?: string; lang?: string };
+
+function rp(o: RO) {
   let s = '';
   if (o.font) s += `<w:rFonts w:ascii="${o.font}" w:hAnsi="${o.font}" w:cs="${o.font}"/>`;
   if (o.b)    s += '<w:b/><w:bCs/>';
@@ -29,15 +37,13 @@ function rPr(o: { b?: boolean; i?: boolean; col?: string; sz?: number; font?: st
   return s ? `<w:rPr>${s}</w:rPr>` : '';
 }
 
-type RunOpts = { b?: boolean; i?: boolean; col?: string; sz?: number; font?: string; lang?: string };
-
-function run(text: string, o: RunOpts = {}): string {
-  return `<w:r>${rPr(o)}<w:t xml:space="preserve">${esc(text)}</w:t></w:r>`;
+function run(text: string, o: RO = {}): string {
+  return `<w:r>${rp(o)}<w:t xml:space="preserve">${esc(text)}</w:t></w:r>`;
 }
 
-type ParaOpts = { align?: string; before?: number; after?: number };
+type PO = { align?: string; before?: number; after?: number };
 
-function para(content: string, o: ParaOpts = {}): string {
+function para(content: string, o: PO = {}): string {
   let pPr = '';
   if (o.align) pPr += `<w:jc w:val="${o.align}"/>`;
   const sp: string[] = [];
@@ -47,441 +53,378 @@ function para(content: string, o: ParaOpts = {}): string {
   return `<w:p>${pPr ? `<w:pPr>${pPr}</w:pPr>` : ''}${content}</w:p>`;
 }
 
-const EP = '<w:p/>';   // empty paragraph placeholder (compact)
-function ep(o: ParaOpts = {}) { return para('', o); }
+const EP = '<w:p><w:pPr><w:spacing w:before="0" w:after="0"/></w:pPr></w:p>';
 
-// No-border shorthand
+// Inline border helpers (return tcBorders XML)
 const NB = '<w:tcBorders><w:top w:val="nil"/><w:left w:val="nil"/><w:bottom w:val="nil"/><w:right w:val="nil"/></w:tcBorders>';
-function allBorder(color: string) {
-  const b = `<w:top w:val="single" w:sz="4" w:color="${color}"/><w:left w:val="single" w:sz="4" w:color="${color}"/><w:bottom w:val="single" w:sz="4" w:color="${color}"/><w:right w:val="single" w:sz="4" w:color="${color}"/>`;
-  return `<w:tcBorders>${b}</w:tcBorders>`;
-}
-function bottomBorder(color: string) {
-  return `<w:tcBorders><w:top w:val="nil"/><w:left w:val="nil"/><w:bottom w:val="single" w:sz="4" w:color="${color}"/><w:right w:val="nil"/></w:tcBorders>`;
-}
-function topBorder(color: string) {
-  return `<w:tcBorders><w:top w:val="single" w:sz="12" w:color="${color}"/><w:left w:val="nil"/><w:bottom w:val="nil"/><w:right w:val="nil"/></w:tcBorders>`;
-}
+function bbot(col: string, sz = 4) { return `<w:tcBorders><w:top w:val="nil"/><w:left w:val="nil"/><w:bottom w:val="single" w:sz="${sz}" w:space="0" w:color="${col}"/><w:right w:val="nil"/></w:tcBorders>`; }
 
-type CellOpts = {
-  w?: number; fill?: string; span?: number; vAlign?: string;
-  borders?: string; pad?: [number, number, number, number]; // T R B L
-};
+type CO = { w?: number; fill?: string; span?: number; vAlign?: string; borders?: string; pad?: [number,number,number,number] };
 
-function cell(content: string, o: CellOpts = ''  as unknown as CellOpts): string {
-  let tcPr = '';
-  if (o.w    != null) tcPr += `<w:tcW w:w="${o.w}" w:type="dxa"/>`;
-  if (o.span && o.span > 1) tcPr += `<w:gridSpan w:val="${o.span}"/>`;
-  if (o.fill)  tcPr += `<w:shd w:val="clear" w:color="auto" w:fill="${o.fill}"/>`;
-  if (o.borders) tcPr += o.borders;
-  if (o.vAlign) tcPr += `<w:vAlign w:val="${o.vAlign}"/>`;
+function cell(content: string, o: CO = {}): string {
+  let p = '';
+  if (o.w    != null) p += `<w:tcW w:w="${o.w}" w:type="dxa"/>`;
+  if (o.span && o.span > 1) p += `<w:gridSpan w:val="${o.span}"/>`;
+  if (o.fill)   p += `<w:shd w:val="clear" w:color="auto" w:fill="${o.fill}"/>`;
+  if (o.borders) p += o.borders;
+  if (o.vAlign)  p += `<w:vAlign w:val="${o.vAlign}"/>`;
   const [pT=60, pR=108, pB=60, pL=108] = o.pad ?? [60, 108, 60, 108];
-  tcPr += `<w:tcMar><w:top w:w="${pT}" w:type="dxa"/><w:left w:w="${pL}" w:type="dxa"/><w:bottom w:w="${pB}" w:type="dxa"/><w:right w:w="${pR}" w:type="dxa"/></w:tcMar>`;
-  return `<w:tc>${tcPr ? `<w:tcPr>${tcPr}</w:tcPr>` : ''}${content}</w:tc>`;
+  p += `<w:tcMar><w:top w:w="${pT}" w:type="dxa"/><w:left w:w="${pL}" w:type="dxa"/><w:bottom w:w="${pB}" w:type="dxa"/><w:right w:w="${pR}" w:type="dxa"/></w:tcMar>`;
+  return `<w:tc><w:tcPr>${p}</w:tcPr>${content}</w:tc>`;
 }
 
-type RowOpts = { h?: number; exact?: boolean };
-
-function trow(cells: string, o: RowOpts = {}): string {
-  const trPr = o.h ? `<w:trPr><w:trHeight w:val="${o.h}"${o.exact ? ' w:hRule="exact"' : ' w:hRule="atLeast"'}/></w:trPr>` : '';
+function trow(cells: string, h?: number): string {
+  const trPr = h ? `<w:trPr><w:trHeight w:val="${h}" w:hRule="atLeast"/></w:trPr>` : '';
   return `<w:tr>${trPr}${cells}</w:tr>`;
 }
 
-type TblOpts = { borders?: 'none' | 'all' | 'innerH'; borderColor?: string };
+type TO = { borders?: 'none' | 'all'; bc?: string };
 
-function tbl(cols: number[], rows: string, o: TblOpts = {}): string {
-  const tw = cols.reduce((a, b) => a + b, 0);
-  const bc = o.borderColor ?? 'C8D0DC';
-  let borders = '';
+function tbl(cols: number[], rows: string, o: TO = {}): string {
+  const w = cols.reduce((a, b) => a + b, 0);
+  const bc = o.bc ?? 'D0D5DD';
+  let bdr = '';
   if (o.borders === 'none') {
-    borders = `<w:tblBorders><w:top w:val="nil"/><w:left w:val="nil"/><w:bottom w:val="nil"/><w:right w:val="nil"/><w:insideH w:val="nil"/><w:insideV w:val="nil"/></w:tblBorders>`;
+    bdr = `<w:tblBorders><w:top w:val="nil"/><w:left w:val="nil"/><w:bottom w:val="nil"/><w:right w:val="nil"/><w:insideH w:val="nil"/><w:insideV w:val="nil"/></w:tblBorders>`;
   } else if (o.borders === 'all') {
-    borders = `<w:tblBorders><w:top w:val="single" w:sz="4" w:color="${bc}"/><w:left w:val="single" w:sz="4" w:color="${bc}"/><w:bottom w:val="single" w:sz="4" w:color="${bc}"/><w:right w:val="single" w:sz="4" w:color="${bc}"/><w:insideH w:val="single" w:sz="4" w:color="${bc}"/><w:insideV w:val="single" w:sz="4" w:color="${bc}"/></w:tblBorders>`;
-  } else if (o.borders === 'innerH') {
-    borders = `<w:tblBorders><w:top w:val="nil"/><w:left w:val="nil"/><w:bottom w:val="nil"/><w:right w:val="nil"/><w:insideH w:val="single" w:sz="4" w:color="${bc}"/><w:insideV w:val="nil"/></w:tblBorders>`;
+    bdr = `<w:tblBorders><w:top w:val="single" w:sz="4" w:color="${bc}"/><w:left w:val="single" w:sz="4" w:color="${bc}"/><w:bottom w:val="single" w:sz="4" w:color="${bc}"/><w:right w:val="single" w:sz="4" w:color="${bc}"/><w:insideH w:val="single" w:sz="4" w:color="${bc}"/><w:insideV w:val="single" w:sz="4" w:color="${bc}"/></w:tblBorders>`;
   }
-  const grid = cols.map(w => `<w:gridCol w:w="${w}"/>`).join('');
-  return `<w:tbl><w:tblPr><w:tblW w:w="${tw}" w:type="dxa"/>${borders}<w:tblLook w:val="04A0"/></w:tblPr><w:tblGrid>${grid}</w:tblGrid>${rows}</w:tbl>`;
+  const grid = cols.map(c => `<w:gridCol w:w="${c}"/>`).join('');
+  return `<w:tbl><w:tblPr><w:tblW w:w="${w}" w:type="dxa"/>${bdr}<w:tblLook w:val="04A0"/></w:tblPr><w:tblGrid>${grid}</w:tblGrid>${rows}</w:tbl>`;
 }
 
-// Conditional tag paragraph (paragraphLoop paragraph-level conditional)
+// Invisible conditional tag (consumed by docxtemplater, leaves no visible output)
 function cond(tag: string): string {
-  return para(run(tag, { sz: 2, col: 'FFFFFF', font: FONT }), { before: 0, after: 0 });
+  return `<w:p><w:pPr><w:spacing w:before="0" w:after="0"/></w:pPr><w:r><w:rPr><w:color w:val="FFFFFF"/><w:sz w:val="2"/><w:szCs w:val="2"/></w:rPr><w:t>${tag}</w:t></w:r></w:p>`;
 }
 
-// Document wrapper with full A4 sectPr
+// Paragraph with bottom border = section title underline
+function titleRule(text: string, col: string, sz = 26, before = 180, after = 80): string {
+  return `<w:p><w:pPr><w:pBdr><w:bottom w:val="single" w:sz="6" w:space="1" w:color="${col}"/></w:pBdr><w:spacing w:before="${before}" w:after="${after}"/></w:pPr><w:r>${rp({b:true, col, sz, font:FONT, lang:'el-GR'})}<w:t xml:space="preserve">${esc(text)}</w:t></w:r></w:p>`;
+}
+
+// Paragraph with thick left border = section accent bar
+function titleBar(text: string, col: string, sz = 26, before = 180, after = 80): string {
+  return `<w:p><w:pPr><w:pBdr><w:left w:val="single" w:sz="28" w:space="8" w:color="${col}"/></w:pBdr><w:ind w:left="220"/><w:spacing w:before="${before}" w:after="${after}"/></w:pPr><w:r>${rp({b:true, col, sz, font:FONT, lang:'el-GR'})}<w:t xml:space="preserve">${esc(text)}</w:t></w:r></w:p>`;
+}
+
+// Photo drawing XML (rId injected at render time by cvService)
+function photoDraw(w = PHOTO_W, h = PHOTO_H): string {
+  return `<w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${w}" cy="${h}"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:docPr id="1" name="EmployeePhoto"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="0" name="EmployeePhoto"/><pic:cNvPicPr><a:picLocks noChangeAspect="1"/></pic:cNvPicPr></pic:nvPicPr><pic:blipFill><a:blip r:embed="${PHOTO_RID}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${w}" cy="${h}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing>`;
+}
+
+// Photo cell paragraph
+function photoP(align = 'center', w = PHOTO_W, h = PHOTO_H): string {
+  return `<w:p><w:pPr><w:jc w:val="${align}"/><w:spacing w:before="0" w:after="0"/></w:pPr><w:r><w:rPr/>${photoDraw(w, h)}</w:r></w:p>`;
+}
+
+// Document wrapper with A4 sectPr + full namespace set
 function doc(body: string): string {
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <w:document xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas" xmlns:cx="http://schemas.microsoft.com/office/drawing/2014/chartex" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:aink="http://schemas.microsoft.com/office/drawing/2016/ink" xmlns:am3d="http://schemas.microsoft.com/office/drawing/2017/model3d" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:oel="http://schemas.microsoft.com/office/2019/extlst" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:wp14="http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:w10="urn:schemas-microsoft-com:office:word" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml" xmlns:w15="http://schemas.microsoft.com/office/word/2012/wordml" xmlns:w16cex="http://schemas.microsoft.com/office/word/2018/wordml/cex" xmlns:w16cid="http://schemas.microsoft.com/office/word/2016/wordml/cid" xmlns:w16="http://schemas.microsoft.com/office/word/2018/wordml" xmlns:w16sdtdh="http://schemas.microsoft.com/office/word/2020/wordml/sdtdatahash" xmlns:w16se="http://schemas.microsoft.com/office/word/2015/wordml/symex" xmlns:wpg="http://schemas.microsoft.com/office/word/2010/wordprocessingGroup" xmlns:wpi="http://schemas.microsoft.com/office/word/2010/wordprocessingInk" xmlns:wne="http://schemas.microsoft.com/office/word/2006/wordml" xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape" mc:Ignorable="w14 w15 w16se w16cid w16 w16cex w16sdtdh wp14">
 <w:body>${body}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="709" w:footer="709" w:gutter="0"/></w:sectPr></w:body></w:document>`;
 }
 
-// ─── Reusable section building ────────────────────────────────────────────────
+// ─── Data table helpers ──────────────────────────────────────────────────────
 
-// A section header row spanning all columns (colored bg, white bold text)
-function sectionHeaderRow(text: string, cols: number[], fill: string): string {
-  const totalW = cols.reduce((a, b) => a + b, 0);
-  return trow(
-    cell(
-      para(run(text, { b: true, col: 'FFFFFF', sz: 20, font: FONT, lang: 'el-GR' }), { before: 80, after: 80 }),
-      { w: totalW, span: cols.length, fill, borders: NB, vAlign: 'center', pad: [60, 160, 60, 160] },
-    ),
-    { h: 440 },
-  );
+const ROW_BORDER = 'E8ECF0'; // subtle row separator color
+
+function colHeaderRow(headers: string[], cols: number[], col: string): string {
+  const B = bbot(col, 8); // thick bottom border under headers
+  return trow(headers.map((h, i) =>
+    cell(para(run(h, {b: true, sz: 18, col, font: FONT, lang: 'el-GR'}), {before: 60, after: 60}), {w: cols[i], borders: B})
+  ).join(''));
 }
 
-// A column-header row with a light tint
-function colHeaderRow(headers: string[], cols: number[], fill: string): string {
-  return trow(
-    headers.map((h, i) =>
-      cell(
-        para(run(h, { b: true, sz: 16, font: FONT, lang: 'el-GR' }), { before: 50, after: 50 }),
-        { w: cols[i], fill, borders: NB },
-      ),
-    ).join(''),
-  );
-}
-
-// A data-row template with {#loop}...{/loop} tags
-function dataRow(loopName: string, phs: string[], cols: number[], sz = 16): string {
+function dataRow(loopName: string, phs: string[], cols: number[]): string {
+  const B = bbot(ROW_BORDER);
   const cells = phs.map((ph, i) => {
     let text = ph;
     if (i === 0)              text = `{#${loopName}}${ph}`;
     if (i === phs.length - 1) text = `${ph}{/${loopName}}`;
-    return cell(
-      para(run(text, { sz, font: FONT, lang: 'el-GR' }), { before: 50, after: 50 }),
-      { w: cols[i], borders: NB },
-    );
+    return cell(para(run(text, {sz: 20, font: FONT, lang: 'el-GR', col: '2D3748'}), {before: 70, after: 70}), {w: cols[i], borders: B});
   }).join('');
   return trow(cells);
 }
 
-// ─── LAYOUT 1 · Classic Professional (Navy) ───────────────────────────────────
-//  • Centered full-width colored banner
-//  • Grid-based personal info (4 columns)
-//  • Bordered tables with column sub-headers
+// ─── Layout 1: CONTEMPORARY ──────────────────────────────────────────────────
+//  Photo (left) | Name / Contact (right) header
+//  Section titles: bold colored text with colored bottom rule
+//  Data: no table borders, subtle gray horizontal row separators
 // ─────────────────────────────────────────────────────────────────────────────
-function buildClassic(hc: string, ct: string): string {
-  // Column layouts
-  const EDU  = [3300, 2350, 2350, 1638];    // education 4-col
-  const EXP  = [3100, 2200, 2700, 1638];    // experience 4-col
-  const LANG = [3200, 3200, 3238];           // languages 3-col
-  const PERS = [1460, 3359, 1460, 3359];    // personal info 4-col
+function buildContemporary(hc: string): string {
+  // Photo cell: ~3.3cm wide
+  const PCW = 1870;               // photo cell width in twips (~3.3 cm)
+  const ICW = PW - PCW;           // info cell
 
-  // Header banner
-  const banner = tbl([PW],
+  // Header table: photo | info
+  const infoContent =
+    para(run('{firstName} {lastName}', {b: true, col: hc, sz: 52, font: FONT}), {before: 100, after: 30}) +
+    para(run('ΒΙΟΓΡΑΦΙΚΟ ΣΗΜΕΙΩΜΑ', {i: true, col: '888888', sz: 16, font: FONT}), {before: 0, after: 60}) +
+    para(
+      run('{email}', {col: '444444', sz: 18, font: FONT}) +
+      run('   ·   ', {col: 'AAAAAA', sz: 18, font: FONT}) +
+      run('{phone}', {col: '444444', sz: 18, font: FONT}),
+      {before: 0, after: 20},
+    ) +
+    para(run('{homeAddress}', {col: '666666', sz: 18, font: FONT}), {before: 0, after: 20}) +
+    para(
+      run('{dateOfBirth}', {col: '888888', sz: 16, font: FONT}) +
+      run('   ·   ', {col: 'CCCCCC', sz: 16, font: FONT}) +
+      run('{placeOfBirth}', {col: '888888', sz: 16, font: FONT}),
+      {before: 0, after: 20},
+    ) +
+    para(
+      run('Πατρώνυμο: ', {b: true, col: '777777', sz: 16, font: FONT}) +
+      run('{fatherName}', {col: '555555', sz: 16, font: FONT}) +
+      run('   Μητρώνυμο: ', {b: true, col: '777777', sz: 16, font: FONT}) +
+      run('{motherName}', {col: '555555', sz: 16, font: FONT}),
+      {before: 0, after: 100},
+    );
+
+  const headerTbl = tbl([PCW, ICW],
     trow(
-      cell(
-        para(run('{firstName} {lastName}', { b: true, col: 'FFFFFF', sz: 48, font: FONT }), { align: 'center', before: 200, after: 60 }) +
-        para(run('ΒΙΟΓΡΑΦΙΚΟ ΣΗΜΕΙΩΜΑ', { col: 'B8C8E8', sz: 18, font: FONT }), { align: 'center', before: 0, after: 200 }),
-        { w: PW, fill: hc, borders: NB, vAlign: 'center' },
-      ),
-      { h: 1600 },
+      cell(photoP('center'), {w: PCW, borders: NB, vAlign: 'center', pad: [0, 120, 0, 0]}) +
+      cell(infoContent,      {w: ICW, borders: NB, vAlign: 'center', pad: [80, 0, 60, 120]}),
+      1700,
     ),
-    { borders: 'none' },
-  );
-
-  // Personal info
-  const L = PERS[0], V = PERS[1];
-  const lbl = (t: string) => para(run(t + ':', { b: true, sz: 18, font: FONT }), { before: 60, after: 60 });
-  const val = (ph: string) => para(run(ph, { sz: 18, font: FONT }), { before: 60, after: 60 });
-
-  const personalTable = tbl(PERS,
-    trow(cell(lbl('Επώνυμο'), { w: L, borders: NB }) + cell(val('{lastName}'),   { w: V, borders: NB }) + cell(lbl('Όνομα'),     { w: L, borders: NB }) + cell(val('{firstName}'),  { w: V, borders: NB })) +
-    trow(cell(lbl('Πατρώνυμο'),   { w: L, borders: NB }) + cell(val('{fatherName}'),  { w: V, borders: NB }) + cell(lbl('Μητρώνυμο'),  { w: L, borders: NB }) + cell(val('{motherName}'),  { w: V, borders: NB })) +
-    trow(cell(lbl('Ημ. Γέννησης'), { w: L, borders: NB }) + cell(val('{dateOfBirth}'), { w: V, borders: NB }) + cell(lbl('Τόπος Γέν.'),  { w: L, borders: NB }) + cell(val('{placeOfBirth}'), { w: V, borders: NB })) +
-    trow(cell(lbl('Τηλέφωνο'),    { w: L, borders: NB }) + cell(val('{phone}'),       { w: V, borders: NB }) + cell(lbl('Email'),       { w: L, borders: NB }) + cell(val('{email}'),       { w: V, borders: NB })) +
-    trow(cell(lbl('Διεύθυνση'),   { w: L, borders: NB }) + cell(val('{homeAddress}'),  { w: PW - L, span: 3, borders: NB })),
-    { borders: 'none' },
+    {borders: 'none'},
   );
 
   // Education
-  const eduTbl = tbl(EDU,
-    sectionHeaderRow('ΕΚΠΑΙΔΕΥΣΗ', EDU, hc) +
-    colHeaderRow(['Ίδρυμα / Σχολή', 'Τίτλος Πτυχίου', 'Ειδικότητα', 'Ημερομηνία'], EDU, ct) +
-    dataRow('educationOnlyRows', ['{institutionFull}', '{degreeTitle}', '{specialization}', '{dateAwarded}'], EDU),
-    { borders: 'all' },
-  );
-
-  // Experience
-  const expTbl = tbl(EXP,
-    sectionHeaderRow('ΕΠΑΓΓΕΛΜΑΤΙΚΗ ΕΜΠΕΙΡΙΑ', EXP, hc) +
-    colHeaderRow(['Έργο / Θέση', 'Εργοδότης', 'Ρόλος', 'Περίοδος'], EXP, ct) +
-    dataRow('experienceRows', ['{projectText}', '{employerName}', '{roleName}', '{period}'], EXP),
-    { borders: 'all' },
+  const EC = [3400, 2400, 2300, 1538];
+  const eduTbl = tbl(EC,
+    colHeaderRow(['Ίδρυμα / Σχολή', 'Τίτλος Πτυχίου', 'Ειδικότητα', 'Ημερομηνία'], EC, hc) +
+    dataRow('educationOnlyRows', ['{institutionFull}', '{degreeTitle}', '{specialization}', '{dateAwarded}'], EC),
+    {borders: 'none'},
   );
 
   // Languages
-  const langTbl = tbl(LANG,
-    sectionHeaderRow('ΓΛΩΣΣΕΣ', LANG, hc) +
-    colHeaderRow(['Γλώσσα', 'Τίτλος / Πιστοποιητικό', 'Επίπεδο'], LANG, ct) +
-    dataRow('languageRows', ['{language}', '{degreeTitle}', '{level}'], LANG),
-    { borders: 'all' },
+  const LC = [3200, 3200, 3238];
+  const langTbl = tbl(LC,
+    colHeaderRow(['Γλώσσα', 'Τίτλος / Πιστοποιητικό', 'Επίπεδο'], LC, hc) +
+    dataRow('languageRows', ['{language}', '{degreeTitle}', '{level}'], LC),
+    {borders: 'none'},
   );
 
   // Publications
   const pubTbl = tbl([PW],
-    sectionHeaderRow('ΔΗΜΟΣΙΕΥΣΕΙΣ', [PW], hc) +
-    trow(cell(para(run('{#publicationRows}{publicationText}{/publicationRows}', { sz: 18, font: FONT }), { before: 60, after: 60 }), { w: PW, borders: NB })),
-    { borders: 'all' },
+    trow(cell(
+      para(run('{#publicationRows}{publicationText}{/publicationRows}', {sz: 20, font: FONT, col: '2D3748'}), {before: 70, after: 70}),
+      {w: PW, borders: bbot(ROW_BORDER)},
+    )),
+    {borders: 'none'},
   );
 
   const body =
-    banner +
-    ep({ before: 100, after: 0 }) +
-    personalTable +
-    ep({ before: 100, after: 0 }) +
+    headerTbl +
+    // Strong colored divider below header
+    `<w:p><w:pPr><w:pBdr><w:bottom w:val="single" w:sz="12" w:space="1" w:color="${hc}"/></w:pBdr><w:spacing w:before="80" w:after="80"/></w:pPr></w:p>` +
+    titleRule('ΕΚΠΑΙΔΕΥΣΗ', hc) +
     eduTbl +
-    ep({ before: 100, after: 0 }) +
-    expTbl +
-    ep({ before: 100, after: 0 }) +
     cond('{#hasLanguages}') +
+    titleRule('ΓΛΩΣΣΕΣ', hc) +
     langTbl +
-    ep({ before: 100, after: 0 }) +
     cond('{/hasLanguages}') +
     cond('{#hasPublications}') +
+    titleRule('ΔΗΜΟΣΙΕΥΣΕΙΣ', hc) +
     pubTbl +
-    ep({ before: 100, after: 0 }) +
     cond('{/hasPublications}');
 
   return doc(body);
 }
 
-// ─── LAYOUT 2 · Two-Column Sidebar (Indigo) ───────────────────────────────────
-//  • Fixed colored left sidebar: name, contact, personal details, languages
-//  • Right content area: education, experience, publications
-//  • Sidebar spans full document height
+// ─── Layout 2: SIDEBAR ───────────────────────────────────────────────────────
+//  Left sidebar (colored): photo, name, contact, personal details, languages
+//  Right column (white): education, publications
+//  The most visually distinctive of the 3 layouts
 // ─────────────────────────────────────────────────────────────────────────────
-function buildSidebar(hc: string, ct: string): string {
-  const SB = 2760;          // sidebar width
-  const MC = PW - SB;       // main content width = 6878
+function buildSidebar(hc: string): string {
+  const SBW = 2900;           // sidebar width in twips
+  const MCW = PW - SBW;      // main content width = 6738
 
-  // Inner table column layouts (relative to MC)
-  const EDU  = [Math.round(MC * 0.4), Math.round(MC * 0.35), Math.round(MC - Math.round(MC * 0.4) - Math.round(MC * 0.35))]; // 3-col
-  const EXP  = [Math.round(MC * 0.35), Math.round(MC * 0.28), Math.round(MC * 0.2), MC - Math.round(MC * 0.35) - Math.round(MC * 0.28) - Math.round(MC * 0.2)]; // 4-col
-  const LANG_SB = [Math.round(SB * 0.55), SB - Math.round(SB * 0.55)]; // 2-col inside sidebar
+  // Sidebar label / value helpers
+  const slbl = (t: string) => para(run(t, {b: true, col: 'B0BFDF', sz: 16, font: FONT}), {before: 40, after: 10});
+  const sval = (ph: string) => para(run(ph, {col: 'FFFFFF', sz: 18, font: FONT}), {before: 0, after: 40});
+  const ssec = (t: string)  => para(run(t, {b: true, col: 'FFFFFF', sz: 20, font: FONT, lang: 'el-GR'}), {before: 140, after: 50});
 
-  // Sidebar label helper
-  const sl = (t: string) => para(run(t, { b: true, col: 'C8D4F0', sz: 16, font: FONT }), { before: 40, after: 20 });
-  const sv = (ph: string) => para(run(ph, { col: 'FFFFFF', sz: 18, font: FONT }), { before: 0, after: 40 });
-  const sh = (t: string)  => para(run(t, { b: true, col: 'FFFFFF', sz: 18, font: FONT }), { before: 120, after: 40 });
-
-  // Left sidebar content (inner table of labels/values)
-  const sbInfo = tbl([SB],
-    // Name block
+  // Language loop inside sidebar (2-col nested)
+  const LSBW = [SBW - 1, 1];   // single-column trick: full width minus padding
+  const sbLang = tbl([SBW - 320],
     trow(cell(
-      para(run('{firstName} {lastName}', { b: true, col: 'FFFFFF', sz: 36, font: FONT }), { before: 160, after: 60 }) +
-      para(run('ΒΙΟΓΡΑΦΙΚΟ ΣΗΜΕΙΩΜΑ', { col: 'B0BFDF', sz: 16, font: FONT }), { before: 0, after: 160 }),
-      { w: SB, fill: hc, borders: NB, pad: [0, 160, 0, 160] },
-    )) +
-    // Contact section header
-    trow(cell(sh('ΕΠΙΚΟΙΝΩΝΙΑ') + sl('Τηλέφωνο') + sv('{phone}') + sl('Email') + sv('{email}') + sl('Διεύθυνση') + sv('{homeAddress}'),
-      { w: SB, fill: hc, borders: NB, pad: [0, 160, 0, 160] })) +
-    // Personal details header
-    trow(cell(sh('ΠΡΟΣΩΠΙΚΑ ΣΤΟΙΧΕΙΑ') + sl('Πατρώνυμο') + sv('{fatherName}') + sl('Μητρώνυμο') + sv('{motherName}') + sl('Ημ. Γέννησης') + sv('{dateOfBirth}') + sl('Τόπος Γέν.') + sv('{placeOfBirth}'),
-      { w: SB, fill: hc, borders: NB, pad: [0, 160, 0, 160] })),
-    { borders: 'none' },
+      para(run('{#languageRows}{language}', {col: 'FFFFFF', sz: 18, font: FONT}), {before: 40, after: 10}) +
+      para(run('{degreeTitle}', {col: 'B0BFDF', sz: 16, font: FONT}), {before: 0, after: 5}) +
+      para(run('{level}{/languageRows}', {i: true, col: 'A0AEC0', sz: 16, font: FONT}), {before: 0, after: 30}),
+      {w: SBW - 320, borders: NB, pad: [0, 0, 0, 0]},
+    )),
+    {borders: 'none'},
+  );
+  void LSBW; // suppress unused warning
+
+  const sidebarBody =
+    // Photo
+    para(run('', {}), {before: 0, after: 0}) +  // anchor
+    photoP('center', 900000, 1080000) +          // 2.5cm × 3cm for sidebar
+    EP +
+    // Name
+    para(run('{firstName} {lastName}', {b: true, col: 'FFFFFF', sz: 38, font: FONT}), {align: 'center', before: 100, after: 20}) +
+    para(run('ΒΙΟΓΡΑΦΙΚΟ ΣΗΜΕΙΩΜΑ', {col: 'B0BFDF', sz: 14, i: true, font: FONT}), {align: 'center', before: 0, after: 60}) +
+    // Contact
+    ssec('ΕΠΙΚΟΙΝΩΝΙΑ') +
+    slbl('Email') + sval('{email}') +
+    slbl('Τηλέφωνο') + sval('{phone}') +
+    slbl('Διεύθυνση') + sval('{homeAddress}') +
+    // Personal
+    ssec('ΠΡΟΣΩΠΙΚΑ') +
+    slbl('Ημ. Γέννησης') + sval('{dateOfBirth}') +
+    slbl('Τόπος Γέν.') + sval('{placeOfBirth}') +
+    slbl('Πατρώνυμο') + sval('{fatherName}') +
+    slbl('Μητρώνυμο') + sval('{motherName}') +
+    // Languages
+    cond('{#hasLanguages}') +
+    ssec('ΓΛΩΣΣΕΣ') +
+    sbLang +
+    cond('{/hasLanguages}');
+
+  // Main content: education
+  const EC = [Math.round(MCW * 0.38), Math.round(MCW * 0.35), MCW - Math.round(MCW * 0.38) - Math.round(MCW * 0.35)];
+  const eduTbl = tbl(EC,
+    colHeaderRow(['Ίδρυμα / Σχολή', 'Τίτλος Πτυχίου', 'Ειδικότητα & Ημ/νία'], EC, hc) +
+    dataRow('educationOnlyRows', ['{institutionFull}', '{degreeTitle}', '{specialization} {dateAwarded}'], EC),
+    {borders: 'none'},
   );
 
-  // Languages inside sidebar (nested 2-col table with loop)
-  const sbLangTbl = tbl(LANG_SB,
-    // Header row (full span)
-    trow(cell(para(run('ΓΛΩΣΣΕΣ', { b: true, col: 'FFFFFF', sz: 18, font: FONT }), { before: 80, after: 80 }),
-      { w: SB, span: 2, fill: hc, borders: NB, pad: [40, 160, 40, 160] })) +
-    // Column headers
-    trow(
-      cell(para(run('Γλώσσα', { b: true, col: 'B0BFDF', sz: 16, font: FONT }), { before: 30, after: 30 }), { w: LANG_SB[0], fill: hc, borders: NB, pad: [0, 80, 0, 160] }) +
-      cell(para(run('Επίπεδο', { b: true, col: 'B0BFDF', sz: 16, font: FONT }), { before: 30, after: 30 }), { w: LANG_SB[1], fill: hc, borders: NB, pad: [0, 80, 0, 80] }),
-    ) +
-    // Data rows
-    trow(
-      cell(para(run('{#languageRows}{language}', { col: 'FFFFFF', sz: 16, font: FONT }), { before: 40, after: 40 }), { w: LANG_SB[0], fill: hc, borders: NB, pad: [0, 80, 0, 160] }) +
-      cell(para(run('{level}{/languageRows}', { col: 'FFFFFF', sz: 16, font: FONT }), { before: 40, after: 40 }), { w: LANG_SB[1], fill: hc, borders: NB, pad: [0, 80, 0, 80] }),
-    ),
-    { borders: 'none' },
+  const pubTbl = tbl([MCW],
+    trow(cell(
+      para(run('{#publicationRows}{publicationText}{/publicationRows}', {sz: 20, font: FONT, col: '2D3748'}), {before: 70, after: 70}),
+      {w: MCW, borders: bbot(ROW_BORDER)},
+    )),
+    {borders: 'none'},
   );
 
-  // Sidebar column (full height filler at bottom)
-  const sidebarContent = sbInfo + cond('{#hasLanguages}') + ep({ before: 0, after: 0 }) + sbLangTbl + cond('{/hasLanguages}');
-
-  // Right content: education table
-  const eduTbl = tbl(EDU,
-    sectionHeaderRow('ΕΚΠΑΙΔΕΥΣΗ', EDU, hc) +
-    colHeaderRow(['Ίδρυμα / Σχολή', 'Τίτλος Πτυχίου', 'Ειδικότητα'], EDU, ct) +
-    dataRow('educationOnlyRows', ['{institutionFull}', '{degreeTitle}', '{specialization} {dateAwarded}'], EDU),
-    { borders: 'all' },
-  );
-
-  // Right content: experience table
-  const expTbl = tbl(EXP,
-    sectionHeaderRow('ΕΠΑΓΓΕΛΜΑΤΙΚΗ ΕΜΠΕΙΡΙΑ', EXP, hc) +
-    colHeaderRow(['Έργο / Θέση', 'Εργοδότης', 'Ρόλος', 'Περίοδος'], EXP, ct) +
-    dataRow('experienceRows', ['{projectText}', '{employerName}', '{roleName}', '{period}'], EXP),
-    { borders: 'all' },
-  );
-
-  // Right content: publications
-  const pubTbl = tbl([MC],
-    sectionHeaderRow('ΔΗΜΟΣΙΕΥΣΕΙΣ', [MC], hc) +
-    trow(cell(para(run('{#publicationRows}{publicationText}{/publicationRows}', { sz: 18, font: FONT }), { before: 60, after: 60 }), { w: MC, borders: NB })),
-    { borders: 'all' },
-  );
-
-  const mainContent =
+  const mainBody =
+    titleRule('ΕΚΠΑΙΔΕΥΣΗ', hc, 24, 100, 80) +
     eduTbl +
-    ep({ before: 80, after: 0 }) +
-    expTbl +
-    ep({ before: 80, after: 0 }) +
     cond('{#hasPublications}') +
+    titleRule('ΔΗΜΟΣΙΕΥΣΕΙΣ', hc, 24, 160, 80) +
     pubTbl +
-    ep({ before: 80, after: 0 }) +
     cond('{/hasPublications}');
 
-  // Outer 2-column table
-  const outer = tbl([SB, MC],
+  // Outer 2-column table (the whole page)
+  const outer = tbl([SBW, MCW],
     trow(
-      cell(sidebarContent, { w: SB, fill: hc, borders: NB, vAlign: 'top', pad: [0, 0, 0, 0] }) +
-      cell(mainContent,    { w: MC, borders: NB, vAlign: 'top', pad: [0, 108, 0, 160] }),
+      cell(sidebarBody, {w: SBW, fill: hc, borders: NB, vAlign: 'top', pad: [160, 200, 200, 200]}) +
+      cell(mainBody,    {w: MCW, borders: NB, vAlign: 'top', pad: [160, 0, 160, 200]}),
     ),
-    { borders: 'none' },
+    {borders: 'none'},
   );
 
   return doc(outer);
 }
 
-// ─── LAYOUT 3 · Clean Minimal (Teal) ──────────────────────────────────────────
-//  • Split header row: large name (left) | contact info (right)
-//  • No table borders — sections separated by colored top-accent rule
-//  • Compact personal info strip
-//  • Borderless data tables with subtle inner-H lines
+// ─── Layout 3: BOLD HEADER ───────────────────────────────────────────────────
+//  Full-width colored banner: large name (left) + photo (right)
+//  Light personal info strip below header
+//  Section titles with thick left accent bar
+//  Borderless data, generous spacing
 // ─────────────────────────────────────────────────────────────────────────────
-function buildClean(hc: string, _ct: string): string {
-  // Column layouts (no borders — inner-H only)
-  const EDU  = [3300, 2350, 2350, 1638];
-  const EXP  = [3100, 2200, 2700, 1638];
-  const LANG = [3200, 3200, 3238];
+function buildBoldHeader(hc: string, lt: string /* light tint */): string {
+  const NLEFT = Math.round(PW * 0.62);   // name area in header
+  const PRIGHT = PW - NLEFT;            // photo area in header
 
-  const HW = Math.round(PW * 0.55);  // header name cell width
-  const CW = PW - HW;                // header contact cell width
+  // Big colored header: name left + photo right
+  const nameContent =
+    para(run('{firstName}', {b: true, col: 'FFFFFF', sz: 64, font: FONT}), {before: 160, after: 0}) +
+    para(run('{lastName}',  {b: true, col: 'FFFFFF', sz: 64, font: FONT}), {before: 0,   after: 30}) +
+    para(run('ΒΙΟΓΡΑΦΙΚΟ ΣΗΜΕΙΩΜΑ', {col: 'A8C4CA', sz: 16, i: true, font: FONT}), {before: 0, after: 30}) +
+    para(
+      run('{email}', {col: 'D0E8EC', sz: 18, font: FONT}) +
+      run('   ·   ', {col: '6AACB6', sz: 18, font: FONT}) +
+      run('{phone}', {col: 'D0E8EC', sz: 18, font: FONT}),
+      {before: 0, after: 160},
+    );
 
-  // Header: 2-column table — name left | contact right
-  const headerTbl = tbl([HW, CW],
+  const headerTbl = tbl([NLEFT, PRIGHT],
     trow(
-      cell(
-        para(run('{firstName} {lastName}', { b: true, col: hc, sz: 52, font: FONT }), { before: 80, after: 20 }) +
-        para(run('ΒΙΟΓΡΑΦΙΚΟ ΣΗΜΕΙΩΜΑ', { col: '888888', sz: 16, i: true, font: FONT }), { before: 0, after: 80 }),
-        { w: HW, borders: NB, vAlign: 'bottom' },
-      ) +
-      cell(
-        para(run('{email}', { col: '444444', sz: 16, font: FONT }), { align: 'right', before: 80, after: 30 }) +
-        para(run('{phone}', { col: '444444', sz: 16, font: FONT }), { align: 'right', before: 0, after: 30 }) +
-        para(run('{homeAddress}', { col: '888888', sz: 14, font: FONT }), { align: 'right', before: 0, after: 80 }),
-        { w: CW, borders: NB, vAlign: 'bottom' },
+      cell(nameContent, {w: NLEFT,  fill: hc, borders: NB, vAlign: 'center', pad: [0, 160, 0, 160]}) +
+      cell(photoP('right', PHOTO_W, PHOTO_H), {w: PRIGHT, fill: hc, borders: NB, vAlign: 'center', pad: [100, 100, 100, 80]}),
+    ),
+    {borders: 'none'},
+  );
+
+  // Personal info strip (light tint background)
+  const PAD = [60, 160, 60, 160] as [number,number,number,number];
+  const pinfo = (lbl: string, ph: string) =>
+    cell(
+      para(run(lbl + ': ', {b: true, col: '444444', sz: 16, font: FONT}) + run(ph, {col: '222222', sz: 16, font: FONT}), {before: 50, after: 50}),
+      {w: Math.round(PW / 2), fill: lt, borders: NB, pad: PAD},
+    );
+
+  const infoStrip = tbl([Math.round(PW / 2), Math.round(PW / 2)],
+    trow(pinfo('Ημ. Γέννησης', '{dateOfBirth}') + pinfo('Τόπος Γέννησης', '{placeOfBirth}')) +
+    trow(pinfo('Πατρώνυμο', '{fatherName}') + pinfo('Μητρώνυμο', '{motherName}')) +
+    trow(
+      cell(para(run('Διεύθυνση: ', {b: true, col: '444444', sz: 16, font: FONT}) + run('{homeAddress}', {col: '222222', sz: 16, font: FONT}), {before: 50, after: 50}),
+        {w: PW, span: 2, fill: lt, borders: NB, pad: PAD},
       ),
     ),
-    { borders: 'none' },
+    {borders: 'none'},
   );
 
-  // Colored top-rule divider
-  const divider = tbl([PW],
-    trow(cell(EP, { w: PW, fill: hc, borders: NB, pad: [3, 0, 3, 0] }), { h: 60, exact: true }),
-    { borders: 'none' },
+  // Education
+  const EC = [3400, 2400, 2300, 1538];
+  const eduTbl = tbl(EC,
+    colHeaderRow(['Ίδρυμα / Σχολή', 'Τίτλος Πτυχίου', 'Ειδικότητα', 'Ημερομηνία'], EC, hc) +
+    dataRow('educationOnlyRows', ['{institutionFull}', '{degreeTitle}', '{specialization}', '{dateAwarded}'], EC),
+    {borders: 'none'},
   );
 
-  // Personal info strip: 3 cells separated by color
-  const PERS3 = [Math.round(PW / 3), Math.round(PW / 3), PW - 2 * Math.round(PW / 3)];
-  const pv = (lbl: string, ph: string) =>
-    para(run(lbl + ': ', { b: true, col: hc, sz: 16, font: FONT }) + run(ph, { sz: 16, font: FONT, col: '333333' }), { before: 50, after: 50 });
-
-  const personalTbl = tbl(PERS3,
-    trow(
-      cell(pv('Πατρώνυμο', '{fatherName}') + pv('Μητρώνυμο', '{motherName}'), { w: PERS3[0], borders: NB }) +
-      cell(pv('Ημ. Γέννησης', '{dateOfBirth}') + pv('Τόπος Γέν.', '{placeOfBirth}'), { w: PERS3[1], borders: NB }) +
-      cell(pv('Επώνυμο', '{lastName}') + pv('Όνομα', '{firstName}'), { w: PERS3[2], borders: NB }),
-    ),
-    { borders: 'none' },
+  // Languages
+  const LC = [3200, 3200, 3238];
+  const langTbl = tbl(LC,
+    colHeaderRow(['Γλώσσα', 'Τίτλος / Πιστοποιητικό', 'Επίπεδο'], LC, hc) +
+    dataRow('languageRows', ['{language}', '{degreeTitle}', '{level}'], LC),
+    {borders: 'none'},
   );
 
-  // Section heading (not a table row — a standalone paragraph with color)
-  function secHeading(text: string): string {
-    return para(
-      run(text, { b: true, col: hc, sz: 22, font: FONT, lang: 'el-GR' }),
-      { before: 120, after: 60 },
-    );
-  }
-
-  // Column label row (no fill, just bold text, bottom border)
-  function colLabelRow(headers: string[], cols: number[]): string {
-    return trow(
-      headers.map((h, i) =>
-        cell(
-          para(run(h, { b: true, sz: 16, col: '555555', font: FONT, lang: 'el-GR' }), { before: 40, after: 40 }),
-          { w: cols[i], borders: bottomBorder(hc) },
-        ),
-      ).join(''),
-    );
-  }
-
-  const eduTbl = tbl(EDU,
-    colLabelRow(['Ίδρυμα / Σχολή', 'Τίτλος Πτυχίου', 'Ειδικότητα', 'Ημερομηνία'], EDU) +
-    dataRow('educationOnlyRows', ['{institutionFull}', '{degreeTitle}', '{specialization}', '{dateAwarded}'], EDU, 18),
-    { borders: 'innerH', borderColor: 'E8EBEF' },
-  );
-
-  const expTbl = tbl(EXP,
-    colLabelRow(['Έργο / Θέση', 'Εργοδότης', 'Ρόλος', 'Περίοδος'], EXP) +
-    dataRow('experienceRows', ['{projectText}', '{employerName}', '{roleName}', '{period}'], EXP, 18),
-    { borders: 'innerH', borderColor: 'E8EBEF' },
-  );
-
-  const langTbl = tbl(LANG,
-    colLabelRow(['Γλώσσα', 'Τίτλος / Πιστοποιητικό', 'Επίπεδο'], LANG) +
-    dataRow('languageRows', ['{language}', '{degreeTitle}', '{level}'], LANG, 18),
-    { borders: 'innerH', borderColor: 'E8EBEF' },
-  );
-
+  // Publications
   const pubTbl = tbl([PW],
     trow(cell(
-      para(run('{#publicationRows}{publicationText}{/publicationRows}', { sz: 18, font: FONT }), { before: 50, after: 50 }),
-      { w: PW, borders: NB },
+      para(run('{#publicationRows}{publicationText}{/publicationRows}', {sz: 20, font: FONT, col: '2D3748'}), {before: 70, after: 70}),
+      {w: PW, borders: bbot(ROW_BORDER)},
     )),
-    { borders: 'none' },
+    {borders: 'none'},
   );
 
   const body =
     headerTbl +
-    divider +
-    personalTbl +
-    divider +
-    secHeading('ΕΚΠΑΙΔΕΥΣΗ') +
+    infoStrip +
+    titleBar('ΕΚΠΑΙΔΕΥΣΗ', hc) +
     eduTbl +
-    secHeading('ΕΠΑΓΓΕΛΜΑΤΙΚΗ ΕΜΠΕΙΡΙΑ') +
-    expTbl +
     cond('{#hasLanguages}') +
-    secHeading('ΓΛΩΣΣΕΣ') +
+    titleBar('ΓΛΩΣΣΕΣ', hc) +
     langTbl +
     cond('{/hasLanguages}') +
     cond('{#hasPublications}') +
-    secHeading('ΔΗΜΟΣΙΕΥΣΕΙΣ') +
+    titleBar('ΔΗΜΟΣΙΕΥΣΕΙΣ', hc) +
     pubTbl +
     cond('{/hasPublications}');
 
   return doc(body);
 }
 
-// ─── Generate all 3 templates ─────────────────────────────────────────────────
-
-const baseContent  = fs.readFileSync(BASE_DOCX, 'binary');
+// ─── Generate files ──────────────────────────────────────────────────────────
 
 const LAYOUTS = [
-  { name: 'navy',   hc: '1B2A4A', ct: 'D0D8EE', builder: buildClassic },
-  { name: 'indigo', hc: '2D2170', ct: 'D5D2F0', builder: buildSidebar },
-  { name: 'teal',   hc: '0A5260', ct: 'C8E3E7', builder: buildClean   },
+  { name: 'navy',   xml: () => buildContemporary('1B2A4A')              },
+  { name: 'indigo', xml: () => buildSidebar('2D2170')                   },
+  { name: 'teal',   xml: () => buildBoldHeader('0A5260', 'DEF0F3')      },
 ] as const;
 
-for (const { name, hc, ct, builder } of LAYOUTS) {
-  const docXml = builder(hc, ct);
+const baseContent = fs.readFileSync(BASE_DOCX, 'binary');
 
+for (const { name, xml } of LAYOUTS) {
+  const docXml = xml();
   const zip = new PizZip(baseContent);
   zip.file('word/document.xml', docXml);
   const buf: Buffer = zip.generate({ type: 'nodebuffer', compression: 'DEFLATE' });
@@ -489,18 +432,7 @@ for (const { name, hc, ct, builder } of LAYOUTS) {
   const outPath = path.join(OUT_DIR, `cv_job_${name}_placeholders.docx`);
   fs.writeFileSync(outPath, buf);
 
-  // Sanity check
-  const verify = new PizZip(buf.toString('binary')).files['word/document.xml'].asText();
-  const checks: Record<string, boolean> = {
-    hasFirstName:       verify.includes('{firstName}'),
-    hasLastName:        verify.includes('{lastName}'),
-    hasEduLoop:         verify.includes('{#educationOnlyRows}'),
-    hasExpLoop:         verify.includes('{#experienceRows}'),
-    hasLangLoop:        verify.includes('{#languageRows}'),
-    hasPubCond:         verify.includes('{#hasPublications}'),
-    hasLangCond:        verify.includes('{#hasLanguages}'),
-  };
-  const ok = Object.values(checks).every(Boolean);
+  const v = new PizZip(buf.toString('binary')).files['word/document.xml'].asText();
+  const ok = v.includes('{firstName}') && v.includes('{#educationOnlyRows}') && v.includes(PHOTO_RID);
   console.log(`cv_job_${name}_placeholders.docx  [${ok ? 'OK' : 'FAIL'}]`);
-  if (!ok) Object.entries(checks).filter(([, v]) => !v).forEach(([k]) => console.log(`  MISSING: ${k}`));
 }
