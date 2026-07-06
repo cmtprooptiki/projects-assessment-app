@@ -2,12 +2,13 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, FileDown } from 'lucide-react';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import EmptyState from '@/components/ui/EmptyState';
 import EmployeeAvatar from '@/components/ui/EmployeeAvatar';
+import CVDownloadModal from '@/components/employees/CVDownloadModal';
 import { Employee } from '@/types';
 import { fullName } from '@/lib/utils';
 import { useDeleteEmployee } from '@/hooks/useEmployees';
@@ -20,6 +21,7 @@ interface Props {
 
 export default function EmployeeTable({ employees, onDeleted, isAdmin = false }: Props) {
   const [deleting, setDeleting] = useState<Employee | null>(null);
+  const [cvEmployee, setCvEmployee] = useState<Employee | null>(null);
   const deleteEmployee = useDeleteEmployee();
 
   const handleDelete = async () => {
@@ -72,6 +74,15 @@ export default function EmployeeTable({ employees, onDeleted, isAdmin = false }:
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setCvEmployee(emp)}
+                      className="text-slate-500 hover:text-blue-600 hover:bg-blue-50"
+                      title="Λήψη Βιογραφικού"
+                    >
+                      <FileDown size={14} />
+                    </Button>
                     <Link href={`/employees/${emp.id}/edit`}>
                       <Button variant="ghost" size="sm"><Pencil size={14} /></Button>
                     </Link>
@@ -100,6 +111,14 @@ export default function EmployeeTable({ employees, onDeleted, isAdmin = false }:
           <Button variant="danger" loading={deleteEmployee.isPending} onClick={handleDelete}>Delete</Button>
         </div>
       </Modal>
+
+      {cvEmployee && (
+        <CVDownloadModal
+          open
+          onClose={() => setCvEmployee(null)}
+          employee={cvEmployee}
+        />
+      )}
     </>
   );
 }

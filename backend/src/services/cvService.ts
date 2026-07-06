@@ -6,9 +6,12 @@ import fs from 'fs';
 import path from 'path';
 import { Education, Employee, EmployeeHistoryProject, EmployeePublication, Language, ProjectParticipation, Project, Role } from '../models';
 
-// Works for both ts-node (src/services) and compiled (dist/services) because
-// the templates/ folder lives two levels up from either location.
-const TEMPLATE_PATH = path.resolve(__dirname, '../../templates/cv_template_placeholders.docx');
+const TEMPLATE_PATHS: Record<string, string> = {
+  classic: path.resolve(__dirname, '../../templates/cv_template_placeholders.docx'),
+  navy:    path.resolve(__dirname, '../../templates/cv_modern_navy_placeholders.docx'),
+  indigo:  path.resolve(__dirname, '../../templates/cv_modern_indigo_placeholders.docx'),
+  teal:    path.resolve(__dirname, '../../templates/cv_modern_teal_placeholders.docx'),
+};
 
 function fmtFull(s?: string | null): string {
   if (!s) return '';
@@ -22,7 +25,7 @@ function fmtMY(s?: string | null): string {
   return `${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
 }
 
-export async function generateCVBuffer(employeeId: number): Promise<Buffer> {
+export async function generateCVBuffer(employeeId: number, template = 'classic'): Promise<Buffer> {
   const employee = await Employee.findByPk(employeeId, {
     include: [
       { model: Education, as: 'education' },
@@ -111,11 +114,12 @@ export async function generateCVBuffer(employeeId: number): Promise<Buffer> {
     publicationRows,
   };
 
-  if (!fs.existsSync(TEMPLATE_PATH)) {
-    throw new Error(`CV template not found at: ${TEMPLATE_PATH}`);
+  const templatePath = TEMPLATE_PATHS[template] ?? TEMPLATE_PATHS.classic;
+  if (!fs.existsSync(templatePath)) {
+    throw new Error(`CV template not found at: ${templatePath}`);
   }
 
-  const content = fs.readFileSync(TEMPLATE_PATH, 'binary');
+  const content = fs.readFileSync(templatePath, 'binary');
   const zip     = new PizZip(content);
   const doc     = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
 

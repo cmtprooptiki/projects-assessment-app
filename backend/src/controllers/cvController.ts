@@ -10,7 +10,8 @@ export const exportCV = async (req: Request, res: Response, next: NextFunction):
     const employee = await Employee.findByPk(employeeId);
     if (!employee) { res.status(404).json({ success: false, message: 'Employee not found' }); return; }
 
-    const buffer = await generateCVBuffer(employeeId);
+    const template = typeof req.query.template === 'string' ? req.query.template : 'classic';
+    const buffer = await generateCVBuffer(employeeId, template);
     const filename = `CV_${employee.lastName}_${employee.firstName}.docx`;
 
     res.set({
