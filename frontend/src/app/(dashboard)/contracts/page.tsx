@@ -42,9 +42,11 @@ export default function ContractsPage() {
         <ContractFilters filters={filters} onChange={setFilters} onReset={() => setFilters(defaultFilters)} />
         <div className="flex items-center gap-3">
           <CashFlowBadge />
-          <Link href="/contracts/new">
-            <Button><Plus size={16} />Add Contract</Button>
-          </Link>
+          {isAdmin && (
+            <Link href="/contracts/new">
+              <Button><Plus size={16} />Add Contract</Button>
+            </Link>
+          )}
         </div>
       </div>
       <Card>
