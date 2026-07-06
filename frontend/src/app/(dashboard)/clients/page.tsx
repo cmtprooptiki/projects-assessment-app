@@ -11,6 +11,7 @@ import { PageSpinner } from '@/components/ui/Spinner';
 import ClientTable from '@/components/clients/ClientTable';
 import ClientImportModal from '@/components/clients/ClientImportModal';
 import { useClients } from '@/hooks/useClients';
+import { useIsAdmin } from '@/hooks/useRole';
 import { ClientFilters } from '@/types';
 
 const defaultFilters: ClientFilters = { page: 1, limit: 15 };
@@ -19,6 +20,7 @@ export default function ClientsPage() {
   const [filters, setFilters] = useState<ClientFilters>(defaultFilters);
   const [importOpen, setImportOpen] = useState(false);
   const { data, isLoading, error } = useClients(filters);
+  const isAdmin = useIsAdmin();
 
   const clients = data?.data ?? [];
   const meta = data?.meta;
@@ -59,7 +61,7 @@ export default function ClientsPage() {
           </div>
         ) : (
           <>
-            <ClientTable clients={clients} />
+            <ClientTable clients={clients} isAdmin={isAdmin} />
             {meta && (
               <Pagination
                 page={meta.page}

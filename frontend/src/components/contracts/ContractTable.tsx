@@ -11,9 +11,9 @@ import { Contract } from '@/types';
 import { formatDate, statusLabel, statusVariant } from '@/lib/utils';
 import { useDeleteContract } from '@/hooks/useContracts';
 
-interface Props { contracts: Contract[]; onDeleted?: () => void; }
+interface Props { contracts: Contract[]; onDeleted?: () => void; isAdmin?: boolean; }
 
-export default function ContractTable({ contracts, onDeleted }: Props) {
+export default function ContractTable({ contracts, onDeleted, isAdmin = false }: Props) {
   const [deleting, setDeleting] = useState<Contract | null>(null);
   const deleteContract = useDeleteContract();
 
@@ -62,10 +62,12 @@ export default function ContractTable({ contracts, onDeleted }: Props) {
                     : <span className="text-gray-300">—</span>}
                 </td>
                 <td className="px-4 py-3">
-                  <div className="flex items-center justify-end gap-1">
-                    <Link href={`/contracts/${c.id}/edit`}><Button variant="ghost" size="sm"><Pencil size={14} /></Button></Link>
-                    <Button variant="ghost" size="sm" onClick={() => setDeleting(c)} className="text-red-500 hover:bg-red-50 hover:text-red-600"><Trash2 size={14} /></Button>
-                  </div>
+                  {isAdmin && (
+                    <div className="flex items-center justify-end gap-1">
+                      <Link href={`/contracts/${c.id}/edit`}><Button variant="ghost" size="sm"><Pencil size={14} /></Button></Link>
+                      <Button variant="ghost" size="sm" onClick={() => setDeleting(c)} className="text-red-500 hover:bg-red-50 hover:text-red-600"><Trash2 size={14} /></Button>
+                    </div>
+                  )}
                 </td>
               </tr>
             ))}

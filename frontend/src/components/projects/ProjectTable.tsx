@@ -19,6 +19,7 @@ interface Props {
   sortOrder?: SortDir;
   onSort?: (field: SortField) => void;
   onDeleted?: () => void;
+  isAdmin?: boolean;
 }
 
 function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
@@ -28,7 +29,7 @@ function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
     : <ChevronDown size={13} className="text-indigo-500 shrink-0" />;
 }
 
-export default function ProjectTable({ projects, sortBy = 'projectCode', sortOrder = 'asc', onSort, onDeleted }: Props) {
+export default function ProjectTable({ projects, sortBy = 'projectCode', sortOrder = 'asc', onSort, onDeleted, isAdmin = false }: Props) {
   const [deleting, setDeleting] = useState<Project | null>(null);
   const deleteProject = useDeleteProject();
 
@@ -99,7 +100,9 @@ export default function ProjectTable({ projects, sortBy = 'projectCode', sortOrd
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-1">
                     <Link href={`/projects/${p.id}/edit`}><Button variant="ghost" size="sm"><Pencil size={14} /></Button></Link>
-                    <Button variant="ghost" size="sm" onClick={() => setDeleting(p)} className="text-red-500 hover:bg-red-50 hover:text-red-600"><Trash2 size={14} /></Button>
+                    {isAdmin && (
+                      <Button variant="ghost" size="sm" onClick={() => setDeleting(p)} className="text-red-500 hover:bg-red-50 hover:text-red-600"><Trash2 size={14} /></Button>
+                    )}
                   </div>
                 </td>
               </tr>

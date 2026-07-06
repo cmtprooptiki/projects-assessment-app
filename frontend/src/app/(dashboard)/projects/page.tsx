@@ -11,12 +11,14 @@ import ProjectTable from '@/components/projects/ProjectTable';
 import ProjectFilters from '@/components/projects/ProjectFilters';
 import { useProjects } from '@/hooks/useProjects';
 import { useContracts } from '@/hooks/useContracts';
+import { useIsAdmin } from '@/hooks/useRole';
 import { ProjectFilters as IProjectFilters } from '@/types';
 
 const defaultFilters: IProjectFilters = { page: 1, limit: 50, sortBy: 'projectCode', sortOrder: 'asc' };
 
 export default function ProjectsPage() {
   const [filters, setFilters] = useState<IProjectFilters>(defaultFilters);
+  const isAdmin = useIsAdmin();
   const { data, isLoading, error } = useProjects(filters);
 
   const handleSort = (field: string) => {
@@ -58,6 +60,7 @@ export default function ProjectsPage() {
                 sortBy={filters.sortBy}
                 sortOrder={filters.sortOrder}
                 onSort={handleSort}
+                isAdmin={isAdmin}
               />
               {meta && (
                 <Pagination page={meta.page} totalPages={meta.totalPages} total={meta.total} limit={meta.limit}

@@ -15,9 +15,10 @@ import { useDeleteEmployee } from '@/hooks/useEmployees';
 interface Props {
   employees: Employee[];
   onDeleted?: () => void;
+  isAdmin?: boolean;
 }
 
-export default function EmployeeTable({ employees, onDeleted }: Props) {
+export default function EmployeeTable({ employees, onDeleted, isAdmin = false }: Props) {
   const [deleting, setDeleting] = useState<Employee | null>(null);
   const deleteEmployee = useDeleteEmployee();
 
@@ -74,10 +75,12 @@ export default function EmployeeTable({ employees, onDeleted }: Props) {
                     <Link href={`/employees/${emp.id}/edit`}>
                       <Button variant="ghost" size="sm"><Pencil size={14} /></Button>
                     </Link>
-                    <Button variant="ghost" size="sm" onClick={() => setDeleting(emp)}
-                      className="text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600">
-                      <Trash2 size={14} />
-                    </Button>
+                    {isAdmin && (
+                      <Button variant="ghost" size="sm" onClick={() => setDeleting(emp)}
+                        className="text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600">
+                        <Trash2 size={14} />
+                      </Button>
+                    )}
                   </div>
                 </td>
               </tr>

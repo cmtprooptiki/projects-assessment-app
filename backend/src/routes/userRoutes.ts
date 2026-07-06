@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import * as userController from '../controllers/userController';
 import { createUserRules, updateUserRules } from '../validators/userValidator';
-import { authenticate } from '../middleware/authenticate';
+import { authenticate, requireAdmin } from '../middleware/authenticate';
 
 const router = Router();
 
 router.use(authenticate);
+router.use(requireAdmin);
 
 router.get('/', userController.getAll);
 router.post('/', createUserRules, userController.create);

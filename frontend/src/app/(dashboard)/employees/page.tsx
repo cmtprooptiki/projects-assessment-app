@@ -10,6 +10,7 @@ import { PageSpinner } from '@/components/ui/Spinner';
 import EmployeeTable from '@/components/employees/EmployeeTable';
 import EmployeeFilters from '@/components/employees/EmployeeFilters';
 import { useEmployees } from '@/hooks/useEmployees';
+import { useIsAdmin } from '@/hooks/useRole';
 import { EmployeeFilters as IEmployeeFilters } from '@/types';
 
 function AzureBadge() {
@@ -30,6 +31,7 @@ const defaultFilters: IEmployeeFilters = { page: 1, limit: 15 };
 export default function EmployeesPage() {
   const [filters, setFilters] = useState<IEmployeeFilters>(defaultFilters);
   const { data, isLoading, error } = useEmployees(filters);
+  const isAdmin = useIsAdmin();
 
   const employees = data?.data ?? [];
   const meta = data?.meta;
@@ -62,7 +64,7 @@ export default function EmployeesPage() {
           </div>
         ) : (
           <>
-            <EmployeeTable employees={employees} />
+            <EmployeeTable employees={employees} isAdmin={isAdmin} />
             {meta && (
               <Pagination
                 page={meta.page}

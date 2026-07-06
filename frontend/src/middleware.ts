@@ -23,10 +23,19 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
-  if (token && pathname.startsWith('/users')) {
+  if (token) {
     const role = getRole(token.value);
     if (role !== 'admin') {
-      return NextResponse.redirect(new URL('/', request.url));
+      // Pages fully blocked for non-admins
+      const adminOnlyPrefixes = ['/users', '/contracts/', '/clients/'];
+      for (const prefix of adminOnlyPrefixes) {
+        if (pathname.startsWith(prefix) && pathname.includes('/edit')) {
+          return NextResponse.redirect(new URL('/', request.url));
+        }
+      }
+      if (pathname.startsWith('/users')) {
+        return NextResponse.redirect(new URL('/', request.url));
+      }
     }
   }
 

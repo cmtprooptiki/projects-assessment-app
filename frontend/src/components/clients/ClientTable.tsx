@@ -12,9 +12,10 @@ import { useDeleteClient } from '@/hooks/useClients';
 interface Props {
   clients: Client[];
   onDeleted?: () => void;
+  isAdmin?: boolean;
 }
 
-export default function ClientTable({ clients, onDeleted }: Props) {
+export default function ClientTable({ clients, onDeleted, isAdmin = false }: Props) {
   const [deleting, setDeleting] = useState<Client | null>(null);
   const deleteClient = useDeleteClient();
 
@@ -81,18 +82,20 @@ export default function ClientTable({ clients, onDeleted }: Props) {
                   {client.notes ?? <span className="text-gray-300">—</span>}
                 </td>
                 <td className="px-4 py-3">
-                  <div className="flex items-center justify-end gap-1">
-                    <Link href={`/clients/${client.id}/edit`}>
-                      <Button variant="ghost" size="sm"><Pencil size={14} /></Button>
-                    </Link>
-                    <Button
-                      variant="ghost" size="sm"
-                      onClick={() => setDeleting(client)}
-                      className="text-red-500 hover:bg-red-50 hover:text-red-600"
-                    >
-                      <Trash2 size={14} />
-                    </Button>
-                  </div>
+                  {isAdmin && (
+                    <div className="flex items-center justify-end gap-1">
+                      <Link href={`/clients/${client.id}/edit`}>
+                        <Button variant="ghost" size="sm"><Pencil size={14} /></Button>
+                      </Link>
+                      <Button
+                        variant="ghost" size="sm"
+                        onClick={() => setDeleting(client)}
+                        className="text-red-500 hover:bg-red-50 hover:text-red-600"
+                      >
+                        <Trash2 size={14} />
+                      </Button>
+                    </div>
+                  )}
                 </td>
               </tr>
             ))}

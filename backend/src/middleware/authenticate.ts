@@ -3,6 +3,14 @@ import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'changeme';
 
+export const requireAdmin = (req: Request, res: Response, next: NextFunction): void => {
+  if ((req as any).userRole !== 'admin') {
+    res.status(403).json({ success: false, message: 'Admin access required.' });
+    return;
+  }
+  next();
+};
+
 export const authenticate = (
   req: Request,
   res: Response,
