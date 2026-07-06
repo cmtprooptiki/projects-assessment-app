@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Plus, Pencil, Trash2, GraduationCap, Languages, CalendarDays, Briefcase } from 'lucide-react';
+import { Plus, Pencil, Trash2, GraduationCap, Languages, CalendarDays, Briefcase, BookOpen } from 'lucide-react';
 import { PageSpinner } from '@/components/ui/Spinner';
 import EmployeeForm from '@/components/employees/EmployeeForm';
 import Card from '@/components/ui/Card';
@@ -17,7 +17,8 @@ import { useEducation, useCreateEducation, useUpdateEducation, useDeleteEducatio
 import { useLanguages, useCreateLanguage, useUpdateLanguage, useDeleteLanguage } from '@/hooks/useLanguages';
 import { useAvailability, useCreateAvailability, useUpdateAvailability, useDeleteAvailability } from '@/hooks/useAvailability';
 import { useHistoryProjects, useCreateHistoryProject, useUpdateHistoryProject, useDeleteHistoryProject } from '@/hooks/useHistoryProjects';
-import type { Education, Language, AvailabilityPeriod, EmployeeHistoryProject } from '@/types';
+import { usePublications, useCreatePublication, useUpdatePublication, useDeletePublication } from '@/hooks/usePublications';
+import type { Education, Language, AvailabilityPeriod, EmployeeHistoryProject, EmployeePublication } from '@/types';
 import { INSTITUTION_HIERARCHY } from '@/data/institutionHierarchy';
 
 const GREEK_INSTITUTIONS = [
@@ -78,6 +79,7 @@ type EduMode = null | 'create' | { edit: Education };
 type LangMode = null | 'create' | { edit: Language };
 type AvailMode = null | 'create' | { edit: AvailabilityPeriod };
 type HistoryMode = null | 'create' | { edit: EmployeeHistoryProject };
+type PubMode = null | 'create' | { edit: EmployeePublication };
 
 function formatDate(d: string) {
   return new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -142,6 +144,18 @@ export default function EditEmployeePage() {
   const updateAvailability = useUpdateAvailability(id);
   const deleteAvailability = useDeleteAvailability(id);
 
+  // Publication state
+  const { data: pubData, isLoading: loadingPub } = usePublications(id);
+  const publicationList = pubData?.data ?? [];
+  const [pubMode, setPubMode] = useState<PubMode>(null);
+  const [deletingPub, setDeletingPub] = useState<EmployeePublication | null>(null);
+  const [pubText, setPubText] = useState('');
+  const [pubError, setPubError] = useState('');
+  const [pubSaving, setPubSaving] = useState(false);
+  const createPublication = useCreatePublication(id);
+  const updatePublication = useUpdatePublication(id);
+  const deletePublication = useDeletePublication(id);
+
   // History project state
   const { data: historyData, isLoading: loadingHistory } = useHistoryProjects(id);
   const historyList = historyData?.data ?? [];
@@ -158,6 +172,26 @@ export default function EditEmployeePage() {
   const isEditingLang = langMode && typeof langMode === 'object';
   const isEditingAvail = availMode && typeof availMode === 'object';
   const isEditingHistory = historyMode && typeof historyMode === 'object';
+  const isEditingPub = pubMode && typeof pubMode === 'object';
+
+  // Publication handlers
+  const handleOpenCreatePub = () => { setPubText(''); setPubError(''); setPubMode('create'); };
+  const handleOpenEditPub = (pub: EmployeePublication) => { setPubText(pub.text); setPubError(''); setPubMode({ edit: pub }); };
+  const handlePubSave = async (e: React.FormEvent) => {
+    e.preventDefault(); setPubError('');
+    if (!pubText.trim()) { setPubError('Publication text is required.'); return; }
+    setPubSaving(true);
+    try {
+      if (pubMode === 'create') await createPublication.mutateAsync(pubText.trim());
+      else if (isEditingPub) await updatePublication.mutateAsync({ id: pubMode.edit.id, text: pubText.trim() });
+      setPubMode(null);
+    } catch (err) { setPubError(err instanceof Error ? err.message : 'Something went wrong.'); }
+    finally { setPubSaving(false); }
+  };
+  const handlePubDelete = async () => {
+    if (!deletingPub) return;
+    try { await deletePublication.mutateAsync(deletingPub.id); setDeletingPub(null); } catch {}
+  };
 
   // Education handlers
   const handleOpenCreateEdu = () => { setEduForm(emptyEdu); setEduInstMode('text'); setEduSchoolMode('text'); setEduDeptMode('text'); setEduError(''); setEduMode('create'); };
@@ -432,6 +466,37 @@ export default function EditEmployeePage() {
         </Card>
       </div>
 
+      {/* Publications Section */}
+      <div className="max-w-3xl space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <BookOpen size={18} className="text-indigo-600" />
+            <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200 uppercase tracking-wide">Publications</h2>
+          </div>
+          <Button size="sm" onClick={handleOpenCreatePub}><Plus size={14} />Add Publication</Button>
+        </div>
+        <Card>
+          {loadingPub ? <div className="p-6"><PageSpinner /></div>
+            : publicationList.length === 0 ? <EmptyState title="No publications" description="Add publications, articles or papers for this employee." />
+            : (
+              <div className="divide-y divide-slate-100 dark:divide-slate-700">
+                {publicationList.map((pub, idx) => (
+                  <div key={pub.id} className="px-6 py-4 flex items-start justify-between group hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                    <div className="min-w-0 flex-1 flex items-start gap-3">
+                      <span className="shrink-0 text-xs font-bold text-slate-400 dark:text-slate-500 mt-0.5 w-5 text-right">{idx + 1}.</span>
+                      <p className="text-sm text-slate-800 dark:text-slate-200 leading-relaxed">{pub.text}</p>
+                    </div>
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-4 shrink-0 mt-0.5">
+                      <Button variant="ghost" size="sm" onClick={() => handleOpenEditPub(pub)}><Pencil size={14} /></Button>
+                      <Button variant="ghost" size="sm" onClick={() => setDeletingPub(pub)} className="text-red-500 hover:bg-red-50 hover:text-red-600"><Trash2 size={14} /></Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+        </Card>
+      </div>
+
       {/* Availability Modals */}
       <Modal open={!!availMode} onClose={() => setAvailMode(null)} title={isEditingAvail ? 'Edit Availability Period' : 'Add Availability Period'}>
         <form onSubmit={handleAvailSave} className="space-y-4">
@@ -586,6 +651,35 @@ export default function EditEmployeePage() {
         <div className="flex justify-end gap-3">
           <Button variant="secondary" onClick={() => setDeletingLang(null)}>Cancel</Button>
           <Button variant="danger" loading={deleteLanguage.isPending} onClick={handleLangDelete}>Delete</Button>
+        </div>
+      </Modal>
+
+      {/* Publication Modals */}
+      <Modal open={!!pubMode} onClose={() => setPubMode(null)} title={isEditingPub ? 'Edit Publication' : 'Add Publication'}>
+        <form onSubmit={handlePubSave} className="space-y-4">
+          <div>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">Publication text <span className="text-red-500">*</span></label>
+            <textarea
+              value={pubText}
+              onChange={(e) => setPubText(e.target.value)}
+              placeholder="e.g. Author, A. (2023). Title of paper. Journal Name, 10(2), 45–60."
+              rows={5}
+              autoFocus
+              className="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 bg-white dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors resize-y"
+            />
+          </div>
+          {pubError && <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-lg">{pubError}</div>}
+          <div className="flex justify-end gap-3">
+            <Button type="button" variant="secondary" onClick={() => setPubMode(null)}>Cancel</Button>
+            <Button type="submit" loading={pubSaving}>{isEditingPub ? 'Update' : 'Add'}</Button>
+          </div>
+        </form>
+      </Modal>
+      <Modal open={!!deletingPub} onClose={() => setDeletingPub(null)} title="Delete Publication">
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">Delete this publication? This cannot be undone.</p>
+        <div className="flex justify-end gap-3">
+          <Button variant="secondary" onClick={() => setDeletingPub(null)}>Cancel</Button>
+          <Button variant="danger" loading={deletePublication.isPending} onClick={handlePubDelete}>Delete</Button>
         </div>
       </Modal>
 

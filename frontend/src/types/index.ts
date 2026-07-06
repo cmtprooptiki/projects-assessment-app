@@ -54,6 +54,14 @@ export interface EmployeeHistoryProject {
   updatedAt: string;
 }
 
+export interface EmployeePublication {
+  id: number;
+  employeeId: number;
+  text: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Employee {
   id: number;
   firstName: string;
