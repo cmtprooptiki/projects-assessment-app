@@ -32,6 +32,7 @@ function MarkdownText({ text }: { text: string }) {
 }
 
 export default function AssistantWidget() {
+  const [mounted, setMounted] = useState(false);
   const [open, setOpen]       = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput]     = useState('');
@@ -39,12 +40,16 @@ export default function AssistantWidget() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef  = useRef<HTMLTextAreaElement>(null);
 
+  useEffect(() => setMounted(true), []);
+
   useEffect(() => {
     if (open) {
       bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
       inputRef.current?.focus();
     }
   }, [messages, open]);
+
+  if (!mounted) return null;
 
   const send = async () => {
     const text = input.trim();
