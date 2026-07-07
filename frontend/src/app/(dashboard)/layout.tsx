@@ -1,6 +1,11 @@
+import dynamic from 'next/dynamic';
 import Sidebar from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
-import AssistantWidget from '@/components/assistant/AssistantWidget';
+
+const AssistantWidget = dynamic(
+  () => import('@/components/assistant/AssistantWidget'),
+  { ssr: false }
+);
 
 export default function DashboardLayout({
   children,
