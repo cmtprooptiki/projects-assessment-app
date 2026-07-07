@@ -117,9 +117,14 @@ export interface ChatMessage {
   content: string;
 }
 
+// ── OpenAI client (fails loudly at startup if key is missing) ─────────────────
+if (!process.env.OPENAI_API_KEY) {
+  console.error('[Assistant] OPENAI_API_KEY is not set — assistant will not work');
+}
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
 // ── Main function ─────────────────────────────────────────────────────────────
 export async function runAssistant(messages: ChatMessage[]): Promise<string> {
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
   const conversation: OpenAI.Chat.ChatCompletionMessageParam[] = [
     { role: 'system', content: SYSTEM_PROMPT },
