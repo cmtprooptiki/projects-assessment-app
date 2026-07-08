@@ -23,7 +23,7 @@ interface Props {
 }
 
 function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
-  if (!active) return <ChevronsUpDown size={13} className="text-gray-300 shrink-0" />;
+  if (!active) return <ChevronsUpDown size={13} className="text-gray-300 dark:text-slate-600 shrink-0" />;
   return dir === 'asc'
     ? <ChevronUp   size={13} className="text-indigo-500 shrink-0" />
     : <ChevronDown size={13} className="text-indigo-500 shrink-0" />;
@@ -45,9 +45,9 @@ export default function ProjectTable({ projects, sortBy = 'projectCode', sortOrd
 
   const thCls = (field: SortField) => cn(
     'text-left px-4 py-3 text-xs font-semibold uppercase tracking-wide select-none whitespace-nowrap',
-    'hover:bg-slate-50 transition-colors',
+    'hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors',
     onSort ? 'cursor-pointer' : '',
-    sortBy === field ? 'text-indigo-600' : 'text-gray-500',
+    sortBy === field ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-slate-400',
   );
 
   const Th = ({ field, label }: { field: SortField; label: string }) => (
@@ -64,7 +64,7 @@ export default function ProjectTable({ projects, sortBy = 'projectCode', sortOrd
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-gray-100">
+            <tr className="border-b border-gray-100 dark:border-slate-700">
               <Th field="projectCode" label="Code" />
               <Th field="name"        label="Name" />
               <Th field="acronym"     label="Acronym" />
@@ -74,34 +74,34 @@ export default function ProjectTable({ projects, sortBy = 'projectCode', sortOrd
               <th className="px-4 py-3" />
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-50">
+          <tbody className="divide-y divide-gray-50 dark:divide-slate-700/50">
             {projects.map((p) => (
-              <tr key={p.id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-4 py-3 font-mono text-xs font-bold text-indigo-600">{p.projectCode}</td>
-                <td className="px-4 py-3 font-medium text-gray-900">{p.name}</td>
-                <td className="px-4 py-3 text-gray-600">{p.acronym}</td>
-                <td className="px-4 py-3 text-gray-600">{p.client?.name ?? <span className="text-gray-300">—</span>}</td>
-                <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
+              <tr key={p.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors">
+                <td className="px-4 py-3 font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400">{p.projectCode}</td>
+                <td className="px-4 py-3 font-medium text-gray-900 dark:text-slate-200">{p.name}</td>
+                <td className="px-4 py-3 text-gray-600 dark:text-slate-300">{p.acronym}</td>
+                <td className="px-4 py-3 text-gray-600 dark:text-slate-300">{p.client?.name ?? <span className="text-gray-300 dark:text-slate-600">—</span>}</td>
+                <td className="px-4 py-3 text-sm text-gray-600 dark:text-slate-300 whitespace-nowrap">
                   {p.startDate ? (
                     <span>
                       {formatDate(p.startDate)}
-                      <span className="text-gray-400"> – </span>
-                      {p.endDate ? formatDate(p.endDate) : <span className="text-green-600 font-medium">Present</span>}
+                      <span className="text-gray-400 dark:text-slate-500"> – </span>
+                      {p.endDate ? formatDate(p.endDate) : <span className="text-green-600 dark:text-green-400 font-medium">Present</span>}
                     </span>
                   ) : (
-                    <span className="text-gray-300">—</span>
+                    <span className="text-gray-300 dark:text-slate-600">—</span>
                   )}
                 </td>
                 <td className="px-4 py-3">
                   {p.contracts?.length
-                    ? <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600"><FileText size={11} />{p.contracts.length}</span>
-                    : <span className="text-gray-300">—</span>}
+                    ? <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300"><FileText size={11} />{p.contracts.length}</span>
+                    : <span className="text-gray-300 dark:text-slate-600">—</span>}
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-1">
                     <Link href={`/projects/${p.id}/edit`}><Button variant="ghost" size="sm"><Pencil size={14} /></Button></Link>
                     {isAdmin && (
-                      <Button variant="ghost" size="sm" onClick={() => setDeleting(p)} className="text-red-500 hover:bg-red-50 hover:text-red-600"><Trash2 size={14} /></Button>
+                      <Button variant="ghost" size="sm" onClick={() => setDeleting(p)} className="text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600"><Trash2 size={14} /></Button>
                     )}
                   </div>
                 </td>
@@ -111,7 +111,7 @@ export default function ProjectTable({ projects, sortBy = 'projectCode', sortOrd
         </table>
       </div>
       <Modal open={!!deleting} onClose={() => setDeleting(null)} title="Delete Project">
-        <p className="text-sm text-gray-600 mb-6">Delete <span className="font-semibold text-gray-900">{deleting?.name}</span>? All linked contracts will be unlinked but not deleted.</p>
+        <p className="text-sm text-gray-600 dark:text-slate-400 mb-6">Delete <span className="font-semibold text-gray-900 dark:text-slate-200">{deleting?.name}</span>? All linked contracts will be unlinked but not deleted.</p>
         <div className="flex justify-end gap-3">
           <Button variant="secondary" onClick={() => setDeleting(null)}>Cancel</Button>
           <Button variant="danger" loading={deleteProject.isPending} onClick={handleDelete}>Delete</Button>

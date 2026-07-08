@@ -40,15 +40,15 @@ export default function Modal({
       />
       <div
         className={cn(
-          'relative bg-white rounded-2xl shadow-xl w-full max-w-md my-auto flex flex-col max-h-[calc(100vh-4rem)]',
+          'relative bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-md my-auto flex flex-col max-h-[calc(100vh-4rem)]',
           className
         )}
       >
-        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 shrink-0">
-          <h2 className="text-base font-semibold text-gray-900">{title}</h2>
+        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-slate-700 shrink-0">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-slate-100">{title}</h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+            className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-300 transition-colors"
           >
             <X size={16} />
           </button>

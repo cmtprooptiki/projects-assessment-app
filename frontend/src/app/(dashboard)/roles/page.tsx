@@ -99,18 +99,18 @@ export default function RolesPage() {
             description="Create your first role to get started."
           />
         ) : (
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-gray-100 dark:divide-slate-700/50">
             {roles.map((role) => (
               <div
                 key={role.id}
-                className="px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors group"
+                className="px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors group"
               >
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-semibold text-gray-900">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-slate-200">
                     {role.name}
                   </h3>
                   {role.description && (
-                    <p className="text-xs text-gray-500 mt-1 truncate">
+                    <p className="text-xs text-gray-500 dark:text-slate-400 mt-1 truncate">
                       {role.description}
                     </p>
                   )}
@@ -127,7 +127,7 @@ export default function RolesPage() {
                     variant="ghost"
                     size="sm"
                     onClick={() => setDeleting(role)}
-                    className="text-red-500 hover:bg-red-50 hover:text-red-600"
+                    className="text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600"
                   >
                     <Trash2 size={14} />
                   </Button>
@@ -154,7 +154,7 @@ export default function RolesPage() {
           />
 
           <div>
-            <label className="text-sm font-medium text-gray-700 block mb-1">
+            <label className="text-sm font-medium text-gray-700 dark:text-slate-300 block mb-1">
               Description
             </label>
             <textarea
@@ -162,12 +162,12 @@ export default function RolesPage() {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Brief description of the role..."
               rows={2}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent hover:border-gray-400 transition-colors"
+              className="w-full rounded-lg border border-gray-300 dark:border-slate-600 px-3 py-2 text-sm text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 bg-white dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent hover:border-gray-400 dark:hover:border-slate-500 transition-colors"
             />
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-lg">
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm px-4 py-3 rounded-lg">
               {error}
             </div>
           )}
@@ -192,8 +192,8 @@ export default function RolesPage() {
         onClose={() => setDeleting(null)}
         title="Delete Role"
       >
-        <p className="text-sm text-gray-600 mb-6">
-          Are you sure you want to delete <span className="font-semibold">{deleting?.name}</span>?
+        <p className="text-sm text-gray-600 dark:text-slate-400 mb-6">
+          Are you sure you want to delete <span className="font-semibold text-gray-900 dark:text-slate-200">{deleting?.name}</span>?
           This action cannot be undone.
         </p>
         <div className="flex justify-end gap-3">

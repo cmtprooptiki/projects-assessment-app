@@ -41,7 +41,7 @@ export default function ProjectsPage() {
         <ProjectFilters filters={filters} onChange={setFilters} onReset={() => setFilters(defaultFilters)} />
         <div className="flex items-center gap-3">
           {unlinkedCount > 0 && (
-            <span className="text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">
+            <span className="text-xs font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-2.5 py-1 rounded-full">
               {unlinkedCount} unassigned contract{unlinkedCount !== 1 ? 's' : ''}
             </span>
           )}

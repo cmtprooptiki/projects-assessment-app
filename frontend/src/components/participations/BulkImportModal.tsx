@@ -153,19 +153,19 @@ export default function BulkImportModal({ open, onClose }: Props) {
             {file ? (
               <div className="text-center">
                 <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{file.name}</p>
-                <p className="text-xs text-slate-400 mt-0.5">{(file.size / 1024).toFixed(1)} KB — click to change</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{(file.size / 1024).toFixed(1)} KB — click to change</p>
               </div>
             ) : (
               <div className="text-center">
                 <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">Drop file here or click to browse</p>
-                <p className="text-xs text-slate-400 mt-0.5">.xlsx, .xls, .csv — max 10 MB</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">.xlsx, .xls, .csv — max 10 MB</p>
               </div>
             )}
             <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={(e) => handleFileChange(e.target.files?.[0] ?? null)} />
           </div>
 
           {preview.error && (
-            <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-lg">
+            <div className="flex items-center gap-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm px-4 py-3 rounded-lg">
               <AlertTriangle size={15} className="shrink-0" />
               {preview.error.message || 'Failed to process file.'}
             </div>
@@ -210,7 +210,7 @@ export default function BulkImportModal({ open, onClose }: Props) {
           </div>
 
           {confirm.error && (
-            <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-lg">
+            <div className="flex items-center gap-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm px-4 py-3 rounded-lg">
               <AlertTriangle size={15} className="shrink-0" />
               {confirm.error.message || 'Import failed.'}
             </div>

@@ -43,57 +43,57 @@ export default function ParticipationTable({
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-gray-100">
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <tr className="border-b border-gray-100 dark:border-slate-700">
+              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">
                 Employee
               </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">
                 Project
               </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">
                 Role
               </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">
                 Period
               </th>
-              <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">
                 Months
               </th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-50">
+          <tbody className="divide-y divide-gray-50 dark:divide-slate-700/50">
             {participations.map((p) => (
-              <tr key={p.id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-4 py-3 font-medium text-gray-900">
+              <tr key={p.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors">
+                <td className="px-4 py-3 font-medium text-gray-900 dark:text-slate-200">
                   {p.employee ? fullName(p.employee) : `Employee #${p.employeeId}`}
                 </td>
-                <td className="px-4 py-3 text-gray-600">
+                <td className="px-4 py-3 text-gray-600 dark:text-slate-300">
                   {p.project
-                    ? <><span className="font-mono text-xs font-bold text-indigo-600 mr-1">{p.project.projectCode}</span>{p.project.name}</>
+                    ? <><span className="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400 mr-1">{p.project.projectCode}</span>{p.project.name}</>
                     : `Project #${p.projectId}`}
                 </td>
-                <td className="px-4 py-3 text-gray-600">
+                <td className="px-4 py-3 text-gray-600 dark:text-slate-300">
                   {p.role?.name ?? `Role #${p.roleId}`}
                 </td>
-                <td className="px-4 py-3 text-gray-600 text-xs">
+                <td className="px-4 py-3 text-gray-600 dark:text-slate-300 text-xs">
                   <div>
                     <span>{formatDate(p.startDate)}</span>
                     {p.endDate ? (
                       <>
                         <br />
-                        <span className="text-gray-400">–</span>
+                        <span className="text-gray-400 dark:text-slate-500">–</span>
                         <br />
                         <span>{formatDate(p.endDate)}</span>
                       </>
                     ) : (
-                      <div className="text-emerald-600 text-xs font-medium mt-0.5">
+                      <div className="text-emerald-600 dark:text-emerald-400 text-xs font-medium mt-0.5">
                         ongoing
                       </div>
                     )}
                   </div>
                 </td>
-                <td className="px-4 py-3 text-center text-gray-900 font-semibold">
+                <td className="px-4 py-3 text-center text-gray-900 dark:text-slate-200 font-semibold">
                   {calcMonths(p.startDate, p.endDate)}
                 </td>
                 <td className="px-4 py-3">
@@ -107,7 +107,7 @@ export default function ParticipationTable({
                       variant="ghost"
                       size="sm"
                       onClick={() => setDeleting(p)}
-                      className="text-red-500 hover:bg-red-50 hover:text-red-600"
+                      className="text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600"
                     >
                       <Trash2 size={14} />
                     </Button>
@@ -124,7 +124,7 @@ export default function ParticipationTable({
         onClose={() => setDeleting(null)}
         title="Delete Participation"
       >
-        <p className="text-sm text-gray-600 mb-6">
+        <p className="text-sm text-gray-600 dark:text-slate-400 mb-6">
           Are you sure you want to delete this participation record? This action
           cannot be undone.
         </p>

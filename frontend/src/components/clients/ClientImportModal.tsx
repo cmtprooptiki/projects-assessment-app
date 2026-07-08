@@ -77,11 +77,11 @@ export default function ClientImportModal({ open, onClose }: Props) {
     <Modal open={open} onClose={handleClose} title="Import Clients from CSV" className="max-w-lg">
       <div className="space-y-4">
         {/* Template download */}
-        <div className="flex items-center justify-between text-xs text-gray-500 bg-gray-50 rounded-lg px-3 py-2">
-          <span>Columns: <span className="font-mono text-gray-700">name*, code, industry, contactEmail, contactPhone, notes</span></span>
+        <div className="flex items-center justify-between text-xs text-gray-500 dark:text-slate-400 bg-gray-50 dark:bg-slate-700/40 rounded-lg px-3 py-2">
+          <span>Columns: <span className="font-mono text-gray-700 dark:text-slate-300">name*, code, industry, contactEmail, contactPhone, notes</span></span>
           <button
             onClick={downloadTemplate}
-            className="flex items-center gap-1 text-indigo-600 hover:text-indigo-700 font-medium shrink-0 ml-3"
+            className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium shrink-0 ml-3"
           >
             <Download size={12} />
             Template
@@ -97,7 +97,7 @@ export default function ClientImportModal({ open, onClose }: Props) {
             onClick={() => fileRef.current?.click()}
             className={`
               border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors
-              ${dragging ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 hover:border-indigo-300 hover:bg-gray-50'}
+              ${dragging ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-900/20' : 'border-gray-200 dark:border-slate-600 hover:border-indigo-300 hover:bg-gray-50 dark:hover:bg-slate-700/30'}
             `}
           >
             <input
@@ -110,14 +110,14 @@ export default function ClientImportModal({ open, onClose }: Props) {
             {file ? (
               <div className="flex flex-col items-center gap-2">
                 <FileText size={28} className="text-indigo-500" />
-                <span className="text-sm font-medium text-gray-900">{file.name}</span>
-                <span className="text-xs text-gray-400">{(file.size / 1024).toFixed(1)} KB</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-slate-200">{file.name}</span>
+                <span className="text-xs text-gray-400 dark:text-slate-500">{(file.size / 1024).toFixed(1)} KB</span>
               </div>
             ) : (
               <div className="flex flex-col items-center gap-2">
-                <Upload size={28} className="text-gray-400" />
-                <p className="text-sm font-medium text-gray-700">Drop a CSV file here or click to browse</p>
-                <p className="text-xs text-gray-400">Max 5 MB</p>
+                <Upload size={28} className="text-gray-400 dark:text-slate-500" />
+                <p className="text-sm font-medium text-gray-700 dark:text-slate-300">Drop a CSV file here or click to browse</p>
+                <p className="text-xs text-gray-400 dark:text-slate-500">Max 5 MB</p>
               </div>
             )}
           </div>
@@ -127,24 +127,24 @@ export default function ClientImportModal({ open, onClose }: Props) {
         {result && (
           <div className="space-y-3">
             <div className="grid grid-cols-3 gap-3 text-center">
-              <div className="bg-green-50 rounded-lg p-3">
-                <div className="text-2xl font-bold text-green-600">{result.created}</div>
-                <div className="text-xs text-green-700 mt-0.5">Created</div>
+              <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3">
+                <div className="text-2xl font-bold text-green-600 dark:text-green-400">{result.created}</div>
+                <div className="text-xs text-green-700 dark:text-green-400 mt-0.5">Created</div>
               </div>
-              <div className="bg-yellow-50 rounded-lg p-3">
-                <div className="text-2xl font-bold text-yellow-600">{result.skipped}</div>
-                <div className="text-xs text-yellow-700 mt-0.5">Skipped</div>
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-3">
+                <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{result.skipped}</div>
+                <div className="text-xs text-yellow-700 dark:text-yellow-400 mt-0.5">Skipped</div>
               </div>
-              <div className="bg-red-50 rounded-lg p-3">
-                <div className="text-2xl font-bold text-red-600">{result.errors.length}</div>
-                <div className="text-xs text-red-700 mt-0.5">Errors</div>
+              <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-3">
+                <div className="text-2xl font-bold text-red-600 dark:text-red-400">{result.errors.length}</div>
+                <div className="text-xs text-red-700 dark:text-red-400 mt-0.5">Errors</div>
               </div>
             </div>
 
             {result.errors.length > 0 && (
-              <div className="bg-red-50 border border-red-100 rounded-lg p-3 space-y-1 max-h-40 overflow-y-auto">
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-lg p-3 space-y-1 max-h-40 overflow-y-auto">
                 {result.errors.map((e, i) => (
-                  <div key={i} className="flex items-start gap-2 text-xs text-red-700">
+                  <div key={i} className="flex items-start gap-2 text-xs text-red-700 dark:text-red-400">
                     <AlertCircle size={12} className="mt-0.5 shrink-0" />
                     <span>{e.row > 0 ? `Row ${e.row}: ` : ''}{e.message}</span>
                   </div>
@@ -153,7 +153,7 @@ export default function ClientImportModal({ open, onClose }: Props) {
             )}
 
             {result.created > 0 && result.errors.length === 0 && (
-              <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2">
+              <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 rounded-lg px-3 py-2">
                 <CheckCircle size={16} />
                 All rows imported successfully.
               </div>

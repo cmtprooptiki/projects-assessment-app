@@ -104,30 +104,30 @@ export default function ContractForm({ defaultValues, clients, onSubmit, submitL
           <Input label="Start Date" type="date" value={form.startDate} onChange={(e) => set('startDate', e.target.value)} required />
           <div>
             <Input label="End Date" type="date" value={form.endDate ?? ''} onChange={(e) => set('endDate', e.target.value)} />
-            <p className="text-xs text-slate-400 mt-1">Leave empty if still active.</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Leave empty if still active.</p>
           </div>
         </div>
 
         <div>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">Budget (€)</label>
           <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400 pointer-events-none">€</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400 dark:text-slate-500 pointer-events-none">€</span>
             <input type="number" min="0" step="0.01" value={form.budget} onChange={(e) => set('budget', e.target.value)} placeholder="0.00"
-              className="w-full rounded-xl border border-slate-300 dark:border-slate-600 pl-7 pr-3 py-2 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 bg-white dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent hover:border-slate-400 transition-colors" />
+              className="w-full rounded-xl border border-slate-300 dark:border-slate-600 pl-7 pr-3 py-2 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 bg-white dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent hover:border-slate-400 dark:hover:border-slate-500 transition-colors" />
           </div>
         </div>
 
         <div>
           <div className="flex items-center justify-between mb-1">
             <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Confirmation of Good Performance</label>
-            <span className={`text-xs ${confirmLen > 480 ? 'text-red-500' : 'text-slate-400'}`}>{confirmLen}/500</span>
+            <span className={`text-xs ${confirmLen > 480 ? 'text-red-500' : 'text-slate-400 dark:text-slate-500'}`}>{confirmLen}/500</span>
           </div>
           <textarea value={form.confirmationOfGoodPerformance} onChange={(e) => set('confirmationOfGoodPerformance', e.target.value)}
             placeholder="Confirmation details..." rows={4} maxLength={500}
             className="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 bg-white dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent hover:border-slate-400 dark:hover:border-slate-500 transition-colors" />
         </div>
 
-        {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-lg">{error}</div>}
+        {error && <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm px-4 py-3 rounded-lg">{error}</div>}
 
         <div className="flex items-center gap-3 pt-2">
           <Button type="submit" loading={loading}>{submitLabel}</Button>

@@ -40,46 +40,46 @@ export default function ClientTable({ clients, onDeleted, isAdmin = false }: Pro
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-gray-100">
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Name</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Code</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Industry</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Contact</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Notes</th>
+            <tr className="border-b border-gray-100 dark:border-slate-700">
+              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Name</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Code</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Industry</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Contact</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Notes</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-50">
+          <tbody className="divide-y divide-gray-50 dark:divide-slate-700/50">
             {clients.map((client) => (
-              <tr key={client.id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-4 py-3 font-medium text-gray-900">{client.name}</td>
+              <tr key={client.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors">
+                <td className="px-4 py-3 font-medium text-gray-900 dark:text-slate-200">{client.name}</td>
                 <td className="px-4 py-3">
                   {client.code
-                    ? <span className="font-mono text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded">{client.code}</span>
-                    : <span className="text-gray-300">—</span>}
+                    ? <span className="font-mono text-xs bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 px-2 py-0.5 rounded">{client.code}</span>
+                    : <span className="text-gray-300 dark:text-slate-600">—</span>}
                 </td>
-                <td className="px-4 py-3 text-gray-600">{client.industry ?? <span className="text-gray-300">—</span>}</td>
-                <td className="px-4 py-3 text-gray-600">
+                <td className="px-4 py-3 text-gray-600 dark:text-slate-300">{client.industry ?? <span className="text-gray-300 dark:text-slate-600">—</span>}</td>
+                <td className="px-4 py-3 text-gray-600 dark:text-slate-300">
                   <div className="space-y-0.5">
                     {client.contactEmail && (
                       <div className="flex items-center gap-1.5 text-xs">
-                        <Mail size={11} className="text-gray-400" />
+                        <Mail size={11} className="text-gray-400 dark:text-slate-500" />
                         {client.contactEmail}
                       </div>
                     )}
                     {client.contactPhone && (
                       <div className="flex items-center gap-1.5 text-xs">
-                        <Phone size={11} className="text-gray-400" />
+                        <Phone size={11} className="text-gray-400 dark:text-slate-500" />
                         {client.contactPhone}
                       </div>
                     )}
                     {!client.contactEmail && !client.contactPhone && (
-                      <span className="text-gray-300">—</span>
+                      <span className="text-gray-300 dark:text-slate-600">—</span>
                     )}
                   </div>
                 </td>
-                <td className="px-4 py-3 text-gray-500 text-xs max-w-xs truncate">
-                  {client.notes ?? <span className="text-gray-300">—</span>}
+                <td className="px-4 py-3 text-gray-500 dark:text-slate-400 text-xs max-w-xs truncate">
+                  {client.notes ?? <span className="text-gray-300 dark:text-slate-600">—</span>}
                 </td>
                 <td className="px-4 py-3">
                   {isAdmin && (
@@ -90,7 +90,7 @@ export default function ClientTable({ clients, onDeleted, isAdmin = false }: Pro
                       <Button
                         variant="ghost" size="sm"
                         onClick={() => setDeleting(client)}
-                        className="text-red-500 hover:bg-red-50 hover:text-red-600"
+                        className="text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600"
                       >
                         <Trash2 size={14} />
                       </Button>
@@ -104,9 +104,9 @@ export default function ClientTable({ clients, onDeleted, isAdmin = false }: Pro
       </div>
 
       <Modal open={!!deleting} onClose={() => setDeleting(null)} title="Delete Client">
-        <p className="text-sm text-gray-600 mb-6">
+        <p className="text-sm text-gray-600 dark:text-slate-400 mb-6">
           Are you sure you want to delete{' '}
-          <span className="font-semibold text-gray-900">{deleting?.name}</span>?
+          <span className="font-semibold text-gray-900 dark:text-slate-200">{deleting?.name}</span>?
           This will fail if the client has projects assigned to it.
         </p>
         <div className="flex justify-end gap-3">

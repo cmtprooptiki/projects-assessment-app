@@ -43,7 +43,7 @@ export default function ParticipationsPage() {
         />
         <div className="flex items-center gap-2">
           {recalculate.data && !recalculate.isPending && (
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-gray-500 dark:text-slate-400">
               {recalculate.data.updated} updated, {recalculate.data.skipped} skipped
             </span>
           )}

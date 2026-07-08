@@ -160,7 +160,7 @@ export default function ProjectForm({ defaultValues, clients, onSubmit, submitLa
                         type="checkbox"
                         checked={checked}
                         onChange={() => toggleContract(c.id)}
-                        className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"
+                        className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"
                       />
                       <span className="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400 shrink-0">
                         {c.code}
@@ -186,7 +186,7 @@ export default function ProjectForm({ defaultValues, clients, onSubmit, submitLa
           />
         </div>
 
-        {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-lg">{error}</div>}
+        {error && <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm px-4 py-3 rounded-lg">{error}</div>}
 
         <div className="flex items-center gap-3 pt-2">
           <Button type="submit" loading={loading}>{submitLabel}</Button>

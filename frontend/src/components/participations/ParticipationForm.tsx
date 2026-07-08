@@ -122,10 +122,10 @@ export default function ParticipationForm({
               <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wide mb-0.5">Period</p>
               <p className="font-medium text-slate-800 dark:text-slate-200">
                 {defaultValues.startDate ? formatDate(defaultValues.startDate) : '—'}
-                <span className="text-slate-400 mx-1">–</span>
+                <span className="text-slate-400 dark:text-slate-500 mx-1">–</span>
                 {defaultValues.endDate
                   ? formatDate(defaultValues.endDate)
-                  : <span className="text-emerald-600">ongoing</span>}
+                  : <span className="text-emerald-600 dark:text-emerald-400">ongoing</span>}
               </p>
             </div>
           </div>
@@ -233,7 +233,7 @@ export default function ParticipationForm({
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-lg">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm px-4 py-3 rounded-lg">
             {error}
           </div>
         )}
