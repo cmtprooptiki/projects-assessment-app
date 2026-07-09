@@ -23,7 +23,7 @@ const typeOptions = [
 ];
 
 export default function EmployeeFilters({ filters, onChange, onReset }: Props) {
-  const { data } = useDepartments();
+  const { data } = useDepartments({ limit: 999 });
   const departments = data?.data ?? [];
 
   const update = (key: keyof EmployeeFilters, value: string) =>

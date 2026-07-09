@@ -5,14 +5,14 @@ import Link from 'next/link';
 import { Plus, Upload } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
 import Pagination from '@/components/ui/Pagination';
 import { PageSpinner } from '@/components/ui/Spinner';
 import ClientTable from '@/components/clients/ClientTable';
+import ClientFilters from '@/components/clients/ClientFilters';
 import ClientImportModal from '@/components/clients/ClientImportModal';
 import { useClients } from '@/hooks/useClients';
 import { useIsAdmin } from '@/hooks/useRole';
-import { ClientFilters } from '@/types';
+import { ClientFilters as IClientFilters } from '@/types';
 
 function CashFlowBadge() {
   return (
@@ -27,13 +27,22 @@ function CashFlowBadge() {
   );
 }
 
-const defaultFilters: ClientFilters = { page: 1, limit: 15 };
+const defaultFilters: IClientFilters = { page: 1, limit: 15, sortBy: 'name', sortOrder: 'asc' };
 
 export default function ClientsPage() {
-  const [filters, setFilters] = useState<ClientFilters>(defaultFilters);
+  const [filters, setFilters] = useState<IClientFilters>(defaultFilters);
   const [importOpen, setImportOpen] = useState(false);
   const { data, isLoading, error } = useClients(filters);
   const isAdmin = useIsAdmin();
+
+  const handleSort = (field: string) => {
+    setFilters((f) => ({
+      ...f,
+      page: 1,
+      sortBy: field,
+      sortOrder: f.sortBy === field && f.sortOrder === 'asc' ? 'desc' : 'asc',
+    }));
+  };
 
   const clients = data?.data ?? [];
   const meta = data?.meta;
@@ -41,16 +50,7 @@ export default function ClientsPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div className="w-64">
-          <Input
-            label=""
-            placeholder="Search clients..."
-            value={filters.search ?? ''}
-            onChange={(e) =>
-              setFilters((f) => ({ ...f, search: e.target.value || undefined, page: 1 }))
-            }
-          />
-        </div>
+        <ClientFilters filters={filters} onChange={setFilters} onReset={() => setFilters(defaultFilters)} />
         <div className="flex items-center gap-2">
           <CashFlowBadge />
           {isAdmin && (
@@ -79,7 +79,13 @@ export default function ClientsPage() {
           </div>
         ) : (
           <>
-            <ClientTable clients={clients} isAdmin={isAdmin} />
+            <ClientTable
+              clients={clients}
+              sortBy={filters.sortBy}
+              sortOrder={filters.sortOrder}
+              onSort={handleSort}
+              isAdmin={isAdmin}
+            />
             {meta && (
               <Pagination
                 page={meta.page}

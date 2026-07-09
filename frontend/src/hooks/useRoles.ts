@@ -1,11 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
-import { Role, ApiResult } from '@/types';
+import { Role, RoleFilters, PaginatedResult } from '@/types';
 
-export const useRoles = () =>
-  useQuery<ApiResult<Role[]>>({
-    queryKey: ['roles'],
-    queryFn: () => api.get('/roles').then((r) => r.data),
+export const useRoles = (filters: RoleFilters = {}) =>
+  useQuery<PaginatedResult<Role>>({
+    queryKey: ['roles', filters],
+    queryFn: () => api.get('/roles', { params: filters }).then((r) => r.data),
   });
 
 export const useCreateRole = () => {

@@ -28,14 +28,24 @@ export const createUser = async (data: {
   return sanitize(user);
 };
 
+const USER_SORT: Record<string, any[]> = {
+  name: [['firstName', 'ASC'], ['lastName', 'ASC']],
+  email: [['email', 'ASC']],
+  role: [['role', 'ASC']],
+};
+
 export const getAllUsers = async (filters: {
   role?: string;
   search?: string;
   page?: number;
   limit?: number;
+  sortBy?: string;
+  sortOrder?: string;
 }) => {
-  const { role, search, page = 1, limit = 20 } = filters;
+  const { role, search, page = 1, limit = 20, sortBy = 'name', sortOrder = 'asc' } = filters;
   const offset = (page - 1) * limit;
+  const dir = sortOrder === 'desc' ? 'DESC' : 'ASC';
+  const order: any = (USER_SORT[sortBy] ?? USER_SORT.name).map(([field]) => [field, dir]);
 
   const where: Record<string, unknown> = {};
 
@@ -53,7 +63,7 @@ export const getAllUsers = async (filters: {
     attributes: { exclude: ['password'] },
     limit,
     offset,
-    order: [['firstName', 'ASC'], ['lastName', 'ASC']],
+    order,
   });
 
   return {

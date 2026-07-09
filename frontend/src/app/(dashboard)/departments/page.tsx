@@ -1,21 +1,27 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Pencil, Trash2, Building } from 'lucide-react';
+import { Plus, Building } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
-import EmptyState from '@/components/ui/EmptyState';
+import Pagination from '@/components/ui/Pagination';
 import { PageSpinner } from '@/components/ui/Spinner';
+import DepartmentTable from '@/components/departments/DepartmentTable';
+import DepartmentFilters from '@/components/departments/DepartmentFilters';
 import { useDepartments, useCreateDepartment, useUpdateDepartment, useDeleteDepartment } from '@/hooks/useDepartments';
-import { Department } from '@/types';
+import { Department, DepartmentFilters as IDepartmentFilters } from '@/types';
 
 type FormMode = null | 'create' | { edit: Department };
 
+const defaultFilters: IDepartmentFilters = { page: 1, limit: 15, sortBy: 'name', sortOrder: 'asc' };
+
 export default function DepartmentsPage() {
-  const { data, isLoading } = useDepartments();
+  const [filters, setFilters] = useState<IDepartmentFilters>(defaultFilters);
+  const { data, isLoading, error: loadError } = useDepartments(filters);
   const departments = data?.data ?? [];
+  const meta = data?.meta;
 
   const [formMode, setFormMode] = useState<FormMode>(null);
   const [deleting, setDeleting] = useState<Department | null>(null);
@@ -29,6 +35,15 @@ export default function DepartmentsPage() {
   const deleteDepartment = useDeleteDepartment();
 
   const isEditing = formMode && typeof formMode === 'object';
+
+  const handleSort = (field: string) => {
+    setFilters((f) => ({
+      ...f,
+      page: 1,
+      sortBy: field,
+      sortOrder: f.sortBy === field && f.sortOrder === 'asc' ? 'desc' : 'asc',
+    }));
+  };
 
   const handleOpenCreate = () => {
     setName(''); setDescription(''); setError('');
@@ -85,41 +100,35 @@ export default function DepartmentsPage() {
         </Button>
       </div>
 
+      <div className="flex items-center justify-between">
+        <DepartmentFilters filters={filters} onChange={setFilters} onReset={() => setFilters(defaultFilters)} />
+      </div>
+
       <Card>
         {isLoading ? (
           <PageSpinner />
-        ) : departments.length === 0 ? (
-          <EmptyState title="No departments yet" description="Create your first department to get started." />
+        ) : loadError ? (
+          <div className="p-8 text-center text-sm text-red-500">Failed to load departments. Please try again.</div>
         ) : (
-          <div className="divide-y divide-slate-100 dark:divide-slate-700">
-            {departments.map((dept) => (
-              <div
-                key={dept.id}
-                className="px-6 py-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors group"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center shrink-0">
-                    <Building size={15} className="text-indigo-600 dark:text-indigo-400" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{dept.name}</p>
-                    {dept.description && (
-                      <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 truncate">{dept.description}</p>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center gap-1 ml-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button variant="ghost" size="sm" onClick={() => handleOpenEdit(dept)}>
-                    <Pencil size={14} />
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => setDeleting(dept)}
-                    className="text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600">
-                    <Trash2 size={14} />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
+          <>
+            <DepartmentTable
+              departments={departments}
+              sortBy={filters.sortBy}
+              sortOrder={filters.sortOrder}
+              onSort={handleSort}
+              onEdit={handleOpenEdit}
+              onDelete={setDeleting}
+            />
+            {meta && (
+              <Pagination
+                page={meta.page}
+                totalPages={meta.totalPages}
+                total={meta.total}
+                limit={meta.limit}
+                onPageChange={(page) => setFilters((f) => ({ ...f, page }))}
+              />
+            )}
+          </>
         )}
       </Card>
 

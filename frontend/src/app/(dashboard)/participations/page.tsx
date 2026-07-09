@@ -16,7 +16,7 @@ import { useProjects } from '@/hooks/useProjects';
 import { useRoles } from '@/hooks/useRoles';
 import { ParticipationFilters as IParticipationFilters } from '@/types';
 
-const defaultFilters: IParticipationFilters = { page: 1, limit: 15 };
+const defaultFilters: IParticipationFilters = { page: 1, limit: 15, sortBy: 'startDate', sortOrder: 'desc' };
 
 export default function ParticipationsPage() {
   const [filters, setFilters] = useState<IParticipationFilters>(defaultFilters);
@@ -24,8 +24,17 @@ export default function ParticipationsPage() {
   const { data, isLoading, error } = useParticipations(filters);
   const { data: employeesData } = useEmployees({ limit: 999 });
   const { data: projectsData } = useProjects({ limit: 999 });
-  const { data: rolesData } = useRoles();
+  const { data: rolesData } = useRoles({ limit: 999 });
   const recalculate = useRecalculateParticipations();
+
+  const handleSort = (field: string) => {
+    setFilters((f) => ({
+      ...f,
+      page: 1,
+      sortBy: field,
+      sortOrder: f.sortBy === field && f.sortOrder === 'asc' ? 'desc' : 'asc',
+    }));
+  };
 
   const participations = data?.data ?? [];
   const meta = data?.meta;
@@ -78,7 +87,12 @@ export default function ParticipationsPage() {
           </div>
         ) : (
           <>
-            <ParticipationTable participations={participations} />
+            <ParticipationTable
+              participations={participations}
+              sortBy={filters.sortBy}
+              sortOrder={filters.sortOrder}
+              onSort={handleSort}
+            />
             {meta && (
               <Pagination
                 page={meta.page}

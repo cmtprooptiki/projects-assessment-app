@@ -22,7 +22,7 @@ export default function EmployeeForm({ defaultValues, onSubmit, submitLabel = 'S
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { data: deptData } = useDepartments();
+  const { data: deptData } = useDepartments({ limit: 999 });
   const departments = deptData?.data ?? [];
 
   const [loading, setLoading] = useState(false);

@@ -1,11 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
-import { Department, ApiResult } from '@/types';
+import { Department, DepartmentFilters, PaginatedResult } from '@/types';
 
-export const useDepartments = () =>
-  useQuery<ApiResult<Department[]>>({
-    queryKey: ['departments'],
-    queryFn: () => api.get('/departments').then((r) => r.data),
+export const useDepartments = (filters: DepartmentFilters = {}) =>
+  useQuery<PaginatedResult<Department>>({
+    queryKey: ['departments', filters],
+    queryFn: () => api.get('/departments', { params: filters }).then((r) => r.data),
   });
 
 export const useCreateDepartment = () => {

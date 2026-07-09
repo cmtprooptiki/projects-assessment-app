@@ -1,13 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
-import { User, PaginatedResult, ApiResult } from '@/types';
-
-interface UserFilters {
-  role?: string;
-  search?: string;
-  page?: number;
-  limit?: number;
-}
+import { User, UserFilters, PaginatedResult, ApiResult } from '@/types';
 
 export const useUsers = (filters: UserFilters = {}) =>
   useQuery<PaginatedResult<User>>({

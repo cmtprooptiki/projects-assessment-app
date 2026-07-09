@@ -85,10 +85,23 @@ const buildParticipationWhere = (filters: ParticipationFilterQuery) => {
   return { where, employeeWhere };
 };
 
+const PARTICIPATION_SORT: Record<string, any[]> = {
+  employee:  [[{ model: Employee, as: 'employee' }, 'firstName', 'ASC'], [{ model: Employee, as: 'employee' }, 'lastName', 'ASC']],
+  project:   [[{ model: Project, as: 'project' }, 'name', 'ASC']],
+  role:      [[{ model: Role, as: 'role' }, 'name', 'ASC']],
+  startDate: [['startDate', 'ASC']],
+  endDate:   [['endDate', 'ASC']],
+};
+
 export const getAllParticipations = async (filters: ParticipationFilterQuery) => {
   const page = parseInt(filters.page || '1', 10);
   const limit = parseInt(filters.limit || '20', 10);
   const offset = (page - 1) * limit;
+  const dir = filters.sortOrder === 'desc' ? 'DESC' : filters.sortOrder === 'asc' ? 'ASC' : null;
+  const sortField = filters.sortBy && PARTICIPATION_SORT[filters.sortBy] ? filters.sortBy : null;
+  const order: any = sortField
+    ? PARTICIPATION_SORT[sortField].map((clause) => [...clause.slice(0, -1), dir ?? clause[clause.length - 1]])
+    : [['startDate', 'DESC']];
 
   const { where, employeeWhere } = buildParticipationWhere(filters);
 
@@ -101,7 +114,7 @@ export const getAllParticipations = async (filters: ParticipationFilterQuery) =>
     ],
     limit,
     offset,
-    order: [['startDate', 'DESC']],
+    order,
     distinct: true,
   });
 

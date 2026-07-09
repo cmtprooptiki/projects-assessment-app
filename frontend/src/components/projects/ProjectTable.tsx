@@ -2,13 +2,14 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Pencil, Trash2, FileText, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
+import { Pencil, Trash2, FileText } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import EmptyState from '@/components/ui/EmptyState';
+import SortableTh from '@/components/ui/SortableTh';
 import { Project } from '@/types';
 import { useDeleteProject } from '@/hooks/useProjects';
-import { formatDate, cn } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
 
 type SortField = 'projectCode' | 'name' | 'acronym' | 'client' | 'startDate' | 'contracts';
 type SortDir   = 'asc' | 'desc';
@@ -20,13 +21,6 @@ interface Props {
   onSort?: (field: SortField) => void;
   onDeleted?: () => void;
   isAdmin?: boolean;
-}
-
-function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
-  if (!active) return <ChevronsUpDown size={13} className="text-gray-300 dark:text-slate-600 shrink-0" />;
-  return dir === 'asc'
-    ? <ChevronUp   size={13} className="text-indigo-500 shrink-0" />
-    : <ChevronDown size={13} className="text-indigo-500 shrink-0" />;
 }
 
 export default function ProjectTable({ projects, sortBy = 'projectCode', sortOrder = 'asc', onSort, onDeleted, isAdmin = false }: Props) {
@@ -43,20 +37,8 @@ export default function ProjectTable({ projects, sortBy = 'projectCode', sortOrd
   if (projects.length === 0)
     return <EmptyState title="No projects found" description="Try adjusting your filters or create a new project." />;
 
-  const thCls = (field: SortField) => cn(
-    'text-left px-4 py-3 text-xs font-semibold uppercase tracking-wide select-none whitespace-nowrap',
-    'hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors',
-    onSort ? 'cursor-pointer' : '',
-    sortBy === field ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-slate-400',
-  );
-
   const Th = ({ field, label }: { field: SortField; label: string }) => (
-    <th className={thCls(field)} onClick={() => onSort?.(field)}>
-      <span className="flex items-center gap-1">
-        {label}
-        <SortIcon active={sortBy === field} dir={sortOrder} />
-      </span>
-    </th>
+    <SortableTh field={field} label={label} sortBy={sortBy} sortOrder={sortOrder} onSort={onSort as (f: string) => void} />
   );
 
   return (

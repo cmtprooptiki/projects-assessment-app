@@ -1,10 +1,15 @@
 import { Request, Response, NextFunction } from 'express';
 import * as departmentService from '../services/departmentService';
 
-export const getAll = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const getAll = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const departments = await departmentService.getAllDepartments();
-    res.json({ success: true, data: departments });
+    const { search, page, limit, sortBy, sortOrder } = req.query as Record<string, string>;
+    const result = await departmentService.getAllDepartments({
+      search, sortBy, sortOrder,
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
+    });
+    res.json({ success: true, ...result });
   } catch (err) { next(err); }
 };
 

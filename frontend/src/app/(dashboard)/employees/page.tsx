@@ -26,12 +26,21 @@ function AzureBadge() {
   );
 }
 
-const defaultFilters: IEmployeeFilters = { page: 1, limit: 15 };
+const defaultFilters: IEmployeeFilters = { page: 1, limit: 15, sortBy: 'name', sortOrder: 'asc' };
 
 export default function EmployeesPage() {
   const [filters, setFilters] = useState<IEmployeeFilters>(defaultFilters);
   const { data, isLoading, error } = useEmployees(filters);
   const isAdmin = useIsAdmin();
+
+  const handleSort = (field: string) => {
+    setFilters((f) => ({
+      ...f,
+      page: 1,
+      sortBy: field,
+      sortOrder: f.sortBy === field && f.sortOrder === 'asc' ? 'desc' : 'asc',
+    }));
+  };
 
   const employees = data?.data ?? [];
   const meta = data?.meta;
@@ -64,7 +73,13 @@ export default function EmployeesPage() {
           </div>
         ) : (
           <>
-            <EmployeeTable employees={employees} isAdmin={isAdmin} />
+            <EmployeeTable
+              employees={employees}
+              sortBy={filters.sortBy}
+              sortOrder={filters.sortOrder}
+              onSort={handleSort}
+              isAdmin={isAdmin}
+            />
             {meta && (
               <Pagination
                 page={meta.page}

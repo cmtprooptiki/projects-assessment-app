@@ -7,8 +7,13 @@ export const getAll = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const roles = await roleService.getAllRoles();
-    res.json({ success: true, data: roles });
+    const { search, page, limit, sortBy, sortOrder } = req.query as Record<string, string>;
+    const result = await roleService.getAllRoles({
+      search, sortBy, sortOrder,
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
+    });
+    res.json({ success: true, ...result });
   } catch (err) {
     next(err);
   }

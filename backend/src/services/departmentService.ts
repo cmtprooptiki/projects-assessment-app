@@ -1,9 +1,45 @@
+import { Op } from 'sequelize';
 import { Department } from '../models';
 import { AppError } from '../middleware/errorHandler';
 import { DepartmentCreationAttributes } from '../models/Department';
 
-export const getAllDepartments = async () =>
-  Department.findAll({ order: [['name', 'ASC']] });
+const DEPARTMENT_SORT: Record<string, string> = {
+  name: 'name',
+  description: 'description',
+};
+
+export const getAllDepartments = async (filters: {
+  search?: string;
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: string;
+} = {}) => {
+  const { search, page = 1, limit = 20, sortBy = 'name', sortOrder = 'asc' } = filters;
+  const offset = (page - 1) * limit;
+  const dir = sortOrder === 'desc' ? 'DESC' : 'ASC';
+  const field = DEPARTMENT_SORT[sortBy] ?? DEPARTMENT_SORT.name;
+
+  const where: Record<string, unknown> = {};
+  if (search) {
+    where[Op.or as unknown as string] = [
+      { name: { [Op.like]: `%${search}%` } },
+      { description: { [Op.like]: `%${search}%` } },
+    ];
+  }
+
+  const { count, rows } = await Department.findAndCountAll({
+    where,
+    limit,
+    offset,
+    order: [[field, dir]],
+  });
+
+  return {
+    data: rows,
+    meta: { total: count, page, limit, totalPages: Math.ceil(count / limit) },
+  };
+};
 
 export const getDepartmentById = async (id: number) => {
   const dept = await Department.findByPk(id);

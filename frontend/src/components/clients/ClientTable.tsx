@@ -6,16 +6,22 @@ import { Pencil, Trash2, Mail, Phone } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import EmptyState from '@/components/ui/EmptyState';
+import SortableTh from '@/components/ui/SortableTh';
 import { Client } from '@/types';
 import { useDeleteClient } from '@/hooks/useClients';
 
+type SortDir = 'asc' | 'desc';
+
 interface Props {
   clients: Client[];
+  sortBy?: string;
+  sortOrder?: SortDir;
+  onSort?: (field: string) => void;
   onDeleted?: () => void;
   isAdmin?: boolean;
 }
 
-export default function ClientTable({ clients, onDeleted, isAdmin = false }: Props) {
+export default function ClientTable({ clients, sortBy = 'name', sortOrder = 'asc', onSort, onDeleted, isAdmin = false }: Props) {
   const [deleting, setDeleting] = useState<Client | null>(null);
   const deleteClient = useDeleteClient();
 
@@ -35,15 +41,19 @@ export default function ClientTable({ clients, onDeleted, isAdmin = false }: Pro
     );
   }
 
+  const Th = ({ field, label }: { field: string; label: string }) => (
+    <SortableTh field={field} label={label} sortBy={sortBy} sortOrder={sortOrder} onSort={onSort} />
+  );
+
   return (
     <>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-100 dark:border-slate-700">
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Name</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Code</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Industry</th>
+              <Th field="name" label="Name" />
+              <Th field="code" label="Code" />
+              <Th field="industry" label="Industry" />
               <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Contact</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Notes</th>
               <th className="px-4 py-3" />

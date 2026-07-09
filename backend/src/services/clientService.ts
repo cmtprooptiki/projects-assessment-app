@@ -3,13 +3,23 @@ import Client, { ClientCreationAttributes } from '../models/Client';
 import Project from '../models/Project';
 import { AppError } from '../middleware/errorHandler';
 
+const CLIENT_SORT: Record<string, string> = {
+  name: 'name',
+  code: 'code',
+  industry: 'industry',
+};
+
 export const getAllClients = async (filters: {
   search?: string;
   page?: number;
   limit?: number;
+  sortBy?: string;
+  sortOrder?: string;
 }) => {
-  const { search, page = 1, limit = 20 } = filters;
+  const { search, page = 1, limit = 20, sortBy = 'name', sortOrder = 'asc' } = filters;
   const offset = (page - 1) * limit;
+  const dir = sortOrder === 'desc' ? 'DESC' : 'ASC';
+  const field = CLIENT_SORT[sortBy] ?? CLIENT_SORT.name;
 
   const where: Record<string, unknown> = {};
 
@@ -26,7 +36,7 @@ export const getAllClients = async (filters: {
     where,
     limit,
     offset,
-    order: [['name', 'ASC']],
+    order: [[field, dir]],
   });
 
   return {

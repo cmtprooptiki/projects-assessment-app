@@ -7,13 +7,23 @@ import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import EmptyState from '@/components/ui/EmptyState';
+import SortableTh from '@/components/ui/SortableTh';
 import { Contract } from '@/types';
 import { formatDate, statusLabel, statusVariant } from '@/lib/utils';
 import { useDeleteContract } from '@/hooks/useContracts';
 
-interface Props { contracts: Contract[]; onDeleted?: () => void; isAdmin?: boolean; }
+type SortDir = 'asc' | 'desc';
 
-export default function ContractTable({ contracts, onDeleted, isAdmin = false }: Props) {
+interface Props {
+  contracts: Contract[];
+  sortBy?: string;
+  sortOrder?: SortDir;
+  onSort?: (field: string) => void;
+  onDeleted?: () => void;
+  isAdmin?: boolean;
+}
+
+export default function ContractTable({ contracts, sortBy = 'name', sortOrder = 'asc', onSort, onDeleted, isAdmin = false }: Props) {
   const [deleting, setDeleting] = useState<Contract | null>(null);
   const deleteContract = useDeleteContract();
 
@@ -27,19 +37,23 @@ export default function ContractTable({ contracts, onDeleted, isAdmin = false }:
   if (contracts.length === 0)
     return <EmptyState title="No contracts found" description="Try adjusting your filters or add a new contract." />;
 
+  const Th = ({ field, label }: { field: string; label: string }) => (
+    <SortableTh field={field} label={label} sortBy={sortBy} sortOrder={sortOrder} onSort={onSort} />
+  );
+
   return (
     <>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-100 dark:border-slate-700">
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Name</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Code</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Client</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Start Date</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">End Date</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Status</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Budget</th>
+              <Th field="name" label="Name" />
+              <Th field="code" label="Code" />
+              <Th field="client" label="Client" />
+              <Th field="startDate" label="Start Date" />
+              <Th field="endDate" label="End Date" />
+              <Th field="status" label="Status" />
+              <Th field="budget" label="Budget" />
               <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Confirmation</th>
               <th className="px-4 py-3" />
             </tr>

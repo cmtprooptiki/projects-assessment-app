@@ -26,12 +26,21 @@ function CashFlowBadge() {
   );
 }
 
-const defaultFilters: IContractFilters = { page: 1, limit: 15 };
+const defaultFilters: IContractFilters = { page: 1, limit: 15, sortBy: 'name', sortOrder: 'asc' };
 
 export default function ContractsPage() {
   const [filters, setFilters] = useState<IContractFilters>(defaultFilters);
   const { data, isLoading, error } = useContracts(filters);
   const isAdmin = useIsAdmin();
+
+  const handleSort = (field: string) => {
+    setFilters((f) => ({
+      ...f,
+      page: 1,
+      sortBy: field,
+      sortOrder: f.sortBy === field && f.sortOrder === 'asc' ? 'desc' : 'asc',
+    }));
+  };
 
   const contracts = data?.data ?? [];
   const meta = data?.meta;
@@ -54,7 +63,13 @@ export default function ContractsPage() {
           : error ? <div className="p-8 text-center text-sm text-red-500">Failed to load contracts. Please try again.</div>
           : (
             <>
-              <ContractTable contracts={contracts} isAdmin={isAdmin} />
+              <ContractTable
+                contracts={contracts}
+                sortBy={filters.sortBy}
+                sortOrder={filters.sortOrder}
+                onSort={handleSort}
+                isAdmin={isAdmin}
+              />
               {meta && (
                 <Pagination page={meta.page} totalPages={meta.totalPages} total={meta.total} limit={meta.limit}
                   onPageChange={(page) => setFilters((f) => ({ ...f, page }))} />

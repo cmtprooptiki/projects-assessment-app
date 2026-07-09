@@ -5,9 +5,9 @@ import { AppError } from '../middleware/errorHandler';
 
 export const getAll = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { search, page, limit } = req.query as Record<string, string>;
+    const { search, page, limit, sortBy, sortOrder } = req.query as Record<string, string>;
     const result = await clientService.getAllClients({
-      search,
+      search, sortBy, sortOrder,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
     });

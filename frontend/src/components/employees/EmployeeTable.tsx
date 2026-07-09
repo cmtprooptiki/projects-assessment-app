@@ -8,18 +8,24 @@ import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import EmptyState from '@/components/ui/EmptyState';
 import EmployeeAvatar from '@/components/ui/EmployeeAvatar';
+import SortableTh from '@/components/ui/SortableTh';
 import CVDownloadModal from '@/components/employees/CVDownloadModal';
 import { Employee } from '@/types';
 import { fullName } from '@/lib/utils';
 import { useDeleteEmployee } from '@/hooks/useEmployees';
 
+type SortDir = 'asc' | 'desc';
+
 interface Props {
   employees: Employee[];
+  sortBy?: string;
+  sortOrder?: SortDir;
+  onSort?: (field: string) => void;
   onDeleted?: () => void;
   isAdmin?: boolean;
 }
 
-export default function EmployeeTable({ employees, onDeleted, isAdmin = false }: Props) {
+export default function EmployeeTable({ employees, sortBy = 'name', sortOrder = 'asc', onSort, onDeleted, isAdmin = false }: Props) {
   const [deleting, setDeleting] = useState<Employee | null>(null);
   const [cvEmployee, setCvEmployee] = useState<Employee | null>(null);
   const deleteEmployee = useDeleteEmployee();
@@ -35,7 +41,9 @@ export default function EmployeeTable({ employees, onDeleted, isAdmin = false }:
     return <EmptyState title="No employees found" description="Try adjusting your filters or add a new employee." />;
   }
 
-  const th = 'text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide';
+  const Th = ({ field, label }: { field: string; label: string }) => (
+    <SortableTh field={field} label={label} sortBy={sortBy} sortOrder={sortOrder} onSort={onSort} />
+  );
 
   return (
     <>
@@ -43,11 +51,11 @@ export default function EmployeeTable({ employees, onDeleted, isAdmin = false }:
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-slate-100 dark:border-slate-700">
-              <th className={th}>Name</th>
-              <th className={th}>Email</th>
-              <th className={th}>Department</th>
-              <th className={th}>Type</th>
-              <th className={th}>Status</th>
+              <Th field="name" label="Name" />
+              <Th field="email" label="Email" />
+              <Th field="department" label="Department" />
+              <Th field="type" label="Type" />
+              <Th field="status" label="Status" />
               <th className="px-4 py-3" />
             </tr>
           </thead>

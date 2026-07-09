@@ -3,6 +3,16 @@ import { Contract, Client } from '../models';
 import { AppError } from '../middleware/errorHandler';
 import { ContractCreationAttributes, ContractStatus } from '../models/Contract';
 
+const CONTRACT_SORT: Record<string, any[]> = {
+  name: [['name', 'ASC']],
+  code: [['code', 'ASC']],
+  client: [[{ model: Client, as: 'client' }, 'name', 'ASC']],
+  startDate: [['startDate', 'ASC']],
+  endDate: [['endDate', 'ASC']],
+  status: [['status', 'ASC']],
+  budget: [['budget', 'ASC']],
+};
+
 export const getAllContracts = async (filters: {
   status?: string;
   clientId?: string;
@@ -11,9 +21,15 @@ export const getAllContracts = async (filters: {
   search?: string;
   page?: number;
   limit?: number;
+  sortBy?: string;
+  sortOrder?: string;
 }) => {
-  const { status, clientId, projectId, unlinked, search, page = 1, limit = 20 } = filters;
+  const { status, clientId, projectId, unlinked, search, page = 1, limit = 20, sortBy = 'name', sortOrder = 'asc' } = filters;
   const offset = (page - 1) * limit;
+  const dir = sortOrder === 'desc' ? 'DESC' : 'ASC';
+  const order: any = (CONTRACT_SORT[sortBy] ?? CONTRACT_SORT.name).map((clause) =>
+    clause.length === 3 ? [clause[0], clause[1], dir] : [clause[0], dir]
+  );
 
   const where: Record<string, unknown> = {};
   if (status) where.status = status;
@@ -40,7 +56,7 @@ export const getAllContracts = async (filters: {
     include: [{ model: Client, as: 'client', required: false }],
     limit,
     offset,
-    order: [['name', 'ASC']],
+    order,
     distinct: true,
     subQuery: false,
   });

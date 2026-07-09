@@ -6,17 +6,26 @@ import { Pencil, Trash2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import EmptyState from '@/components/ui/EmptyState';
+import SortableTh from '@/components/ui/SortableTh';
 import { ProjectParticipation } from '@/types';
 import { formatDate, fullName, calcMonths } from '@/lib/utils';
 import { useDeleteParticipation } from '@/hooks/useParticipations';
 
+type SortDir = 'asc' | 'desc';
+
 interface Props {
   participations: ProjectParticipation[];
+  sortBy?: string;
+  sortOrder?: SortDir;
+  onSort?: (field: string) => void;
   onDeleted?: () => void;
 }
 
 export default function ParticipationTable({
   participations,
+  sortBy = 'startDate',
+  sortOrder = 'desc',
+  onSort,
   onDeleted,
 }: Props) {
   const [deleting, setDeleting] = useState<ProjectParticipation | null>(null);
@@ -38,24 +47,20 @@ export default function ParticipationTable({
     );
   }
 
+  const Th = ({ field, label, align }: { field: string; label: string; align?: 'left' | 'center' }) => (
+    <SortableTh field={field} label={label} sortBy={sortBy} sortOrder={sortOrder} onSort={onSort} align={align} />
+  );
+
   return (
     <>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-100 dark:border-slate-700">
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">
-                Employee
-              </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">
-                Project
-              </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">
-                Role
-              </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">
-                Period
-              </th>
+              <Th field="employee" label="Employee" />
+              <Th field="project" label="Project" />
+              <Th field="role" label="Role" />
+              <Th field="startDate" label="Period" />
               <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">
                 Months
               </th>

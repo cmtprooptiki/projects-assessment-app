@@ -16,7 +16,7 @@ export default function EditParticipationPage() {
   const { data, isLoading } = useParticipation(id);
   const { data: employeesData, isLoading: loadingEmployees } = useEmployees({ limit: 999 });
   const { data: projectsData, isLoading: loadingProjects } = useProjects({ limit: 999 });
-  const { data: rolesData, isLoading: loadingRoles } = useRoles();
+  const { data: rolesData, isLoading: loadingRoles } = useRoles({ limit: 999 });
   const updateParticipation = useUpdateParticipation();
 
   if (isLoading || loadingEmployees || loadingProjects || loadingRoles) {

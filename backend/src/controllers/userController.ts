@@ -26,10 +26,12 @@ export const getAll = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { role, search, page, limit } = req.query as Record<string, string>;
+    const { role, search, page, limit, sortBy, sortOrder } = req.query as Record<string, string>;
     const result = await userService.getAllUsers({
       role,
       search,
+      sortBy,
+      sortOrder,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
     });

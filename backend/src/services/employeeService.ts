@@ -12,6 +12,14 @@ const deletePhotoFile = (photoPath: string | null | undefined) => {
   try { if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath); } catch {}
 };
 
+const EMPLOYEE_SORT: Record<string, any[]> = {
+  name: [['firstName', 'ASC'], ['lastName', 'ASC']],
+  email: [['email', 'ASC']],
+  department: [['department', 'ASC']],
+  type: [['isExternal', 'ASC']],
+  status: [['isActive', 'ASC']],
+};
+
 export const getAllEmployees = async (filters: {
   department?: string;
   isActive?: string;
@@ -19,9 +27,13 @@ export const getAllEmployees = async (filters: {
   search?: string;
   page?: number;
   limit?: number;
+  sortBy?: string;
+  sortOrder?: string;
 }) => {
-  const { department, isActive, isExternal, search, page = 1, limit = 20 } = filters;
+  const { department, isActive, isExternal, search, page = 1, limit = 20, sortBy = 'name', sortOrder = 'asc' } = filters;
   const offset = (page - 1) * limit;
+  const dir = sortOrder === 'desc' ? 'DESC' : 'ASC';
+  const order: any = (EMPLOYEE_SORT[sortBy] ?? EMPLOYEE_SORT.name).map(([field]) => [field, dir]);
 
   const where: Record<string, unknown> = {};
   if (department) where.department = department;
@@ -40,7 +52,7 @@ export const getAllEmployees = async (filters: {
     include: [{ model: EmployeeAvailabilityPeriod, as: 'availabilityPeriods' }],
     limit,
     offset,
-    order: [['firstName', 'ASC'], ['lastName', 'ASC']],
+    order,
     distinct: true,
   });
 
