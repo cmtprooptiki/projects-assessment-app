@@ -91,7 +91,7 @@ export default function AssistantWidget() {
 
       {/* Chat panel */}
       {open && (
-        <div className="fixed bottom-24 right-6 z-50 w-[380px] max-h-[600px] flex flex-col rounded-2xl shadow-2xl border border-slate-200 bg-white overflow-hidden">
+        <div className="fixed bottom-24 right-6 z-50 w-[380px] max-h-[600px] flex flex-col rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-black overflow-hidden">
           {/* Header */}
           <div className="flex items-center gap-3 px-4 py-3 bg-indigo-600 text-white">
             <Bot size={20} />
@@ -104,8 +104,8 @@ export default function AssistantWidget() {
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0" style={{ maxHeight: 420 }}>
             {messages.length === 0 && (
-              <div className="text-center text-slate-400 text-sm mt-8 space-y-2">
-                <Bot size={32} className="mx-auto text-slate-300" />
+              <div className="text-center text-slate-400 dark:text-white text-sm mt-8 space-y-2">
+                <Bot size={32} className="mx-auto text-slate-300 dark:text-white" />
                 <p>Καλώς ήρθατε!</p>
                 <p className="text-xs">Μπορείτε να ρωτήσετε για υπαλλήλους, έργα, συμμετοχές, διαθεσιμότητα και πολλά άλλα.</p>
               </div>
@@ -121,7 +121,7 @@ export default function AssistantWidget() {
                 <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${
                   msg.role === 'user'
                     ? 'bg-indigo-600 text-white rounded-br-sm'
-                    : 'bg-slate-100 text-slate-800 rounded-bl-sm'
+                    : 'bg-slate-100 dark:bg-black text-slate-800 dark:text-white rounded-bl-sm'
                 }`}>
                   {msg.role === 'assistant'
                     ? <MarkdownText text={msg.content} />
@@ -140,9 +140,9 @@ export default function AssistantWidget() {
                 <div className="flex-none w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center">
                   <Bot size={14} className="text-indigo-600" />
                 </div>
-                <div className="bg-slate-100 rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-2">
+                <div className="bg-slate-100 dark:bg-black rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-2">
                   <Loader2 size={14} className="animate-spin text-indigo-600" />
-                  <span className="text-sm text-slate-500">Αναζήτηση...</span>
+                  <span className="text-sm text-slate-500 dark:text-white">Αναζήτηση...</span>
                 </div>
               </div>
             )}
@@ -151,7 +151,7 @@ export default function AssistantWidget() {
           </div>
 
           {/* Input */}
-          <div className="border-t border-slate-100 p-3 flex gap-2 items-end">
+          <div className="border-t border-slate-100 dark:border-slate-800 p-3 flex gap-2 items-end">
             <textarea
               ref={inputRef}
               value={input}
@@ -159,7 +159,7 @@ export default function AssistantWidget() {
               onKeyDown={handleKey}
               placeholder="Γράψτε την ερώτησή σας…"
               rows={1}
-              className="flex-1 resize-none rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 max-h-28 overflow-y-auto"
+              className="flex-1 resize-none rounded-xl border border-slate-200 dark:border-slate-800 dark:bg-black dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 max-h-28 overflow-y-auto"
               style={{ lineHeight: '1.5' }}
               disabled={loading}
             />
