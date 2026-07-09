@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Plus } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -29,7 +30,11 @@ function AzureBadge() {
 const defaultFilters: IEmployeeFilters = { page: 1, limit: 15, sortBy: 'name', sortOrder: 'asc' };
 
 export default function EmployeesPage() {
-  const [filters, setFilters] = useState<IEmployeeFilters>(defaultFilters);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialPage = parseInt(searchParams.get('page') ?? '1', 10);
+
+  const [filters, setFilters] = useState<IEmployeeFilters>({ ...defaultFilters, page: initialPage });
   const { data, isLoading, error } = useEmployees(filters);
   const isAdmin = useIsAdmin();
 
@@ -75,6 +80,7 @@ export default function EmployeesPage() {
           <>
             <EmployeeTable
               employees={employees}
+              currentPage={filters.page}
               sortBy={filters.sortBy}
               sortOrder={filters.sortOrder}
               onSort={handleSort}
@@ -86,7 +92,10 @@ export default function EmployeesPage() {
                 totalPages={meta.totalPages}
                 total={meta.total}
                 limit={meta.limit}
-                onPageChange={(page) => setFilters((f) => ({ ...f, page }))}
+                onPageChange={(page) => {
+                  setFilters((f) => ({ ...f, page }));
+                  router.replace(`/employees?page=${page}`, { scroll: false });
+                }}
               />
             )}
           </>
