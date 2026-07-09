@@ -318,7 +318,7 @@ export default function EditEmployeePage() {
         defaultValues={employee}
         onSubmit={async (formData) => {
           await updateEmployee.mutateAsync({ id, data: formData });
-          router.back();
+          router.push('/employees');
         }}
         submitLabel="Update Employee"
       />

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Plus } from 'lucide-react';
@@ -35,6 +35,20 @@ export default function EmployeesPage() {
   const { data, isLoading, error } = useEmployees(filters);
   const isAdmin = useIsAdmin();
 
+  // Restore last page from sessionStorage on mount (e.g. coming back from edit)
+  useEffect(() => {
+    const saved = sessionStorage.getItem('employees:page');
+    if (saved) {
+      const page = parseInt(saved, 10);
+      if (page > 1) setFilters((f) => ({ ...f, page }));
+    }
+  }, []);
+
+  // Persist current page so it survives navigation to/from edit
+  useEffect(() => {
+    sessionStorage.setItem('employees:page', String(filters.page));
+  }, [filters.page]);
+
   const handleSort = (field: string) => {
     setFilters((f) => ({
       ...f,
@@ -53,7 +67,7 @@ export default function EmployeesPage() {
         <EmployeeFilters
           filters={filters}
           onChange={setFilters}
-          onReset={() => setFilters(defaultFilters)}
+          onReset={() => { setFilters(defaultFilters); sessionStorage.removeItem('employees:page'); }}
         />
         <div className="flex items-center gap-3">
           <AzureBadge />
