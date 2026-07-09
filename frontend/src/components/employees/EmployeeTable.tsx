@@ -18,7 +18,6 @@ type SortDir = 'asc' | 'desc';
 
 interface Props {
   employees: Employee[];
-  currentPage?: number;
   sortBy?: string;
   sortOrder?: SortDir;
   onSort?: (field: string) => void;
@@ -26,7 +25,7 @@ interface Props {
   isAdmin?: boolean;
 }
 
-export default function EmployeeTable({ employees, currentPage = 1, sortBy = 'name', sortOrder = 'asc', onSort, onDeleted, isAdmin = false }: Props) {
+export default function EmployeeTable({ employees, sortBy = 'name', sortOrder = 'asc', onSort, onDeleted, isAdmin = false }: Props) {
   const [deleting, setDeleting] = useState<Employee | null>(null);
   const [cvEmployee, setCvEmployee] = useState<Employee | null>(null);
   const deleteEmployee = useDeleteEmployee();
@@ -92,7 +91,7 @@ export default function EmployeeTable({ employees, currentPage = 1, sortBy = 'na
                     >
                       <FileDown size={14} />
                     </Button>
-                    <Link href={`/employees/${emp.id}/edit?returnTo=${encodeURIComponent(`/employees?page=${currentPage}`)}`}>
+                    <Link href={`/employees/${emp.id}/edit`}>
                       <Button variant="ghost" size="sm"><Pencil size={14} /></Button>
                     </Link>
                     {isAdmin && (

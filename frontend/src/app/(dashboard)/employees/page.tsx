@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Plus } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -31,10 +31,7 @@ const defaultFilters: IEmployeeFilters = { page: 1, limit: 15, sortBy: 'name', s
 
 export default function EmployeesPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const initialPage = parseInt(searchParams.get('page') ?? '1', 10);
-
-  const [filters, setFilters] = useState<IEmployeeFilters>({ ...defaultFilters, page: initialPage });
+  const [filters, setFilters] = useState<IEmployeeFilters>(defaultFilters);
   const { data, isLoading, error } = useEmployees(filters);
   const isAdmin = useIsAdmin();
 
@@ -80,7 +77,6 @@ export default function EmployeesPage() {
           <>
             <EmployeeTable
               employees={employees}
-              currentPage={filters.page}
               sortBy={filters.sortBy}
               sortOrder={filters.sortOrder}
               onSort={handleSort}

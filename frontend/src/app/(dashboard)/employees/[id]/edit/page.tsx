@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
-import { useRouter, useParams, useSearchParams } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { Plus, Pencil, Trash2, GraduationCap, Languages, CalendarDays, Briefcase, BookOpen, ArrowLeft } from 'lucide-react';
 import { PageSpinner } from '@/components/ui/Spinner';
 import EmployeeForm from '@/components/employees/EmployeeForm';
@@ -101,8 +100,6 @@ function calcYearsOfService(periods: AvailabilityPeriod[]): number | null {
 export default function EditEmployeePage() {
   const router = useRouter();
   const params = useParams();
-  const searchParams = useSearchParams();
-  const returnTo = searchParams.get('returnTo') ?? '/employees';
   const id = parseInt(params.id as string, 10);
 
   const { data, isLoading } = useEmployee(id);
@@ -306,12 +303,10 @@ export default function EditEmployeePage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link href={returnTo}>
-          <Button variant="ghost" size="sm" className="gap-1.5 text-slate-500 hover:text-slate-700 dark:hover:text-slate-200">
-            <ArrowLeft size={16} />
-            Back to Employees
-          </Button>
-        </Link>
+        <Button variant="ghost" size="sm" className="gap-1.5 text-slate-500 hover:text-slate-700 dark:hover:text-slate-200" onClick={() => router.back()}>
+          <ArrowLeft size={16} />
+          Back to Employees
+        </Button>
         {employee && (
           <h1 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
             {employee.firstName} {employee.lastName}
@@ -323,7 +318,7 @@ export default function EditEmployeePage() {
         defaultValues={employee}
         onSubmit={async (formData) => {
           await updateEmployee.mutateAsync({ id, data: formData });
-          router.push(returnTo);
+          router.back();
         }}
         submitLabel="Update Employee"
       />
