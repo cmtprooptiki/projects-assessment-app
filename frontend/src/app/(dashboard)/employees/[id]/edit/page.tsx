@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
-import { Plus, Pencil, Trash2, GraduationCap, Languages, CalendarDays, Briefcase, BookOpen } from 'lucide-react';
+import { Plus, Pencil, Trash2, GraduationCap, Languages, CalendarDays, Briefcase, BookOpen, ArrowLeft } from 'lucide-react';
 import { PageSpinner } from '@/components/ui/Spinner';
 import EmployeeForm from '@/components/employees/EmployeeForm';
 import Card from '@/components/ui/Card';
@@ -298,10 +299,26 @@ export default function EditEmployeePage() {
 
   const yearsOfService = calcYearsOfService(availList);
 
+  const employee = data?.data;
+
   return (
     <div className="space-y-6">
+      <div className="flex items-center gap-4">
+        <Link href="/employees">
+          <Button variant="ghost" size="sm" className="gap-1.5 text-slate-500 hover:text-slate-700 dark:hover:text-slate-200">
+            <ArrowLeft size={16} />
+            Back to Employees
+          </Button>
+        </Link>
+        {employee && (
+          <h1 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+            {employee.firstName} {employee.lastName}
+          </h1>
+        )}
+      </div>
+
       <EmployeeForm
-        defaultValues={data?.data}
+        defaultValues={employee}
         onSubmit={async (formData) => {
           await updateEmployee.mutateAsync({ id, data: formData });
           router.push('/employees');
