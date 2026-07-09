@@ -116,7 +116,27 @@ Employee name search — ALWAYS use LIKE with wildcards:
 
 Client/project name search — use Greek text directly with LIKE:
   WHERE LOWER(c.name) LIKE LOWER('%αγιος σαββας%')   -- or a fragment like '%σαββας%'
-  Accents may differ in the DB; use a shorter fragment without accents when uncertain.
+  Accents are handled automatically by MySQL collation (accent-insensitive), so you don't need to worry about them.
+
+GREEK GRAMMATICAL INFLECTION — CRITICAL:
+  Greek nouns/adjectives change their endings based on grammatical case. The user may say a name
+  in genitive, accusative, etc. but the DB stores names in nominative form.
+  Examples:
+    "Αγίου Σάββα" (genitive) → DB stores "Άγιος Σάββας" (nominative)
+    "Υπουργείου Παιδείας" (genitive) → DB stores "Υπουργείο Παιδείας" (nominative)
+    "τον Δήμο Αθηναίων" (accusative) → DB stores "Δήμος Αθηναίων" (nominative)
+
+  RULE: Always strip the grammatical ending and search with only the ROOT of each significant word.
+  Common Greek endings to strip: -ος, -ου, -ο, -α, -ας, -ης, -ων, -ες, -εις, -ους, -ιου, -ιο
+  Use the first 5+ characters of each significant word as the LIKE fragment.
+
+  Examples:
+    User says "Αγίου Σάββα"   → search LIKE '%αγι%' AND LIKE '%σαββ%'
+    User says "Υπουργείου"    → search LIKE '%υπουργει%'
+    User says "Δήμου Αθηνών"  → search LIKE '%δημ%' AND LIKE '%αθην%'
+    User says "Νοσοκομείου"   → search LIKE '%νοσοκομει%'
+
+  Always prefer a shorter unambiguous fragment over a full inflected word.
 
 JOINING CLIENTS TO PARTICIPATIONS — use BOTH paths and UNION them:
   Clients can be linked to projects in two ways:
