@@ -2,7 +2,7 @@ import { Router } from 'express';
 import multer from 'multer';
 import * as clientController from '../controllers/clientController';
 import { createClientRules, updateClientRules } from '../validators/clientValidator';
-import { requireAdmin } from '../middleware/authenticate';
+import { authenticate, requireAdmin } from '../middleware/authenticate';
 
 const router = Router();
 
@@ -20,7 +20,7 @@ router.post('/', createClientRules, clientController.create);
 router.post('/import', csvUpload, clientController.importCSV);
 router.post('/sync', clientController.syncFromCashflow);
 router.get('/:id', clientController.getById);
-router.put('/:id', requireAdmin, updateClientRules, clientController.update);
-router.delete('/:id', requireAdmin, clientController.remove);
+router.put('/:id', authenticate, requireAdmin, updateClientRules, clientController.update);
+router.delete('/:id', authenticate, requireAdmin, clientController.remove);
 
 export default router;
