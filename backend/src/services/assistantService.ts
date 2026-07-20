@@ -18,7 +18,8 @@ const roSequelize = new Sequelize({
 });
 
 // ── Safety guard ─────────────────────────────────────────────────────────────
-const WRITE_RE = /\b(INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|TRUNCATE|REPLACE|MERGE|CALL|EXEC|GRANT|REVOKE)\b/i;
+// REPLACE as a string function REPLACE(col,x,y) is safe; only block REPLACE INTO (write op)
+const WRITE_RE = /\b(INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|TRUNCATE|MERGE|CALL|EXEC|GRANT|REVOKE)\b|\bREPLACE\s+INTO\b/i;
 
 function validateReadOnly(sql: string): void {
   if (WRITE_RE.test(sql)) throw new Error('Write operations are not permitted.');
