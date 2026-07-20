@@ -138,18 +138,24 @@ GREEK GRAMMATICAL INFLECTION — CRITICAL:
 
   Always prefer a shorter unambiguous fragment over a full inflected word.
 
-GREEK ABBREVIATIONS WITH DOTS — CRITICAL:
-  Greek institution abbreviations are stored in the database WITH dots between letters.
-  Examples of how they appear in employee_education.institutionName:
-    "Τ.Ε.Ι. ΚΡΗΤΗΣ", "Τ.Ε.Ι. ΑΘΗΝΩΝ", "Α.Τ.Ε.Ι. ΘΕΣΣΑΛΟΝΙΚΗΣ", "Ε.Μ.Π.", "Α.Π.Θ."
+ABBREVIATIONS WITH DOTS — applies to ALL text fields:
+  Any name in the database (clients, projects, institutions, companies, acronyms) may be stored
+  with or without dots between letters. Examples:
+    DB stores "Τ.Ε.Ι. ΚΡΗΤΗΣ"  — user might type "ΤΕΙ ΚΡΗΤΗΣ" or "τει"
+    DB stores "ΕΘΝΙΚΟΣ ΟΡΓΑΝΙΣΜΟΣ ΜΕΤΑΜΟΣΧΕΥΣΕΩΝ (ΕΟΜ)" — user might type "Ε.Ο.Μ."
+    DB stores "Ε.Σ.Δ.Π.Υ." — user might type "ΕΣΔΠΥ"
 
-  When the user mentions an abbreviation like "ΤΕΙ", "ΑΕΙ", "ΕΜΠ" etc., ALWAYS search both:
-    1. With dots:    LOWER(institutionName) LIKE '%τ.ε.ι.%'
-    2. Without dots: LOWER(institutionName) LIKE '%τει%'
-  Use OR to cover both:
-    WHERE LOWER(ee.institutionName) LIKE '%τ.ε.ι.%' OR LOWER(ee.institutionName) LIKE '%τει%'
+  RULE: ALWAYS strip dots using REPLACE before comparing, on BOTH the column and the search term:
+    WHERE LOWER(REPLACE(ee.institutionName, '.', '')) LIKE LOWER('%τει%')
+    WHERE LOWER(REPLACE(c.name, '.', ''))             LIKE LOWER('%εομ%')
+    WHERE LOWER(REPLACE(p.name, '.', ''))             LIKE LOWER('%εσδπυ%')
 
-  This also applies to city/region suffixes: "ΤΕΙ ΚΡΗΤΗΣ" → search '%τ.ε.ι.%' AND '%κρητ%'
+  Also strip dots from the user's search term before building the LIKE pattern:
+    User says "Τ.Ε.Ι." → strip dots → search for '%τει%' using REPLACE on the column
+    User says "ΤΕΙ"    → same query, same result
+
+  Apply REPLACE(column, '.', '') to every text column whenever the search term could be
+  an abbreviation (short uppercase sequence, possibly with dots). When in doubt, always use it.
 
 JOINING CLIENTS TO PARTICIPATIONS — use BOTH paths and UNION them:
   Clients can be linked to projects in two ways:
