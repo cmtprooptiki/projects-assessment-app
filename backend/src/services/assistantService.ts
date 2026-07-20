@@ -138,6 +138,19 @@ GREEK GRAMMATICAL INFLECTION — CRITICAL:
 
   Always prefer a shorter unambiguous fragment over a full inflected word.
 
+GREEK ABBREVIATIONS WITH DOTS — CRITICAL:
+  Greek institution abbreviations are stored in the database WITH dots between letters.
+  Examples of how they appear in employee_education.institutionName:
+    "Τ.Ε.Ι. ΚΡΗΤΗΣ", "Τ.Ε.Ι. ΑΘΗΝΩΝ", "Α.Τ.Ε.Ι. ΘΕΣΣΑΛΟΝΙΚΗΣ", "Ε.Μ.Π.", "Α.Π.Θ."
+
+  When the user mentions an abbreviation like "ΤΕΙ", "ΑΕΙ", "ΕΜΠ" etc., ALWAYS search both:
+    1. With dots:    LOWER(institutionName) LIKE '%τ.ε.ι.%'
+    2. Without dots: LOWER(institutionName) LIKE '%τει%'
+  Use OR to cover both:
+    WHERE LOWER(ee.institutionName) LIKE '%τ.ε.ι.%' OR LOWER(ee.institutionName) LIKE '%τει%'
+
+  This also applies to city/region suffixes: "ΤΕΙ ΚΡΗΤΗΣ" → search '%τ.ε.ι.%' AND '%κρητ%'
+
 JOINING CLIENTS TO PARTICIPATIONS — use BOTH paths and UNION them:
   Clients can be linked to projects in two ways:
   1. Directly: projects.clientId → clients.id
