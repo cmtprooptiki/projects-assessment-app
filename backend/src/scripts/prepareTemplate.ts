@@ -227,7 +227,7 @@ const pubDataTable =
   `<w:sz w:val="20"/><w:szCs w:val="20"/><w:lang w:val="el-GR"/></w:rPr></w:pPr>` +
   `<w:r><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/>` +
   `<w:sz w:val="20"/><w:szCs w:val="20"/><w:lang w:val="el-GR"/></w:rPr>` +
-  `<w:t>{#publicationRows}{publicationText}{/publicationRows}</w:t></w:r>` +
+  `<w:t>{publicationsText}</w:t></w:r>` +
   `</w:p></w:tc></w:tr></w:tbl>`;
 
 const emptyPara = `<w:p><w:pPr><w:rPr><w:sz w:val="18"/><w:szCs w:val="18"/><w:lang w:val="el-GR"/></w:rPr></w:pPr></w:p>`;
@@ -263,6 +263,5 @@ console.log(`{employerName}       ${check('{employerName}')}`);
 console.log(`ΕΠΑΓΓΕΛΜΑΤΙΚΗ        ${check('ΕΠΑΓΓΕΛΜΑΤΙΚΗ ΕΜΠΕΙΡΙΑ')}`);
 console.log(`{#hasPublications}   ${check('{#hasPublications}')}`);
 console.log(`{/hasPublications}   ${check('{/hasPublications}')}`);
-console.log(`{#publicationRows}   ${check('{#publicationRows}')}`);
-console.log(`{/publicationRows}   ${check('{/publicationRows}')}`);
+console.log(`{publicationsText}    ${check('{publicationsText}')}`);
 console.log(`ΔΗΜΟΣΙΕΥΣΕΙΣ         ${check('ΔΗΜΟΣΙΕΥΣΕΙΣ')}`);

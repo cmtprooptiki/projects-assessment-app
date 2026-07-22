@@ -152,7 +152,7 @@ export async function generateCVBuffer(employeeId: number, template = 'classic')
     .sort((a, b) => b.startDate.localeCompare(a.startDate))
     .map(({ startDate: _s, ...rest }) => rest);
 
-  const publicationRows = publications.map((pub) => ({ publicationText: pub.text }));
+  const publicationsText = publications.map((pub) => pub.text).join('\n');
 
   const data = {
     // Personal info
@@ -174,7 +174,7 @@ export async function generateCVBuffer(employeeId: number, template = 'classic')
     // Shared
     experienceRows,
     hasPublications: publications.length > 0,
-    publicationRows,
+    publicationsText,
   };
 
   const templatePath = TEMPLATE_PATHS[template] ?? TEMPLATE_PATHS.classic;
