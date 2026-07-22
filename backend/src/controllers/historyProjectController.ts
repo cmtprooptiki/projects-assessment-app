@@ -17,6 +17,7 @@ export const create = async (req: Request, res: Response, next: NextFunction): P
       return;
     }
     const record = await historyProjectService.createHistoryProject({
+      projectName: '',
       ...req.body,
       employeeId: parseInt(req.params.employeeId, 10),
     });

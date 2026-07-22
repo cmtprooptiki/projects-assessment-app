@@ -278,7 +278,7 @@ export default function EditEmployeePage() {
   };
   const handleHistorySave = async (e: React.FormEvent) => {
     e.preventDefault(); setHistoryError('');
-    if (!historyForm.projectName.trim()) { setHistoryError('Project name is required.'); return; }
+    if (!historyForm.employerName.trim()) { setHistoryError('Employer / Organization is required.'); return; }
     if (!historyForm.startDate) { setHistoryError('Start date is required.'); return; }
     setHistorySaving(true);
     try {
@@ -700,8 +700,8 @@ export default function EditEmployeePage() {
       {/* History Project Modals */}
       <Modal open={!!historyMode} onClose={() => setHistoryMode(null)} title={isEditingHistory ? 'Edit Project' : 'Add Project'}>
         <form onSubmit={handleHistorySave} className="space-y-4">
-          <Input label="Project Name" value={historyForm.projectName} onChange={(e) => setHistoryForm(f => ({ ...f, projectName: e.target.value }))} placeholder="Project title" required autoFocus />
-          <Input label="Employer / Organization" value={historyForm.employerName} onChange={(e) => setHistoryForm(f => ({ ...f, employerName: e.target.value }))} placeholder="Company or organization name" />
+          <Input label="Project Name" value={historyForm.projectName} onChange={(e) => setHistoryForm(f => ({ ...f, projectName: e.target.value }))} placeholder="Project title" autoFocus />
+          <Input label="Employer / Organization" value={historyForm.employerName} onChange={(e) => setHistoryForm(f => ({ ...f, employerName: e.target.value }))} placeholder="Company or organization name" required />
           <Input label="Role" value={historyForm.role} onChange={(e) => setHistoryForm(f => ({ ...f, role: e.target.value }))} placeholder="e.g. Software Engineer" />
           <div className="grid grid-cols-2 gap-4">
             <DatePicker label="Start Date" value={historyForm.startDate} onChange={(v) => setHistoryForm(f => ({ ...f, startDate: v }))} required />
