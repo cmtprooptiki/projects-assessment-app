@@ -152,7 +152,7 @@ export async function generateCVBuffer(employeeId: number, template = 'classic')
     .sort((a, b) => b.startDate.localeCompare(a.startDate))
     .map(({ startDate: _s, ...rest }) => rest);
 
-  const publicationsText = publications.map((pub) => pub.text).join('\n');
+  const publicationsText = publications.map((pub) => pub.text).join('\n\n');
 
   const data = {
     // Personal info
