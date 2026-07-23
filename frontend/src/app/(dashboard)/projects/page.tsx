@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Plus } from 'lucide-react';
+import { Plus, Download } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Pagination from '@/components/ui/Pagination';
@@ -13,11 +13,14 @@ import { useProjects } from '@/hooks/useProjects';
 import { useContracts } from '@/hooks/useContracts';
 import { useIsAdmin } from '@/hooks/useRole';
 import { ProjectFilters as IProjectFilters } from '@/types';
+import api from '@/lib/api';
+import { exportProjectsToXlsx } from '@/lib/exportProjects';
 
 const defaultFilters: IProjectFilters = { page: 1, limit: 50, sortBy: 'projectCode', sortOrder: 'asc' };
 
 export default function ProjectsPage() {
   const [filters, setFilters] = useState<IProjectFilters>(defaultFilters);
+  const [exporting, setExporting] = useState(false);
   const isAdmin = useIsAdmin();
   const { data, isLoading, error } = useProjects(filters);
 
@@ -29,6 +32,19 @@ export default function ProjectsPage() {
       sortOrder: f.sortBy === field && f.sortOrder === 'asc' ? 'desc' : 'asc',
     }));
   };
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      // Fetch all projects (ignore current pagination) with active filters applied
+      const { search, clientId, status } = filters;
+      const res = await api.get('/projects', { params: { page: 1, limit: 9999, sortBy: filters.sortBy, sortOrder: filters.sortOrder, search, clientId, status } });
+      exportProjectsToXlsx(res.data.data, 'projects.xlsx');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const { data: unlinkedData } = useContracts({ unlinked: 'true', limit: 1 });
 
   const projects = data?.data ?? [];
@@ -45,6 +61,9 @@ export default function ProjectsPage() {
               {unlinkedCount} unassigned contract{unlinkedCount !== 1 ? 's' : ''}
             </span>
           )}
+          <Button variant="secondary" onClick={handleExport} loading={exporting}>
+            <Download size={16} />Export XLSX
+          </Button>
           <Link href="/projects/new">
             <Button><Plus size={16} />New Project</Button>
           </Link>
