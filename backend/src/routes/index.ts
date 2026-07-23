@@ -15,6 +15,7 @@ import availabilityRoutes from './availabilityRoutes';
 import cvRoutes from './cvRoutes';
 import historyProjectRoutes from './historyProjectRoutes';
 import publicationRoutes from './publicationRoutes';
+import certificationRoutes from './certificationRoutes';
 import assistantRoutes from './assistantRoutes';
 
 const router = Router();
@@ -34,6 +35,7 @@ router.use('/employees/:employeeId/languages', languageRoutes);
 router.use('/employees/:employeeId/availability', availabilityRoutes);
 router.use('/employees/:employeeId/history-projects', historyProjectRoutes);
 router.use('/employees/:employeeId/publications', publicationRoutes);
+router.use('/employees/:employeeId/certifications', certificationRoutes);
 router.use('/cv', cvRoutes);
 router.use('/assistant', assistantRoutes);
 

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Plus, Pencil, Trash2, GraduationCap, Languages, CalendarDays, Briefcase, BookOpen, ArrowLeft } from 'lucide-react';
+import { Plus, Pencil, Trash2, GraduationCap, Languages, CalendarDays, Briefcase, BookOpen, Award, ArrowLeft } from 'lucide-react';
 import { PageSpinner } from '@/components/ui/Spinner';
 import EmployeeForm from '@/components/employees/EmployeeForm';
 import Card from '@/components/ui/Card';
@@ -18,7 +18,8 @@ import { useLanguages, useCreateLanguage, useUpdateLanguage, useDeleteLanguage }
 import { useAvailability, useCreateAvailability, useUpdateAvailability, useDeleteAvailability } from '@/hooks/useAvailability';
 import { useHistoryProjects, useCreateHistoryProject, useUpdateHistoryProject, useDeleteHistoryProject } from '@/hooks/useHistoryProjects';
 import { usePublications, useCreatePublication, useUpdatePublication, useDeletePublication } from '@/hooks/usePublications';
-import type { Education, Language, AvailabilityPeriod, EmployeeHistoryProject, EmployeePublication } from '@/types';
+import { useCertifications, useCreateCertification, useUpdateCertification, useDeleteCertification } from '@/hooks/useCertifications';
+import type { Education, Language, AvailabilityPeriod, EmployeeHistoryProject, EmployeePublication, EmployeeCertification } from '@/types';
 import { INSTITUTION_HIERARCHY } from '@/data/institutionHierarchy';
 
 const GREEK_INSTITUTIONS = [
@@ -80,6 +81,7 @@ type LangMode = null | 'create' | { edit: Language };
 type AvailMode = null | 'create' | { edit: AvailabilityPeriod };
 type HistoryMode = null | 'create' | { edit: EmployeeHistoryProject };
 type PubMode = null | 'create' | { edit: EmployeePublication };
+type CertMode = null | 'create' | { edit: EmployeeCertification };
 
 function formatDate(d: string) {
   return new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -156,6 +158,18 @@ export default function EditEmployeePage() {
   const updatePublication = useUpdatePublication(id);
   const deletePublication = useDeletePublication(id);
 
+  // Certification state
+  const { data: certData, isLoading: loadingCert } = useCertifications(id);
+  const certificationList = certData?.data ?? [];
+  const [certMode, setCertMode] = useState<CertMode>(null);
+  const [deletingCert, setDeletingCert] = useState<EmployeeCertification | null>(null);
+  const [certText, setCertText] = useState('');
+  const [certError, setCertError] = useState('');
+  const [certSaving, setCertSaving] = useState(false);
+  const createCertification = useCreateCertification(id);
+  const updateCertification = useUpdateCertification(id);
+  const deleteCertification = useDeleteCertification(id);
+
   // History project state
   const { data: historyData, isLoading: loadingHistory } = useHistoryProjects(id);
   const historyList = historyData?.data ?? [];
@@ -173,6 +187,7 @@ export default function EditEmployeePage() {
   const isEditingAvail = availMode && typeof availMode === 'object';
   const isEditingHistory = historyMode && typeof historyMode === 'object';
   const isEditingPub = pubMode && typeof pubMode === 'object';
+  const isEditingCert = certMode && typeof certMode === 'object';
 
   // Publication handlers
   const handleOpenCreatePub = () => { setPubText(''); setPubError(''); setPubMode('create'); };
@@ -191,6 +206,25 @@ export default function EditEmployeePage() {
   const handlePubDelete = async () => {
     if (!deletingPub) return;
     try { await deletePublication.mutateAsync(deletingPub.id); setDeletingPub(null); } catch {}
+  };
+
+  // Certification handlers
+  const handleOpenCreateCert = () => { setCertText(''); setCertError(''); setCertMode('create'); };
+  const handleOpenEditCert = (cert: EmployeeCertification) => { setCertText(cert.text); setCertError(''); setCertMode({ edit: cert }); };
+  const handleCertSave = async (e: React.FormEvent) => {
+    e.preventDefault(); setCertError('');
+    if (!certText.trim()) { setCertError('Certification text is required.'); return; }
+    setCertSaving(true);
+    try {
+      if (certMode === 'create') await createCertification.mutateAsync(certText.trim());
+      else if (isEditingCert) await updateCertification.mutateAsync({ id: certMode.edit.id, text: certText.trim() });
+      setCertMode(null);
+    } catch (err) { setCertError(err instanceof Error ? err.message : 'Something went wrong.'); }
+    finally { setCertSaving(false); }
+  };
+  const handleCertDelete = async () => {
+    if (!deletingCert) return;
+    try { await deleteCertification.mutateAsync(deletingCert.id); setDeletingCert(null); } catch {}
   };
 
   // Education handlers
@@ -511,6 +545,37 @@ export default function EditEmployeePage() {
         </Card>
       </div>
 
+      {/* Certifications Section */}
+      <div className="max-w-3xl space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Award size={18} className="text-indigo-600" />
+            <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200 uppercase tracking-wide">Certifications</h2>
+          </div>
+          <Button size="sm" onClick={handleOpenCreateCert}><Plus size={14} />Add Certification</Button>
+        </div>
+        <Card>
+          {loadingCert ? <div className="p-6"><PageSpinner /></div>
+            : certificationList.length === 0 ? <EmptyState title="No certifications" description="Add certifications or professional credentials for this employee." />
+            : (
+              <div className="divide-y divide-slate-100 dark:divide-slate-700">
+                {certificationList.map((cert, idx) => (
+                  <div key={cert.id} className="px-6 py-4 flex items-start justify-between group hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                    <div className="min-w-0 flex-1 flex items-start gap-3">
+                      <span className="shrink-0 text-xs font-bold text-slate-400 dark:text-slate-500 mt-0.5 w-5 text-right">{idx + 1}.</span>
+                      <p className="text-sm text-slate-800 dark:text-slate-200 leading-relaxed">{cert.text}</p>
+                    </div>
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-4 shrink-0 mt-0.5">
+                      <Button variant="ghost" size="sm" onClick={() => handleOpenEditCert(cert)}><Pencil size={14} /></Button>
+                      <Button variant="ghost" size="sm" onClick={() => setDeletingCert(cert)} className="text-red-500 hover:bg-red-50 hover:text-red-600"><Trash2 size={14} /></Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+        </Card>
+      </div>
+
       {/* Availability Modals */}
       <Modal open={!!availMode} onClose={() => setAvailMode(null)} title={isEditingAvail ? 'Edit Availability Period' : 'Add Availability Period'}>
         <form onSubmit={handleAvailSave} className="space-y-4">
@@ -694,6 +759,35 @@ export default function EditEmployeePage() {
         <div className="flex justify-end gap-3">
           <Button variant="secondary" onClick={() => setDeletingPub(null)}>Cancel</Button>
           <Button variant="danger" loading={deletePublication.isPending} onClick={handlePubDelete}>Delete</Button>
+        </div>
+      </Modal>
+
+      {/* Certification Modals */}
+      <Modal open={!!certMode} onClose={() => setCertMode(null)} title={isEditingCert ? 'Edit Certification' : 'Add Certification'}>
+        <form onSubmit={handleCertSave} className="space-y-4">
+          <div>
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">Certification text <span className="text-red-500">*</span></label>
+            <textarea
+              className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+              rows={4}
+              value={certText}
+              onChange={(e) => setCertText(e.target.value)}
+              placeholder="e.g. PMP – Project Management Professional (PMI, 2022)"
+              autoFocus
+            />
+          </div>
+          {certError && <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-lg">{certError}</div>}
+          <div className="flex justify-end gap-3">
+            <Button type="button" variant="secondary" onClick={() => setCertMode(null)}>Cancel</Button>
+            <Button type="submit" loading={certSaving}>{isEditingCert ? 'Update' : 'Add'}</Button>
+          </div>
+        </form>
+      </Modal>
+      <Modal open={!!deletingCert} onClose={() => setDeletingCert(null)} title="Delete Certification">
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">Delete this certification? This cannot be undone.</p>
+        <div className="flex justify-end gap-3">
+          <Button variant="secondary" onClick={() => setDeletingCert(null)}>Cancel</Button>
+          <Button variant="danger" loading={deleteCertification.isPending} onClick={handleCertDelete}>Delete</Button>
         </div>
       </Modal>
 
