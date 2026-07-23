@@ -37,8 +37,8 @@ export default function ProjectsPage() {
     setExporting(true);
     try {
       // Fetch all projects (ignore current pagination) with active filters applied
-      const { search, clientId, status } = filters;
-      const res = await api.get('/projects', { params: { page: 1, limit: 9999, sortBy: filters.sortBy, sortOrder: filters.sortOrder, search, clientId, status } });
+      const { search, clientId } = filters;
+      const res = await api.get('/projects', { params: { page: 1, limit: 9999, sortBy: filters.sortBy, sortOrder: filters.sortOrder, search, clientId } });
       exportProjectsToXlsx(res.data.data, 'projects.xlsx');
     } finally {
       setExporting(false);
