@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import * as employeeService from '../services/employeeService';
+import { suggestGreekNames } from '../services/nameConversionService';
 
 export const getAll = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -94,6 +95,18 @@ export const syncCleanup = async (req: Request, res: Response, next: NextFunctio
       return;
     }
     const result = await employeeService.syncCleanup(azureIds);
+    res.json({ success: true, data: result });
+  } catch (err) { next(err); }
+};
+
+export const suggestGreekNamesHandler = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { firstName, lastName } = req.body;
+    if (!firstName || !lastName) {
+      res.status(400).json({ success: false, message: 'firstName and lastName are required.' });
+      return;
+    }
+    const result = await suggestGreekNames(String(firstName), String(lastName));
     res.json({ success: true, data: result });
   } catch (err) { next(err); }
 };

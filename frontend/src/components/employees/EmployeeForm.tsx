@@ -11,7 +11,7 @@ import Card from '@/components/ui/Card';
 import { Employee } from '@/types';
 import { getPhotoUrl } from '@/lib/photoUrl';
 import { useDepartments } from '@/hooks/useDepartments';
-import { greeklishToGreek } from '@/lib/greeklish';
+import api from '@/lib/api';
 
 interface Props {
   defaultValues?: Partial<Employee>;
@@ -28,6 +28,7 @@ export default function EmployeeForm({ defaultValues, onSubmit, submitLabel = 'S
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [autofillLoading, setAutofillLoading] = useState(false);
 
   // Fields locked for Azure-synced employees (those with an azureId)
   const isAzureSynced = !!defaultValues?.azureId;
@@ -156,14 +157,26 @@ export default function EmployeeForm({ defaultValues, onSubmit, submitLabel = 'S
             <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Ελληνικό Όνομα (για CV)</span>
             <button
               type="button"
-              onClick={() => setForm((f) => ({
-                ...f,
-                firstNameGr: greeklishToGreek(f.firstName),
-                lastNameGr:  greeklishToGreek(f.lastName),
-              }))}
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 px-2 py-1 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+              disabled={autofillLoading || !form.firstName.trim() || !form.lastName.trim()}
+              onClick={async () => {
+                setAutofillLoading(true);
+                try {
+                  const res = await api.post('/employees/suggest-greek-names', {
+                    firstName: form.firstName.trim(),
+                    lastName: form.lastName.trim(),
+                  });
+                  const { firstNameGr, lastNameGr } = res.data.data;
+                  setForm((f) => ({ ...f, firstNameGr, lastNameGr }));
+                } catch {
+                  setError('Could not auto-fill Greek names. Please fill in manually.');
+                } finally {
+                  setAutofillLoading(false);
+                }
+              }}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 px-2 py-1 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Wand2 size={12} /> Auto-fill
+              <Wand2 size={12} className={autofillLoading ? 'animate-spin' : ''} />
+              {autofillLoading ? 'Filling...' : 'Auto-fill (AI)'}
             </button>
           </div>
           <div className="grid grid-cols-2 gap-4">
