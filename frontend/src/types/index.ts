@@ -72,8 +72,11 @@ export interface EmployeeCertification {
 
 export interface Employee {
   id: number;
+  azureId?: string | null;
   firstName: string;
+  firstNameGr?: string | null;
   lastName: string;
+  lastNameGr?: string | null;
   email: string;
   department: string;
   isActive: boolean;

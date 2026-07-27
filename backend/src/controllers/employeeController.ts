@@ -22,7 +22,7 @@ export const getById = async (req: Request, res: Response, next: NextFunction): 
 
 export const create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { firstName, lastName, email, department, isActive, isExternal, fatherName, motherName, dateOfBirth, placeOfBirth, phone, homeAddress } = req.body;
+    const { firstName, firstNameGr, lastName, lastNameGr, email, department, isActive, isExternal, fatherName, motherName, dateOfBirth, placeOfBirth, phone, homeAddress } = req.body;
     const photo = req.file ? `/uploads/employees/${req.file.filename}` : undefined;
 
     const employee = await employeeService.createEmployee({
@@ -30,6 +30,8 @@ export const create = async (req: Request, res: Response, next: NextFunction): P
       isActive: isActive === undefined ? true : (isActive === 'true' || isActive === true),
       isExternal: isExternal === 'true' || isExternal === true,
       ...(photo !== undefined && { photo }),
+      ...(firstNameGr && { firstNameGr }),
+      ...(lastNameGr && { lastNameGr }),
       ...(fatherName && { fatherName }),
       ...(motherName && { motherName }),
       ...(dateOfBirth && { dateOfBirth }),
@@ -43,12 +45,14 @@ export const create = async (req: Request, res: Response, next: NextFunction): P
 
 export const update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { firstName, lastName, email, department, isActive, isExternal, clearPhoto, fatherName, motherName, dateOfBirth, placeOfBirth, phone, homeAddress } = req.body;
+    const { firstName, firstNameGr, lastName, lastNameGr, email, department, isActive, isExternal, clearPhoto, fatherName, motherName, dateOfBirth, placeOfBirth, phone, homeAddress } = req.body;
     const newPhoto = req.file ? `/uploads/employees/${req.file.filename}` : undefined;
 
     const data: Record<string, unknown> = {};
     if (firstName !== undefined) data.firstName = firstName;
+    if (firstNameGr !== undefined) data.firstNameGr = firstNameGr || null;
     if (lastName !== undefined) data.lastName = lastName;
+    if (lastNameGr !== undefined) data.lastNameGr = lastNameGr || null;
     if (email !== undefined) data.email = email;
     if (department !== undefined) data.department = department;
     if (isActive !== undefined) data.isActive = isActive === 'true' || isActive === true;

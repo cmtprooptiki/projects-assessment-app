@@ -155,9 +155,9 @@ export async function generateCVBuffer(employeeId: number, template = 'classic')
   const publicationsText = publications.map((pub) => pub.text).join('\n\n');
 
   const data = {
-    // Personal info
-    lastName:     employee.lastName    ?? '',
-    firstName:    employee.firstName   ?? '',
+    // Personal info — prefer Greek names when available
+    lastName:     employee.lastNameGr  || employee.lastName   || '',
+    firstName:    employee.firstNameGr || employee.firstName  || '',
     fatherName:   employee.fatherName  ?? '',
     motherName:   employee.motherName  ?? '',
     dateOfBirth:  fmtFull(employee.dateOfBirth),

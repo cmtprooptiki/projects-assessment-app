@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Camera, X } from 'lucide-react';
+import { Camera, X, Wand2 } from 'lucide-react';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import DatePicker from '@/components/ui/DatePicker';
@@ -11,6 +11,7 @@ import Card from '@/components/ui/Card';
 import { Employee } from '@/types';
 import { getPhotoUrl } from '@/lib/photoUrl';
 import { useDepartments } from '@/hooks/useDepartments';
+import { greeklishToGreek } from '@/lib/greeklish';
 
 interface Props {
   defaultValues?: Partial<Employee>;
@@ -28,9 +29,14 @@ export default function EmployeeForm({ defaultValues, onSubmit, submitLabel = 'S
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Fields locked for Azure-synced employees (those with an azureId)
+  const isAzureSynced = !!defaultValues?.azureId;
+
   const [form, setForm] = useState({
     firstName: defaultValues?.firstName ?? '',
+    firstNameGr: defaultValues?.firstNameGr ?? '',
     lastName: defaultValues?.lastName ?? '',
+    lastNameGr: defaultValues?.lastNameGr ?? '',
     email: defaultValues?.email ?? '',
     department: defaultValues?.department ?? '',
     isActive: defaultValues?.isActive ?? true,
@@ -78,7 +84,9 @@ export default function EmployeeForm({ defaultValues, onSubmit, submitLabel = 'S
     try {
       const fd = new FormData();
       fd.append('firstName', form.firstName.trim());
+      fd.append('firstNameGr', form.firstNameGr.trim());
       fd.append('lastName', form.lastName.trim());
+      fd.append('lastNameGr', form.lastNameGr.trim());
       fd.append('email', form.email.trim());
       fd.append('department', form.department);
       fd.append('isActive', String(form.isActive));
@@ -131,12 +139,40 @@ export default function EmployeeForm({ defaultValues, onSubmit, submitLabel = 'S
           </div>
         </div>
 
+        {isAzureSynced && (
+          <div className="flex items-center gap-2 text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-3 py-2 rounded-lg">
+            <span className="font-semibold">Azure AD sync:</span> Name and email are managed by Microsoft 365 and cannot be edited here.
+          </div>
+        )}
+
         <div className="grid grid-cols-2 gap-4">
-          <Input label="First Name" value={form.firstName} onChange={(e) => set('firstName', e.target.value)} placeholder="John" required />
-          <Input label="Last Name" value={form.lastName} onChange={(e) => set('lastName', e.target.value)} placeholder="Doe" required />
+          <Input label="First Name (EN)" value={form.firstName} onChange={(e) => set('firstName', e.target.value)} placeholder="John" required disabled={isAzureSynced} />
+          <Input label="Last Name (EN)" value={form.lastName} onChange={(e) => set('lastName', e.target.value)} placeholder="Doe" required disabled={isAzureSynced} />
         </div>
 
-        <Input label="Email Address" type="email" value={form.email} onChange={(e) => set('email', e.target.value)} placeholder="john.doe@company.com" required />
+        {/* Greek names with auto-fill */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Ελληνικό Όνομα (για CV)</span>
+            <button
+              type="button"
+              onClick={() => setForm((f) => ({
+                ...f,
+                firstNameGr: greeklishToGreek(f.firstName),
+                lastNameGr:  greeklishToGreek(f.lastName),
+              }))}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 px-2 py-1 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+            >
+              <Wand2 size={12} /> Auto-fill
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Input label="Όνομα (GR)" value={form.firstNameGr} onChange={(e) => set('firstNameGr', e.target.value)} placeholder="Ιωάννης" />
+            <Input label="Επώνυμο (GR)" value={form.lastNameGr} onChange={(e) => set('lastNameGr', e.target.value)} placeholder="Παπαδόπουλος" />
+          </div>
+        </div>
+
+        <Input label="Email Address" type="email" value={form.email} onChange={(e) => set('email', e.target.value)} placeholder="john.doe@company.com" required disabled={isAzureSynced} />
 
         <Select
           label="Department"

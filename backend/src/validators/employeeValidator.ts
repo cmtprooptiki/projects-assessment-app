@@ -14,7 +14,9 @@ const personalRules = (optional = false) => {
 
 export const createEmployeeRules = [
   body('firstName').trim().notEmpty().withMessage('First name is required.').isLength({ max: 100 }),
+  body('firstNameGr').optional({ nullable: true }).trim().isLength({ max: 100 }),
   body('lastName').trim().notEmpty().withMessage('Last name is required.').isLength({ max: 100 }),
+  body('lastNameGr').optional({ nullable: true }).trim().isLength({ max: 100 }),
   body('email').trim().notEmpty().withMessage('Email is required.').isEmail().normalizeEmail(),
   body('department').trim().notEmpty().withMessage('Department is required.').isLength({ max: 100 }),
   body('isActive').optional().isBoolean({ strict: false }),
@@ -24,7 +26,9 @@ export const createEmployeeRules = [
 
 export const updateEmployeeRules = [
   body('firstName').optional().trim().notEmpty().withMessage('First name cannot be empty.').isLength({ max: 100 }),
+  body('firstNameGr').optional({ nullable: true }).trim().isLength({ max: 100 }),
   body('lastName').optional().trim().notEmpty().withMessage('Last name cannot be empty.').isLength({ max: 100 }),
+  body('lastNameGr').optional({ nullable: true }).trim().isLength({ max: 100 }),
   body('email').optional().trim().isEmail().normalizeEmail(),
   body('department').optional().trim().notEmpty().withMessage('Department cannot be empty.').isLength({ max: 100 }),
   body('isActive').optional().isBoolean({ strict: false }),
