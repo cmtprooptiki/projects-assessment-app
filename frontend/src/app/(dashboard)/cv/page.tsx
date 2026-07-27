@@ -34,9 +34,11 @@ export default function CVExportPage() {
     () =>
       (data?.data ?? [])
         .slice()
-        .sort((a, b) =>
-          `${a.lastName} ${a.firstName}`.localeCompare(`${b.lastName} ${b.firstName}`, 'el'),
-        ),
+        .sort((a, b) => {
+          const nameA = `${a.lastNameGr || a.lastName} ${a.firstNameGr || a.firstName}`;
+          const nameB = `${b.lastNameGr || b.lastName} ${b.firstNameGr || b.firstName}`;
+          return nameA.localeCompare(nameB, 'el');
+        }),
     [data],
   );
 
@@ -50,6 +52,7 @@ export default function CVExportPage() {
     const q = search.toLowerCase();
     return q
       ? employees.filter((e) =>
+          `${e.lastNameGr || e.lastName} ${e.firstNameGr || e.firstName}`.toLowerCase().includes(q) ||
           `${e.lastName} ${e.firstName}`.toLowerCase().includes(q) ||
           (e.department ?? '').toLowerCase().includes(q),
         )
@@ -79,7 +82,7 @@ export default function CVExportPage() {
       if (ids.length === 1) {
         // Single export — download .docx directly
         const emp = empMap.get(ids[0])!;
-        setProgress(`Δημιουργία CV για ${emp.lastName} ${emp.firstName}...`);
+        setProgress(`Δημιουργία CV για ${emp.lastNameGr || emp.lastName} ${emp.firstNameGr || emp.firstName}...`);
         const res = await api.get(`/cv/${ids[0]}`, {
           params: { template: 'classic' },
           responseType: 'blob',
@@ -197,7 +200,7 @@ export default function CVExportPage() {
                       />
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
-                          {emp.lastName} {emp.firstName}
+                          {emp.lastNameGr || emp.lastName} {emp.firstNameGr || emp.firstName}
                         </p>
                         {emp.department && (
                           <p className="text-xs text-slate-400 dark:text-slate-500 truncate">{emp.department}</p>

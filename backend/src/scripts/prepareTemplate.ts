@@ -188,6 +188,43 @@ const expDataStart = tbl2Trs[2];        // 3rd TR in Table[2] = first data row
 xml = xml.substring(0, expDataStart) + expTemplateRow + xml.substring(tbl2End);
 
 // ──────────────────────────────────────────────────────────────────────────────
+// 6.5. Insert ΚΑΤΗΓΟΡΙΑ ΣΤΕΛΕΧΟΥΣ table between Table[0] and Table[1]
+//      (after education section, before ΕΠΑΓΓΕΛΜΑΤΙΚΗ ΕΜΠΕΙΡΙΑ)
+// ──────────────────────────────────────────────────────────────────────────────
+const kategoriaTblProps =
+  `<w:tblPr><w:tblW w:w="5652" w:type="pct"/><w:tblInd w:w="-601" w:type="dxa"/>` +
+  `<w:tblBorders>` +
+  `<w:top w:val="single" w:sz="4" w:space="0" w:color="auto"/>` +
+  `<w:left w:val="single" w:sz="4" w:space="0" w:color="auto"/>` +
+  `<w:bottom w:val="single" w:sz="4" w:space="0" w:color="auto"/>` +
+  `<w:right w:val="single" w:sz="4" w:space="0" w:color="auto"/>` +
+  `<w:insideH w:val="single" w:sz="4" w:space="0" w:color="auto"/>` +
+  `<w:insideV w:val="single" w:sz="4" w:space="0" w:color="auto"/>` +
+  `</w:tblBorders>` +
+  `<w:tblLook w:val="0000" w:firstRow="0" w:lastRow="0" w:firstColumn="0" w:lastColumn="0" w:noHBand="0" w:noVBand="0"/>` +
+  `</w:tblPr><w:tblGrid><w:gridCol w:w="6266"/><w:gridCol w:w="3374"/></w:tblGrid>`;
+
+const kategoriaTable =
+  `<w:tbl>${kategoriaTblProps}` +
+  `<w:tr w:rsidR="00KAT001" w14:paraId="KAT00001" w14:textId="77777777">` +
+  `<w:trPr><w:trHeight w:val="400"/></w:trPr>` +
+  `<w:tc><w:tcPr><w:tcW w:w="3250" w:type="pct"/>` +
+  `<w:shd w:val="clear" w:color="auto" w:fill="D9D9D9"/>` +
+  `<w:vAlign w:val="center"/></w:tcPr>` +
+  `<w:p><w:pPr><w:rPr><w:b/><w:sz w:val="18"/><w:szCs w:val="18"/><w:lang w:val="el-GR"/></w:rPr></w:pPr>` +
+  `<w:r><w:rPr><w:b/><w:sz w:val="18"/><w:szCs w:val="18"/><w:lang w:val="el-GR"/></w:rPr>` +
+  `<w:t>ΚΑΤΗΓΟΡΙΑ ΣΤΕΛΕΧΟΥΣ</w:t></w:r></w:p></w:tc>` +
+  `<w:tc><w:tcPr><w:tcW w:w="1750" w:type="pct"/>` +
+  `<w:vAlign w:val="center"/></w:tcPr>` +
+  `<w:p><w:pPr><w:rPr><w:sz w:val="18"/><w:szCs w:val="18"/><w:lang w:val="el-GR"/></w:rPr></w:pPr>` +
+  `</w:tc></w:tr></w:tbl>`;
+
+// Insert after the first </w:tbl> (which is Table[0] — education)
+const firstTblCloseEnd = xml.indexOf('</w:tbl>') + '</w:tbl>'.length;
+const katEmptyPara = `<w:p><w:pPr><w:rPr><w:sz w:val="18"/><w:szCs w:val="18"/><w:lang w:val="el-GR"/></w:rPr></w:pPr></w:p>`;
+xml = xml.substring(0, firstTblCloseEnd) + katEmptyPara + kategoriaTable + xml.substring(firstTblCloseEnd);
+
+// ──────────────────────────────────────────────────────────────────────────────
 // 7. Insert publications section before the body-level <w:sectPr>
 //    Mirrors the ΕΠΑΓΓΕΛΜΑΤΙΚΗ ΕΜΠΕΙΡΙΑ pattern: header table + data table.
 //    Wrapped in {#hasPublications}…{/hasPublications} so the section is hidden
@@ -265,3 +302,4 @@ console.log(`{#hasPublications}   ${check('{#hasPublications}')}`);
 console.log(`{/hasPublications}   ${check('{/hasPublications}')}`);
 console.log(`{publicationsText}    ${check('{publicationsText}')}`);
 console.log(`ΔΗΜΟΣΙΕΥΣΕΙΣ         ${check('ΔΗΜΟΣΙΕΥΣΕΙΣ')}`);
+console.log(`ΚΑΤΗΓΟΡΙΑ ΣΤΕΛΕΧΟΥΣ  ${check('ΚΑΤΗΓΟΡΙΑ ΣΤΕΛΕΧΟΥΣ')}`);
