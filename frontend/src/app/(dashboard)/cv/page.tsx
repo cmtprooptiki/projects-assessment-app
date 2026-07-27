@@ -8,16 +8,9 @@ import api from '@/lib/api';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
 import { PageSpinner } from '@/components/ui/Spinner';
 import type { Employee } from '@/types';
 
-const TEMPLATE_OPTIONS = [
-  { value: 'classic', label: 'Classic (standard)' },
-  { value: 'navy',    label: 'Navy (job CV)' },
-  { value: 'indigo',  label: 'Indigo (job CV)' },
-  { value: 'teal',    label: 'Teal (job CV)' },
-];
 
 function useEmployeeList() {
   return useQuery<{ success: boolean; data: Employee[] }>({
@@ -49,7 +42,6 @@ export default function CVExportPage() {
 
   const [search, setSearch]           = useState('');
   const [selected, setSelected]       = useState<Set<number>>(new Set());
-  const [template, setTemplate]       = useState('classic');
   const [exporting, setExporting]     = useState(false);
   const [progress, setProgress]       = useState('');
   const [error, setError]             = useState('');
@@ -89,7 +81,7 @@ export default function CVExportPage() {
         const emp = empMap.get(ids[0])!;
         setProgress(`Δημιουργία CV για ${emp.lastName} ${emp.firstName}...`);
         const res = await api.get(`/cv/${ids[0]}`, {
-          params: { template },
+          params: { template: 'classic' },
           responseType: 'blob',
         });
         const blob = new Blob([res.data as BlobPart], {
@@ -102,7 +94,7 @@ export default function CVExportPage() {
         const results = await Promise.allSettled(
           ids.map((id) =>
             api
-              .get(`/cv/${id}`, { params: { template }, responseType: 'arraybuffer' })
+              .get(`/cv/${id}`, { params: { template: 'classic' }, responseType: 'arraybuffer' })
               .then((res) => ({ id, buffer: res.data as ArrayBuffer })),
           ),
         );
@@ -149,14 +141,6 @@ export default function CVExportPage() {
 
       <Card>
         <div className="p-6 space-y-4">
-
-          {/* Template selector */}
-          <Select
-            label="Πρότυπο CV"
-            options={TEMPLATE_OPTIONS}
-            value={template}
-            onChange={(e) => setTemplate(e.target.value)}
-          />
 
           {/* Search + select-all toolbar */}
           <div className="space-y-2">
