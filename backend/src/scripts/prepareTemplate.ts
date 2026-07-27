@@ -216,7 +216,7 @@ const kategoriaTable =
   `<w:t>ΚΑΤΗΓΟΡΙΑ ΣΤΕΛΕΧΟΥΣ</w:t></w:r></w:p></w:tc>` +
   `<w:tc><w:tcPr><w:tcW w:w="1750" w:type="pct"/>` +
   `<w:vAlign w:val="center"/></w:tcPr>` +
-  `<w:p><w:pPr><w:rPr><w:sz w:val="18"/><w:szCs w:val="18"/><w:lang w:val="el-GR"/></w:rPr></w:pPr>` +
+  `<w:p><w:pPr><w:rPr><w:sz w:val="18"/><w:szCs w:val="18"/><w:lang w:val="el-GR"/></w:rPr></w:pPr></w:p>` +
   `</w:tc></w:tr></w:tbl>`;
 
 // Insert after the first </w:tbl> (which is Table[0] — education)
