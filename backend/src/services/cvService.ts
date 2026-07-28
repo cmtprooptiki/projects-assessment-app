@@ -105,12 +105,15 @@ export async function generateCVBuffer(employeeId: number, template = 'classic')
         dateAwarded:     fmtMY(edu.dateAwarded),
       };
     }),
-    ...(employee.languages ?? []).map((lang) => ({
-      institutionFull: '',
-      degreeTitle:     lang.degreeTitle ?? lang.language,
-      specialization:  lang.level ?? '',
-      dateAwarded:     '',
-    })),
+    ...(employee.languages ?? []).map((lang) => {
+      const base = lang.degreeTitle ?? lang.language;
+      return {
+        institutionFull: '',
+        degreeTitle:     lang.level ? `${base} (${lang.level})` : base,
+        specialization:  '',
+        dateAwarded:     '',
+      };
+    }),
   ];
 
   // ── educationOnlyRows (job CV templates): formal education without language certs
