@@ -5,6 +5,7 @@ export const createProjectRules = [
   body('acronym').trim().notEmpty().withMessage('Acronym is required.').isLength({ max: 50 }),
   body('description').optional({ nullable: true }).trim(),
   body('clientId').optional({ nullable: true }).isInt({ min: 1 }).toInt(),
+  body('totalBudget').optional({ nullable: true }).isFloat({ min: 0 }).withMessage('Total budget must be a positive number.'),
 ];
 
 export const updateProjectRules = [
@@ -12,4 +13,5 @@ export const updateProjectRules = [
   body('acronym').optional().trim().notEmpty().withMessage('Acronym cannot be empty.').isLength({ max: 50 }),
   body('description').optional({ nullable: true }).trim(),
   body('clientId').optional({ nullable: true }).isInt({ min: 1 }).toInt(),
+  body('totalBudget').optional({ nullable: true }).isFloat({ min: 0 }).withMessage('Total budget must be a positive number.'),
 ];

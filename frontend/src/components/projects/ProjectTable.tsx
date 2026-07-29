@@ -53,6 +53,8 @@ export default function ProjectTable({ projects, sortBy = 'projectCode', sortOrd
               <Th field="client"      label="Client" />
               <Th field="startDate"   label="Period" />
               <Th field="contracts"   label="Contracts" />
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide whitespace-nowrap">Total Budget</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide whitespace-nowrap">CMT Budget</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
@@ -77,6 +79,16 @@ export default function ProjectTable({ projects, sortBy = 'projectCode', sortOrd
                 <td className="px-4 py-3">
                   {p.contracts?.length
                     ? <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300"><FileText size={11} />{p.contracts.length}</span>
+                    : <span className="text-gray-300 dark:text-slate-600">—</span>}
+                </td>
+                <td className="px-4 py-3 text-sm text-gray-600 dark:text-slate-300 whitespace-nowrap">
+                  {p.totalBudget != null
+                    ? <span className="font-medium">€{Number(p.totalBudget).toLocaleString('el-GR', { minimumFractionDigits: 2 })}</span>
+                    : <span className="text-gray-300 dark:text-slate-600">—</span>}
+                </td>
+                <td className="px-4 py-3 text-sm text-gray-600 dark:text-slate-300 whitespace-nowrap">
+                  {p.cmtBudget != null && p.cmtBudget > 0
+                    ? <span className="font-medium text-indigo-600 dark:text-indigo-400">€{Number(p.cmtBudget).toLocaleString('el-GR', { minimumFractionDigits: 2 })}</span>
                     : <span className="text-gray-300 dark:text-slate-600">—</span>}
                 </td>
                 <td className="px-4 py-3">

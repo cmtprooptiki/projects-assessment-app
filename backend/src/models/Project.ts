@@ -7,13 +7,14 @@ export interface ProjectAttributes {
   name: string;
   acronym: string;
   description?: string | null;
+  totalBudget?: number | null;
   clientId?: number | null;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
 export interface ProjectCreationAttributes
-  extends Optional<ProjectAttributes, 'id' | 'description' | 'clientId'> {}
+  extends Optional<ProjectAttributes, 'id' | 'description' | 'totalBudget' | 'clientId'> {}
 
 class Project
   extends Model<ProjectAttributes, ProjectCreationAttributes>
@@ -24,6 +25,7 @@ class Project
   public name!: string;
   public acronym!: string;
   public description!: string | null;
+  public totalBudget!: number | null;
   public clientId!: number | null;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -36,6 +38,7 @@ Project.init(
     name: { type: DataTypes.STRING(800), allowNull: false },
     acronym: { type: DataTypes.STRING(50), allowNull: false },
     description: { type: DataTypes.TEXT, allowNull: true },
+    totalBudget: { type: DataTypes.DECIMAL(15, 2), allowNull: true },
     clientId: {
       type: DataTypes.INTEGER.UNSIGNED,
       allowNull: true,

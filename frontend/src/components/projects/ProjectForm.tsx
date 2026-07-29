@@ -18,6 +18,7 @@ interface FormValues {
   acronym: string;
   description: string;
   clientId: number | null;
+  totalBudget: string;
 }
 
 interface Props {
@@ -38,6 +39,7 @@ export default function ProjectForm({ defaultValues, clients, onSubmit, submitLa
     acronym: defaultValues?.acronym ?? '',
     description: defaultValues?.description ?? '',
     clientId: defaultValues?.clientId ?? null,
+    totalBudget: defaultValues?.totalBudget != null ? String(defaultValues.totalBudget) : '',
   });
 
   const [linkedContractIds, setLinkedContractIds] = useState<number[]>(
@@ -120,6 +122,16 @@ export default function ProjectForm({ defaultValues, clients, onSubmit, submitLa
           <Input label="Project Name" value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Highway Construction" required />
           <Input label="Acronym" value={form.acronym} onChange={(e) => set('acronym', e.target.value)} placeholder="HWY" required />
         </div>
+
+        <Input
+          label="Total Budget (€)"
+          type="number"
+          min="0"
+          step="0.01"
+          value={form.totalBudget}
+          onChange={(e) => set('totalBudget', e.target.value)}
+          placeholder="0.00"
+        />
 
         <Select
           label="Client"

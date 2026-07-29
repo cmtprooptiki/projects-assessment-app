@@ -24,7 +24,12 @@ const computeProjectDates = (contracts: Array<{ startDate: string; endDate?: str
 
 const withDates = (p: any) => {
   const json = p.toJSON ? p.toJSON() : p;
-  return { ...json, ...computeProjectDates(json.contracts ?? []) };
+  const contracts = json.contracts ?? [];
+  const cmtBudget = contracts.reduce(
+    (sum: number, c: any) => sum + (c.budget != null ? parseFloat(c.budget) : 0),
+    0,
+  );
+  return { ...json, ...computeProjectDates(contracts), cmtBudget };
 };
 
 const ALLOWED_SORT = new Set(['projectCode', 'name', 'acronym', 'client', 'startDate', 'contracts']);

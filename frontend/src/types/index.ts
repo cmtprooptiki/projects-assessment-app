@@ -122,6 +122,8 @@ export interface Project {
   name: string;
   acronym: string;
   description?: string | null;
+  totalBudget?: number | null;
+  cmtBudget?: number;
   clientId?: number | null;
   client?: Client | null;
   contracts?: Contract[];

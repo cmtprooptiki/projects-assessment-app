@@ -22,20 +22,24 @@ export const getById = async (req: Request, res: Response, next: NextFunction): 
 
 export const create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { name, acronym, description, clientId } = req.body;
-    const project = await projectService.createProject({ name, acronym, description, clientId: clientId || null });
+    const { name, acronym, description, clientId, totalBudget } = req.body;
+    const project = await projectService.createProject({
+      name, acronym, description, clientId: clientId || null,
+      totalBudget: totalBudget != null && totalBudget !== '' ? parseFloat(totalBudget) : null,
+    });
     res.status(201).json({ success: true, data: project });
   } catch (err) { next(err); }
 };
 
 export const update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { name, acronym, description, clientId } = req.body;
+    const { name, acronym, description, clientId, totalBudget } = req.body;
     const data: Record<string, unknown> = {};
     if (name !== undefined) data.name = name;
     if (acronym !== undefined) data.acronym = acronym;
     if (description !== undefined) data.description = description || null;
     if (clientId !== undefined) data.clientId = clientId || null;
+    if (totalBudget !== undefined) data.totalBudget = totalBudget != null && totalBudget !== '' ? parseFloat(totalBudget) : null;
     const project = await projectService.updateProject(parseInt(req.params.id, 10), data as any);
     res.json({ success: true, data: project });
   } catch (err) { next(err); }
