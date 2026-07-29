@@ -11,7 +11,7 @@ import { Project } from '@/types';
 import { useDeleteProject } from '@/hooks/useProjects';
 import { formatDate } from '@/lib/utils';
 
-type SortField = 'projectCode' | 'name' | 'acronym' | 'client' | 'startDate' | 'contracts';
+type SortField = 'projectCode' | 'name' | 'acronym' | 'client' | 'startDate' | 'contracts' | 'totalBudget' | 'cmtBudget';
 type SortDir   = 'asc' | 'desc';
 
 interface Props {
@@ -53,8 +53,8 @@ export default function ProjectTable({ projects, sortBy = 'projectCode', sortOrd
               <Th field="client"      label="Client" />
               <Th field="startDate"   label="Period" />
               <Th field="contracts"   label="Contracts" />
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide whitespace-nowrap">Total Budget</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide whitespace-nowrap">CMT Budget</th>
+              <Th field="totalBudget" label="Total Budget" />
+              <Th field="cmtBudget"   label="CMT Budget" />
               <th className="px-4 py-3" />
             </tr>
           </thead>

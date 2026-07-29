@@ -32,7 +32,7 @@ const withDates = (p: any) => {
   return { ...json, ...computeProjectDates(contracts), cmtBudget };
 };
 
-const ALLOWED_SORT = new Set(['projectCode', 'name', 'acronym', 'client', 'startDate', 'contracts']);
+const ALLOWED_SORT = new Set(['projectCode', 'name', 'acronym', 'client', 'startDate', 'contracts', 'totalBudget', 'cmtBudget']);
 
 export const getAllProjects = async (filters: {
   clientId?: string;
@@ -52,8 +52,10 @@ export const getAllProjects = async (filters: {
       case 'name':       return [['name', dir]];
       case 'acronym':    return [['acronym', dir]];
       case 'client':     return [[{ model: Client, as: 'client' }, 'name', dir]];
-      case 'startDate':  return [[literal('(SELECT MIN(startDate) FROM contracts WHERE projectId = Project.id)'), dir]];
-      case 'contracts':  return [[literal('(SELECT COUNT(*) FROM contracts WHERE projectId = Project.id)'), dir]];
+      case 'startDate':    return [[literal('(SELECT MIN(startDate) FROM contracts WHERE projectId = Project.id)'), dir]];
+      case 'contracts':    return [[literal('(SELECT COUNT(*) FROM contracts WHERE projectId = Project.id)'), dir]];
+      case 'totalBudget':  return [['totalBudget', dir]];
+      case 'cmtBudget':    return [[literal('(SELECT COALESCE(SUM(budget), 0) FROM contracts WHERE projectId = Project.id)'), dir]];
       default:           return [['projectCode', dir]];
     }
   })();
