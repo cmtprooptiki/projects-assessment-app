@@ -10,13 +10,11 @@ export async function suggestGreekNames(
 
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o',
-    response_format: { type: 'json_object' },
-    temperature: 0,
     messages: [
       {
         role: 'system',
         content:
-          'You are a Greek language expert. Convert Greeklish or Latin-script Greek names to proper Modern Greek with correct accent marks (τόνοι). Return only a JSON object.',
+          'You are a Greek language expert. Convert Greeklish or Latin-script Greek names to proper Modern Greek with correct accent marks (τόνοι). Always respond with valid JSON only, no extra text.',
       },
       {
         role: 'user',
@@ -24,7 +22,7 @@ export async function suggestGreekNames(
 First name: "${firstName}"
 Last name: "${lastName}"
 
-Return ONLY this JSON, nothing else:
+Respond with ONLY this JSON (no markdown, no explanation):
 {"firstNameGr": "...", "lastNameGr": "..."}
 
 Examples: "Ilias" → "Ηλίας", "Zampetakis" → "Ζαμπετάκης", "Nikos" → "Νίκος", "Braoudaki" → "Μπραουδάκη"`,
@@ -32,8 +30,10 @@ Examples: "Ilias" → "Ηλίας", "Zampetakis" → "Ζαμπετάκης", "Ni
     ],
   });
 
-  const raw = completion.choices[0]?.message?.content ?? '{}';
-  const parsed = JSON.parse(raw);
+  const raw = (completion.choices[0]?.message?.content ?? '').trim();
+  // Strip markdown code fences if the model wraps the JSON
+  const jsonStr = raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
+  const parsed = JSON.parse(jsonStr);
 
   if (!parsed.firstNameGr || !parsed.lastNameGr) {
     throw new Error('Could not convert names. Please fill in manually.');
