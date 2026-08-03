@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 
 interface Option {
   value: string;
@@ -64,6 +64,7 @@ export default function Combobox({ label, options, value, onChange, placeholder 
         className="relative flex items-center cursor-text"
         onClick={() => { setOpen(true); inputRef.current?.focus(); }}
       >
+        <Search size={14} className="absolute left-3 text-slate-400 pointer-events-none" />
         <input
           ref={inputRef}
           type="text"
@@ -72,14 +73,13 @@ export default function Combobox({ label, options, value, onChange, placeholder 
           onFocus={() => setOpen(true)}
           onKeyDown={(e) => { if (e.key === 'Escape') { setOpen(false); setQuery(''); } }}
           placeholder={placeholder}
-          className="w-full rounded-xl border border-slate-300 dark:border-slate-600 px-3 py-2 pr-8 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 bg-white dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+          className="w-full rounded-xl border border-slate-300 dark:border-slate-600 pl-8 pr-7 py-2 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 bg-white dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
         />
-        <div className="absolute right-2 flex items-center">
-          {value
-            ? <button type="button" onClick={handleClear} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5"><X size={13} /></button>
-            : <ChevronDown size={14} className="text-slate-400 pointer-events-none" />
-          }
-        </div>
+        {value && (
+          <button type="button" onClick={handleClear} className="absolute right-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5">
+            <X size={13} />
+          </button>
+        )}
       </div>
 
       {open && (

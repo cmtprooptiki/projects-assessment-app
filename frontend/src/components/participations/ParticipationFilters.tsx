@@ -3,6 +3,7 @@
 import Select from '@/components/ui/Select';
 import Combobox from '@/components/ui/Combobox';
 import Button from '@/components/ui/Button';
+
 import type { ParticipationFilters, Project } from '@/types';
 
 interface Props {
@@ -34,16 +35,16 @@ export default function ParticipationFilters({
 
   return (
     <div className="flex flex-wrap items-end gap-3">
-      <div className="w-40">
-        <Select
+      <div className="w-48">
+        <Combobox
           label="Employee"
           placeholder="All employees"
           options={employees.map((e) => ({
             value: e.id.toString(),
-            label: `${e.firstName} ${e.lastName}`,
+            label: `${e.lastName} ${e.firstName}`,
           }))}
           value={filters.employeeId ?? ''}
-          onChange={(e) => update('employeeId', e.target.value)}
+          onChange={(val) => update('employeeId', val)}
         />
       </div>
       <div className="w-64">
@@ -59,7 +60,7 @@ export default function ParticipationFilters({
         />
       </div>
       <div className="w-40">
-        <Select
+        <Combobox
           label="Role"
           placeholder="All roles"
           options={roles.map((r) => ({
@@ -67,7 +68,7 @@ export default function ParticipationFilters({
             label: r.name,
           }))}
           value={filters.roleId ?? ''}
-          onChange={(e) => update('roleId', e.target.value)}
+          onChange={(val) => update('roleId', val)}
         />
       </div>
       <div className="w-40">
