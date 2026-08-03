@@ -8,7 +8,7 @@ import api from '@/lib/api';
 import { Employee } from '@/types';
 import { fullName } from '@/lib/utils';
 
-type TemplateId = 'navy' | 'indigo' | 'teal';
+type TemplateId = 'navy' | 'indigo' | 'teal' | 'sidebar';
 
 // ─── Mini layout preview components ──────────────────────────────────────────
 
@@ -178,6 +178,46 @@ function PreviewBoldHeader({ color, lt }: { color: string; lt: string }) {
   );
 }
 
+// Layout 4: Blue Sidebar — circular photo, blue sidebar, two content sections
+function PreviewBlueSidebar({ color }: { color: string }) {
+  return (
+    <div className="w-full flex" style={{ minHeight: 130 }}>
+      {/* Sidebar */}
+      <div className="flex-none w-[36%] flex flex-col items-center px-1.5 py-2 gap-1" style={{ backgroundColor: color }}>
+        {/* Circular photo */}
+        <div className="w-8 h-8 rounded-full bg-white opacity-30 mb-0.5" />
+        <div className="w-full h-1.5 rounded-full bg-white opacity-80" />
+        <div className="w-2/3 h-1 rounded-full bg-white opacity-40 mb-1" />
+        {/* Contact section */}
+        <div className="w-full h-1 rounded-full bg-white opacity-60" />
+        {[70, 80, 60, 55].map((w, i) => (
+          <div key={i} className="h-0.5 rounded-full bg-white" style={{ width: `${w}%`, opacity: 0.22 }} />
+        ))}
+        {/* Skills section */}
+        <div className="w-full h-1 rounded-full bg-white opacity-60 mt-1" />
+        {[60, 50, 65, 45].map((w, i) => (
+          <div key={i} className="h-0.5 rounded-full bg-white" style={{ width: `${w}%`, opacity: 0.22 }} />
+        ))}
+      </div>
+      {/* Main content */}
+      <div className="flex-1 px-2 py-2 flex flex-col gap-1 bg-white">
+        <div className="flex items-end pb-0.5 border-b mb-0.5" style={{ borderColor: color }}>
+          <div className="h-1.5 w-12 rounded-sm" style={{ backgroundColor: color, opacity: 0.85 }} />
+        </div>
+        {[85, 60, 75, 55].map((w, i) => (
+          <div key={i} className="h-0.5 rounded-full bg-slate-200" style={{ width: `${w}%` }} />
+        ))}
+        <div className="flex items-end pb-0.5 border-b mt-1.5 mb-0.5" style={{ borderColor: color }}>
+          <div className="h-1.5 w-14 rounded-sm" style={{ backgroundColor: color, opacity: 0.85 }} />
+        </div>
+        {[80, 65, 70, 50].map((w, i) => (
+          <div key={i} className="h-0.5 rounded-full bg-slate-200" style={{ width: `${w}%` }} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 const TEMPLATES: {
   id: TemplateId; name: string; description: string;
   color: string; lt?: string;
@@ -204,6 +244,13 @@ const TEMPLATES: {
     color: '#0A5260',
     lt: '#DEF0F3',
     preview: (c, lt) => <PreviewBoldHeader color={c} lt={lt} />,
+  },
+  {
+    id: 'sidebar',
+    name: 'Blue Sidebar',
+    description: 'Κυκλική φωτογραφία, γαλάζια στήλη, δεξιά ενότητες',
+    color: '#2B6CB0',
+    preview: (c) => <PreviewBlueSidebar color={c} />,
   },
 ];
 
@@ -238,13 +285,13 @@ export default function CVDownloadModal({ open, onClose, employee }: Props) {
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Λήψη Βιογραφικού" className="max-w-2xl">
+    <Modal open={open} onClose={onClose} title="Λήψη Βιογραφικού" className="max-w-3xl">
       <p className="text-sm text-slate-500 mb-5">
         Επιλέξτε πρότυπο για το βιογραφικό του{' '}
         <span className="font-semibold text-slate-700">{fullName(employee)}</span>.
       </p>
 
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-2 gap-4 mb-6">
         {TEMPLATES.map((tpl) => (
           <button
             key={tpl.id}

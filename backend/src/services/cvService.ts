@@ -6,7 +6,7 @@ import fs from 'fs';
 import path from 'path';
 
 // ── Job CV templates embed photos at render-time ──────────────────────────────
-const JOB_TEMPLATES = new Set(['navy', 'indigo', 'teal']);
+const JOB_TEMPLATES = new Set(['navy', 'indigo', 'teal', 'sidebar']);
 const PHOTO_RID      = 'rId_employee_photo';
 const IMG_REL_TYPE   = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/image';
 
@@ -87,6 +87,7 @@ const TEMPLATE_PATHS: Record<string, string> = {
   navy:    path.join(TEMPLATES_DIR, 'cv_job_navy_placeholders.docx'),
   indigo:  path.join(TEMPLATES_DIR, 'cv_job_indigo_placeholders.docx'),
   teal:    path.join(TEMPLATES_DIR, 'cv_job_teal_placeholders.docx'),
+  sidebar: path.join(TEMPLATES_DIR, 'cv_sidebar_blue_placeholders.docx'),
 };
 
 function fmtFull(s?: string | null): string {
@@ -212,6 +213,16 @@ export async function generateCVBuffer(employeeId: number, template = 'classic')
 
   const publicationsText = publications.map((pub) => pub.text).join('\n\n');
 
+  // ── skillRows (sidebar template): education specializations + language certs
+  const skillRows = [
+    ...(employee.education ?? [])
+      .filter((edu) => edu.specialization)
+      .map((edu) => ({ skillText: edu.specialization! })),
+    ...(employee.languages ?? []).map((lang) => ({
+      skillText: lang.level ? `${lang.language} (${lang.level})` : lang.language,
+    })),
+  ];
+
   const data = {
     // Personal info — prefer Greek names when available
     lastName:     employee.lastNameGr  || employee.lastName   || '',
@@ -223,6 +234,7 @@ export async function generateCVBuffer(employeeId: number, template = 'classic')
     phone:        employee.phone       ?? '',
     email:        employee.email       ?? '',
     homeAddress:  employee.homeAddress ?? '',
+    department:   employee.department  ?? '',
     website:      '',
     // Classic template sections (education + languages merged)
     educationRows,
@@ -230,6 +242,8 @@ export async function generateCVBuffer(employeeId: number, template = 'classic')
     educationOnlyRows,
     languageRows,
     hasLanguages: languageRows.length > 0,
+    // Sidebar template
+    skillRows,
     // Shared
     experienceRows,
     workExperienceRows,
