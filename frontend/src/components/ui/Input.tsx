@@ -22,6 +22,7 @@ export default function Input({ label, error, hint, className, id, ...props }: I
         id={inputId}
         className={cn(
           'w-full rounded-xl border px-3 py-2 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 bg-white dark:bg-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent',
+          'disabled:bg-slate-100 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-500 disabled:border-slate-200 dark:disabled:border-slate-700 disabled:cursor-not-allowed',
           error
             ? 'border-red-400 focus:ring-red-400'
             : 'border-slate-300 dark:border-slate-600 hover:border-slate-400 dark:hover:border-slate-500',
