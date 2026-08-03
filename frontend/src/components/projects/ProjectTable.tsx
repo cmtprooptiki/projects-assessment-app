@@ -99,7 +99,11 @@ export default function ProjectTable({ projects, sortBy = 'projectCode', sortOrd
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-1">
-                    <Link href={`/projects/${p.id}/edit`}><Button variant="ghost" size="sm"><Pencil size={14} /></Button></Link>
+                    <Link href={`/projects/${p.id}/edit`}>
+                      <Button variant="ghost" size="sm" className="text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20">
+                        <Pencil size={14} />
+                      </Button>
+                    </Link>
                     {isAdmin && (
                       <Button variant="ghost" size="sm" onClick={() => setDeleting(p)} className="text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600"><Trash2 size={14} /></Button>
                     )}
