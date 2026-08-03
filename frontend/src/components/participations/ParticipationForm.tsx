@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Select from '@/components/ui/Select';
+import Combobox from '@/components/ui/Combobox';
 import DatePicker from '@/components/ui/DatePicker';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
@@ -134,15 +134,16 @@ export default function ParticipationForm({
         {!isEdit && (
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Select
+              <Combobox
                 label="Employee"
+                placeholder="Search employee..."
                 options={employees.map((e) => ({
                   value: e.id.toString(),
-                  label: `${fullName(e)}${e.isExternal ? ' (External)' : ''}`,
+                  label: `${e.lastName} ${e.firstName}${e.isExternal ? ' (External)' : ''}`,
                 }))}
-                value={employeeId.toString()}
-                onChange={(e) => {
-                  setEmployeeId(parseInt(e.target.value, 10));
+                value={employeeId ? employeeId.toString() : ''}
+                onChange={(val) => {
+                  setEmployeeId(val ? parseInt(val, 10) : 0);
                   setStartDate('');
                   setEndDate('');
                 }}
@@ -154,15 +155,16 @@ export default function ParticipationForm({
                 </div>
               )}
             </div>
-            <Select
+            <Combobox
               label="Project"
+              placeholder="Search project..."
               options={projects.map((p) => ({
                 value: p.id.toString(),
                 label: `${p.projectCode} – ${p.name}`,
               }))}
-              value={projectId.toString()}
-              onChange={(e) => {
-                setProjectId(parseInt(e.target.value, 10));
+              value={projectId ? projectId.toString() : ''}
+              onChange={(val) => {
+                setProjectId(val ? parseInt(val, 10) : 0);
                 setStartDate('');
                 setEndDate('');
               }}
@@ -202,14 +204,15 @@ export default function ParticipationForm({
           </div>
         )}
 
-        <Select
+        <Combobox
           label="Role"
+          placeholder="Search role..."
           options={roles.map((r) => ({
             value: r.id.toString(),
             label: r.name,
           }))}
-          value={roleId.toString()}
-          onChange={(e) => setRoleId(parseInt(e.target.value, 10))}
+          value={roleId ? roleId.toString() : ''}
+          onChange={(val) => setRoleId(val ? parseInt(val, 10) : 0)}
           required
         />
 

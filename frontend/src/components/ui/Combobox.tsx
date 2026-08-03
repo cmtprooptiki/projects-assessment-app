@@ -14,9 +14,10 @@ interface Props {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  required?: boolean;
 }
 
-export default function Combobox({ label, options, value, onChange, placeholder = 'All...' }: Props) {
+export default function Combobox({ label, options, value, onChange, placeholder = 'All...', required }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
@@ -58,6 +59,7 @@ export default function Combobox({ label, options, value, onChange, placeholder 
       {label && (
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
           {label}
+          {required && <span className="text-red-500 ml-1">*</span>}
         </label>
       )}
       <div
