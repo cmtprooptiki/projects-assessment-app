@@ -158,6 +158,7 @@ export async function generateCVBuffer(employeeId: number, template = 'classic')
     return {
       institutionFull: parts.join(' – '),
       degreeTitle:     edu.degreeTitle ?? '',
+      degreeType:      edu.degreeType  ?? '',
       specialization:  edu.specialization ?? '',
       dateAwarded:     fmtMY(edu.dateAwarded),
     };
