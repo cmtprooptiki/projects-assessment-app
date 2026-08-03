@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Plus, RefreshCw, FileUp } from 'lucide-react';
+import { Plus, RefreshCw, FileUp, Download } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Pagination from '@/components/ui/Pagination';
@@ -15,17 +15,33 @@ import { useEmployees } from '@/hooks/useEmployees';
 import { useProjects } from '@/hooks/useProjects';
 import { useRoles } from '@/hooks/useRoles';
 import { ParticipationFilters as IParticipationFilters } from '@/types';
+import { exportParticipationsToXlsx } from '@/lib/exportParticipations';
+import api from '@/lib/api';
 
 const defaultFilters: IParticipationFilters = { page: 1, limit: 15, sortBy: 'startDate', sortOrder: 'desc' };
 
 export default function ParticipationsPage() {
   const [filters, setFilters] = useState<IParticipationFilters>(defaultFilters);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const { data, isLoading, error } = useParticipations(filters);
   const { data: employeesData } = useEmployees({ limit: 999 });
   const { data: projectsData } = useProjects({ limit: 999 });
   const { data: rolesData } = useRoles({ limit: 999 });
   const recalculate = useRecalculateParticipations();
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const { page: _p, limit: _l, ...activeFilters } = filters;
+      const res = await api.get('/participations', { params: { ...activeFilters, page: 1, limit: 9999 } });
+      const all = res.data?.data ?? [];
+      const date = new Date().toISOString().slice(0, 10);
+      exportParticipationsToXlsx(all, `participations_${date}.xlsx`);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const handleSort = (field: string) => {
     setFilters((f) => ({
@@ -64,6 +80,10 @@ export default function ParticipationsPage() {
           >
             <RefreshCw size={16} />
             Recalculate Dates
+          </Button>
+          <Button variant="secondary" loading={exporting} onClick={handleExport}>
+            <Download size={16} />
+            Export XLSX
           </Button>
           <Button variant="secondary" onClick={() => setBulkOpen(true)}>
             <FileUp size={16} />

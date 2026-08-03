@@ -1,6 +1,7 @@
 'use client';
 
 import Select from '@/components/ui/Select';
+import Combobox from '@/components/ui/Combobox';
 import Button from '@/components/ui/Button';
 import type { ParticipationFilters, Project } from '@/types';
 
@@ -45,8 +46,8 @@ export default function ParticipationFilters({
           onChange={(e) => update('employeeId', e.target.value)}
         />
       </div>
-      <div className="w-48">
-        <Select
+      <div className="w-64">
+        <Combobox
           label="Project"
           placeholder="All projects"
           options={projects.map((p) => ({
@@ -54,7 +55,7 @@ export default function ParticipationFilters({
             label: `${p.projectCode} – ${p.name}`,
           }))}
           value={filters.projectId ?? ''}
-          onChange={(e) => update('projectId', e.target.value)}
+          onChange={(val) => update('projectId', val)}
         />
       </div>
       <div className="w-40">
