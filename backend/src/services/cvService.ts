@@ -78,7 +78,7 @@ function removePhotoDrawing(zip: typeof PizZip): void {
     zip.file(filename, updated);
   });
 }
-import { Education, Employee, EmployeeHistoryProject, EmployeePublication, Language, ProjectParticipation, Project, Role } from '../models';
+import { Education, Employee, EmployeeAvailabilityPeriod, EmployeeHistoryProject, EmployeePublication, Language, ProjectParticipation, Project, Role } from '../models';
 
 // process.cwd() = /app in Docker, .../backend/ locally — templates/ lives there in both envs
 const TEMPLATES_DIR = path.join(process.cwd(), 'templates');
@@ -111,7 +111,7 @@ export async function generateCVBuffer(employeeId: number, template = 'classic')
 
   if (!employee) throw new Error('Employee not found');
 
-  const [participations, historyProjects, publications] = await Promise.all([
+  const [participations, historyProjects, publications, availabilityPeriods] = await Promise.all([
     (ProjectParticipation.findAll({
       where: { employeeId },
       include: [
@@ -127,6 +127,10 @@ export async function generateCVBuffer(employeeId: number, template = 'classic')
     EmployeePublication.findAll({
       where: { employeeId },
       order: [['createdAt', 'ASC']],
+    }),
+    EmployeeAvailabilityPeriod.findAll({
+      where: { employeeId },
+      order: [['startDate', 'DESC']],
     }),
   ]);
 
@@ -192,6 +196,20 @@ export async function generateCVBuffer(employeeId: number, template = 'classic')
     .sort((a, b) => b.startDate.localeCompare(a.startDate))
     .map(({ startDate: _s, ...rest }) => rest);
 
+  // ── workExperienceRows (navy job CV): availability periods as CMT rows + history projects
+  //    No project-level data — each availability period is one "CMT ΠΡΟΟΠΤΙΚΗ ΕΠΕ" employer entry
+  const cmtRows = availabilityPeriods.map((ap) => ({
+    startDate:    ap.startDate,
+    employerName: 'CMT ΠΡΟΟΠΤΙΚΗ ΕΠΕ',
+    projectText:  '',
+    roleName:     '',
+    period:       `${fmtMY(ap.startDate)} - ${fmtMY(ap.endDate ?? null)}`,
+  }));
+
+  const workExperienceRows = [...cmtRows, ...historyRows]
+    .sort((a, b) => b.startDate.localeCompare(a.startDate))
+    .map(({ startDate: _s, ...rest }) => rest);
+
   const publicationsText = publications.map((pub) => pub.text).join('\n\n');
 
   const data = {
@@ -214,6 +232,7 @@ export async function generateCVBuffer(employeeId: number, template = 'classic')
     hasLanguages: languageRows.length > 0,
     // Shared
     experienceRows,
+    workExperienceRows,
     hasPublications: publications.length > 0,
     publicationsText,
   };
