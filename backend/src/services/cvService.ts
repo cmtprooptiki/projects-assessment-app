@@ -11,36 +11,72 @@ const PHOTO_RID      = 'rId_employee_photo';
 const IMG_REL_TYPE   = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/image';
 
 function injectPhoto(zip: typeof PizZip, photoFilePath: string): void {
-  const ext  = path.extname(photoFilePath).toLowerCase().replace('.', '');
-  const mime = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
+  const ext      = path.extname(photoFilePath).toLowerCase().replace('.', '');
+  const mime     = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
+  const extForCT = ext === 'jpg' ? 'jpeg' : ext;
   const mediaName = `employee_photo.${ext}`;
 
   // 1. Embed the image binary
-  const imgBuf = fs.readFileSync(photoFilePath);
-  zip.file(`word/media/${mediaName}`, imgBuf);
+  zip.file(`word/media/${mediaName}`, fs.readFileSync(photoFilePath));
 
-  // 2. Add relationship entry
-  let rels: string = zip.files['word/_rels/document.xml.rels'].asText();
-  rels = rels.replace(
-    '</Relationships>',
-    `<Relationship Id="${PHOTO_RID}" Type="${IMG_REL_TYPE}" Target="media/${mediaName}"/></Relationships>`,
-  );
-  zip.file('word/_rels/document.xml.rels', rels);
+  // 2. Find every XML file (body, headers, footers…) that references rId_employee_photo
+  //    and update its corresponding .rels file — handles templates where the photo
+  //    lives in a header rather than the main document body.
+  const relEntry = `<Relationship Id="${PHOTO_RID}" Type="${IMG_REL_TYPE}" Target="media/${mediaName}"/>`;
+  let addedToAny = false;
+
+  Object.keys(zip.files).forEach((filename) => {
+    if (!filename.startsWith('word/') || !filename.endsWith('.xml')) return;
+    if (filename.includes('/_rels/')) return;
+
+    const xmlContent: string = zip.files[filename].asText();
+    if (!xmlContent.includes(PHOTO_RID)) return;
+
+    // e.g. 'word/header1.xml' → 'word/_rels/header1.xml.rels'
+    const base     = filename.split('/').pop()!;
+    const relsPath = `word/_rels/${base}.rels`;
+    if (!zip.files[relsPath]) return;
+
+    let rels: string = zip.files[relsPath].asText();
+    if (!rels.includes(PHOTO_RID)) {
+      rels = rels.replace('</Relationships>', `${relEntry}</Relationships>`);
+      zip.file(relsPath, rels);
+      addedToAny = true;
+    }
+  });
+
+  // Fallback: if the rId wasn't found in any scanned file, try document.xml.rels
+  if (!addedToAny) {
+    let rels: string = zip.files['word/_rels/document.xml.rels'].asText();
+    if (!rels.includes(PHOTO_RID)) {
+      rels = rels.replace('</Relationships>', `${relEntry}</Relationships>`);
+      zip.file('word/_rels/document.xml.rels', rels);
+    }
+  }
 
   // 3. Add content type if missing
   let ct: string = zip.files['[Content_Types].xml'].asText();
-  if (!ct.includes(mime)) {
-    const def = `<Default Extension="${ext === 'jpg' ? 'jpeg' : ext}" ContentType="${mime}"/>`;
-    ct = ct.replace('</Types>', `${def}</Types>`);
+  if (!ct.includes(`Extension="${extForCT}"`)) {
+    ct = ct.replace('</Types>', `<Default Extension="${extForCT}" ContentType="${mime}"/></Types>`);
     zip.file('[Content_Types].xml', ct);
   }
 }
 
 function removePhotoDrawing(zip: typeof PizZip): void {
-  let xml: string = zip.files['word/document.xml'].asText();
-  // Remove the entire <w:drawing> element that references the placeholder rId
-  xml = xml.replace(/<w:drawing>(?:(?!<\/w:drawing>)[\s\S])*?rId_employee_photo(?:(?!<\/w:drawing>)[\s\S])*?<\/w:drawing>/g, '');
-  zip.file('word/document.xml', xml);
+  // Remove the photo drawing from every XML file that references it
+  Object.keys(zip.files).forEach((filename) => {
+    if (!filename.startsWith('word/') || !filename.endsWith('.xml')) return;
+    if (filename.includes('/_rels/')) return;
+
+    const content: string = zip.files[filename].asText();
+    if (!content.includes(PHOTO_RID)) return;
+
+    const updated = content.replace(
+      /<w:drawing>(?:(?!<\/w:drawing>)[\s\S])*?rId_employee_photo(?:(?!<\/w:drawing>)[\s\S])*?<\/w:drawing>/g,
+      '',
+    );
+    zip.file(filename, updated);
+  });
 }
 import { Education, Employee, EmployeeHistoryProject, EmployeePublication, Language, ProjectParticipation, Project, Role } from '../models';
 
