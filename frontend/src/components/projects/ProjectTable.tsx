@@ -55,12 +55,12 @@ export default function ProjectTable({ projects, sortBy = 'projectCode', sortOrd
               <Th field="contracts"   label="Contracts" />
               <Th field="totalBudget" label="Total Budget" />
               <Th field="cmtBudget"   label="CMT Budget" />
-              <th className="px-4 py-3" />
+              <th className="sticky right-0 px-4 py-3 bg-white dark:bg-slate-800" />
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50 dark:divide-slate-700/50">
             {projects.map((p) => (
-              <tr key={p.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors">
+              <tr key={p.id} className="group hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors">
                 <td className="px-4 py-3 font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400">{p.projectCode}</td>
                 <td className="px-4 py-3">
                   <Link href={`/projects/${p.id}/edit`} className="group inline-flex items-center gap-1 w-fit">
@@ -97,7 +97,7 @@ export default function ProjectTable({ projects, sortBy = 'projectCode', sortOrd
                     ? <span className="font-medium text-indigo-600 dark:text-indigo-400">€{Number(p.cmtBudget).toLocaleString('el-GR', { minimumFractionDigits: 2 })}</span>
                     : <span className="text-gray-300 dark:text-slate-600">—</span>}
                 </td>
-                <td className="px-4 py-3">
+                <td className="sticky right-0 px-4 py-3 bg-white dark:bg-slate-800 group-hover:bg-gray-50 dark:group-hover:bg-slate-700/30">
                   <div className="flex items-center justify-end gap-1">
                     <Link href={`/projects/${p.id}/edit`}>
                       <Button variant="ghost" size="sm" className="text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20">
