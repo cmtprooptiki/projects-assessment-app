@@ -6,14 +6,15 @@ import { Employee } from '@/types';
 
 interface Props {
   employee: Pick<Employee, 'firstName' | 'lastName' | 'photo'>;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
 }
 
 const sizeClasses = {
   sm: 'w-8 h-8 text-xs',
-  md: 'w-10 h-10 text-sm',
-  lg: 'w-14 h-14 text-base',
+  md: 'w-12 h-12 text-sm',
+  lg: 'w-16 h-16 text-base',
+  xl: 'w-28 h-28 text-2xl',
 };
 
 export default function EmployeeAvatar({ employee, size = 'md', className = '' }: Props) {

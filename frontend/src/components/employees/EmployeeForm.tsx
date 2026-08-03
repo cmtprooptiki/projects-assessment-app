@@ -116,7 +116,7 @@ export default function EmployeeForm({ defaultValues, onSubmit, submitLabel = 'S
 
         <div className="flex items-center gap-5">
           <div className="relative shrink-0">
-            <div className="w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center text-white font-bold text-xl shadow-md">
+            <div className="w-32 h-32 rounded-full overflow-hidden bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center text-white font-bold text-3xl shadow-md">
               {photoPreview
                 ? <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
                 : initials}

@@ -64,7 +64,7 @@ export default function EmployeeTable({ employees, sortBy = 'name', sortOrder = 
               <tr key={emp.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
                 <td className="px-4 py-3">
                   <Link href={`/employees/${emp.id}/edit`} className="flex items-center gap-3 group w-fit">
-                    <EmployeeAvatar employee={emp} size="sm" />
+                    <EmployeeAvatar employee={emp} size="md" />
                     <span className="font-medium text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 group-hover:underline underline-offset-2 transition-colors">
                       {fullName(emp)}
                     </span>
