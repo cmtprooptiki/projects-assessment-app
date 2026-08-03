@@ -63,10 +63,12 @@ export default function EmployeeTable({ employees, sortBy = 'name', sortOrder = 
             {employees.map((emp) => (
               <tr key={emp.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
                 <td className="px-4 py-3">
-                  <div className="flex items-center gap-3">
+                  <Link href={`/employees/${emp.id}/edit`} className="flex items-center gap-3 group w-fit">
                     <EmployeeAvatar employee={emp} size="sm" />
-                    <span className="font-medium text-slate-800 dark:text-slate-200">{fullName(emp)}</span>
-                  </div>
+                    <span className="font-medium text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 group-hover:underline underline-offset-2 transition-colors">
+                      {fullName(emp)}
+                    </span>
+                  </Link>
                 </td>
                 <td className="px-4 py-3 text-slate-500 dark:text-slate-400">{emp.email}</td>
                 <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{emp.department}</td>
