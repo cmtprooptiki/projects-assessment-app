@@ -204,6 +204,7 @@ export async function generateCVBuffer(employeeId: number, template = 'classic')
     phone:        employee.phone       ?? '',
     email:        employee.email       ?? '',
     homeAddress:  employee.homeAddress ?? '',
+    website:      '',
     // Classic template sections (education + languages merged)
     educationRows,
     // Job CV template sections (separated)
