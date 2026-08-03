@@ -12,10 +12,10 @@ const WHITE = 'FFFFFF';
 const DARK  = '1A202C';
 const GRAY  = '718096';
 
-// ── Unique paragraph ID counter ───────────────────────────────────────────────
-let _pid = 1;
+// ── Unique paragraph ID counter (must be 8-char hex) ─────────────────────────
+let _pid = 0x10000001;
 function pid() {
-  return 'SB' + String(_pid++).padStart(6, '0');
+  return (_pid++).toString(16).toUpperCase().padStart(8, '0');
 }
 
 // ── Low-level builders ────────────────────────────────────────────────────────
@@ -50,8 +50,8 @@ function jc(val) { return `<w:jc w:val="${val}"/>`; }
 // ── Sidebar paragraph helpers ─────────────────────────────────────────────────
 function sbHeader(text) {
   const ppr = '<w:pPr>'
-    + spacing(200, 80)
     + '<w:pBdr><w:bottom w:val="single" w:sz="4" w:space="1" w:color="' + WHITE + '"/></w:pBdr>'
+    + spacing(200, 80)
     + rpr({ color: WHITE, bold: true, sz: 20 })
     + '</w:pPr>';
   return para(ppr, run(text, { color: WHITE, bold: true, sz: 20 }));
@@ -75,7 +75,7 @@ function loopPara(tag) {
 // ── Photo (circular) ──────────────────────────────────────────────────────────
 const photoPara =
   `<w:p w14:paraId="${pid()}" w14:textId="77777777" w:rsidR="00B11A48" w:rsidRDefault="00B11A48">`
-+ '<w:pPr>' + jc('center') + spacing(240, 120) + '</w:pPr>'
++ '<w:pPr>' + spacing(240, 120) + jc('center') + '</w:pPr>'
 + '<w:r><w:rPr><w:noProof/></w:rPr>'
 + '<w:drawing>'
 + '<wp:inline distT="0" distB="0" distL="0" distR="0">'
@@ -111,8 +111,8 @@ const photoPara =
 // ── Right content paragraph helpers ──────────────────────────────────────────
 function ctHeader(text) {
   const ppr = '<w:pPr>'
-    + spacing(280, 80)
     + '<w:pBdr><w:bottom w:val="single" w:sz="6" w:space="1" w:color="' + BLUE + '"/></w:pBdr>'
+    + spacing(280, 80)
     + rpr({ color: BLUE, bold: true, sz: 24 })
     + '</w:pPr>';
   return para(ppr, run(text, { color: BLUE, bold: true, sz: 24 }));
@@ -143,14 +143,14 @@ const sidebarContent = [
 
   // Name
   para(
-    '<w:pPr>' + jc('center') + spacing(0, 40)
+    '<w:pPr>' + spacing(0, 40) + jc('center')
     + rpr({ color: WHITE, bold: true, sz: 36 }) + '</w:pPr>',
     run('{firstName} {lastName}', { color: WHITE, bold: true, sz: 36 })
   ),
 
   // Department / position
   para(
-    '<w:pPr>' + jc('center') + spacing(0, 160)
+    '<w:pPr>' + spacing(0, 160) + jc('center')
     + rpr({ color: WHITE, sz: 18 }) + '</w:pPr>',
     run('{department}', { color: WHITE, sz: 18 })
   ),
