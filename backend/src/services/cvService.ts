@@ -2,6 +2,8 @@
 const Docxtemplater = require('docxtemplater');
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const PizZip = require('pizzip');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const sharp = require('sharp');
 import fs from 'fs';
 import path from 'path';
 
@@ -10,14 +12,17 @@ const JOB_TEMPLATES = new Set(['navy', 'indigo', 'teal', 'sidebar']);
 const PHOTO_RID      = 'rId_employee_photo';
 const IMG_REL_TYPE   = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/image';
 
-function injectPhoto(zip: typeof PizZip, photoFilePath: string): void {
-  const ext      = path.extname(photoFilePath).toLowerCase().replace('.', '');
-  const mime     = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
-  const extForCT = ext === 'jpg' ? 'jpeg' : ext;
+async function injectPhoto(zip: typeof PizZip, photoFilePath: string): Promise<void> {
+  // Always embed as JPEG — Word has poor support for webp/png in some versions
+  const jpegBuffer = await sharp(fs.readFileSync(photoFilePath))
+    .jpeg({ quality: 90 })
+    .toBuffer();
+  const ext      = 'jpeg';
+  const mime     = 'image/jpeg';
   const mediaName = `employee_photo.${ext}`;
 
-  // 1. Embed the image binary
-  zip.file(`word/media/${mediaName}`, fs.readFileSync(photoFilePath));
+  // 1. Embed the JPEG buffer
+  zip.file(`word/media/${mediaName}`, jpegBuffer);
 
   // 2. Find every XML file (body, headers, footers…) that references rId_employee_photo
   //    and update its corresponding .rels file — handles templates where the photo
@@ -56,8 +61,8 @@ function injectPhoto(zip: typeof PizZip, photoFilePath: string): void {
 
   // 3. Add content type if missing
   let ct: string = zip.files['[Content_Types].xml'].asText();
-  if (!ct.includes(`Extension="${extForCT}"`)) {
-    ct = ct.replace('</Types>', `<Default Extension="${extForCT}" ContentType="${mime}"/></Types>`);
+  if (!ct.includes(`Extension="${ext}"`)) {
+    ct = ct.replace('</Types>', `<Default Extension="${ext}" ContentType="${mime}"/></Types>`);
     zip.file('[Content_Types].xml', ct);
   }
 }
@@ -271,7 +276,7 @@ export async function generateCVBuffer(employeeId: number, template = 'classic')
       : null;
 
     if (photoFilePath && fs.existsSync(photoFilePath)) {
-      injectPhoto(renderedZip, photoFilePath);
+      await injectPhoto(renderedZip, photoFilePath);
     } else {
       removePhotoDrawing(renderedZip);
     }
