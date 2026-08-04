@@ -273,15 +273,18 @@ const base    = fs.readFileSync(path.join(__dirname, '../../templates/cv_job_nav
 const zip     = new PizZip(base);
 const navyXml = zip.files['word/document.xml'].asText();
 
-// Extract the root <w:document ...> opening tag with all namespaces
-const docOpenEnd = navyXml.indexOf('>') + 1;
-const docOpenTag = navyXml.substring(0, docOpenEnd);
+// Take everything up to (not including) <w:body — this captures the XML declaration
+// AND the full <w:document xmlns:wpc="..." ... > opening tag with all namespace declarations.
+// (The previous approach of taking up to the first '>' only captured <?xml...?> and missed
+//  the <w:document> opening tag entirely, producing a document with no root element.)
+const bodyStart  = navyXml.indexOf('<w:body');
+const docOpenTag = navyXml.substring(0, bodyStart);
 
 const newDocXml = docOpenTag
   + '<w:body>'
   + tableXml
   + '<w:sectPr>'
-  + '<w:pgSz w:w="11906" w:h="16838"/>'   // A4
+  + '<w:pgSz w:w="11906" w:h="16838"/>'
   + '<w:pgMar w:top="567" w:right="567" w:bottom="567" w:left="567" w:header="708" w:footer="708" w:gutter="0"/>'
   + '</w:sectPr>'
   + '</w:body>'
