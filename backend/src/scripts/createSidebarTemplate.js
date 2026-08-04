@@ -1,16 +1,24 @@
 /**
  * Generates cv_sidebar_blue_placeholders.docx
- * Layout: blue sidebar (35%) | white content (65%)
+ * Layout: light-blue sidebar (35%) | white content (65%)
  * Run with: node src/scripts/createSidebarTemplate.js
  */
 const PizZip = require('pizzip');
 const fs     = require('fs');
 const path   = require('path');
 
-const BLUE  = '2B6CB0';
-const WHITE = 'FFFFFF';
-const DARK  = '1A202C';
-const GRAY  = '718096';
+// Sidebar palette — light-medium blue matching the Canva reference image
+const SIDEBAR_BG     = '7AB2D3';   // light-medium blue sidebar fill
+const SIDEBAR_DARK   = '1B3A52';   // near-navy for section header text
+const SIDEBAR_BORDER = '4A86C8';   // medium blue for underline borders
+const SIDEBAR_TEXT   = '1A202C';   // near-black for sidebar body text
+const CONTENT_BLUE   = '2B6CB0';   // blue for right-column section headers & italics
+const DARK           = '1A202C';   // near-black for right-column bold entries
+const GRAY           = '4A5568';   // gray for right-column normal text
+const WHITE          = 'FFFFFF';   // right cell and table cell backgrounds
+
+// Photo size in EMUs — 1800000 ≈ 4.9 cm (larger than the previous 1440000 ≈ 3.8 cm)
+const PHOTO_EMU = '1800000';
 
 // ── Unique paragraph ID counter (must be 8-char hex) ─────────────────────────
 let _pid = 0x10000001;
@@ -20,14 +28,13 @@ function pid() {
 
 // ── Low-level builders ────────────────────────────────────────────────────────
 function rpr(opts) {
-  const { color, bold, sz, font, italic, spacing } = opts || {};
+  const { color, bold, sz, font, italic } = opts || {};
   let x = '<w:rPr>';
   if (font !== false) x += '<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/>';
-  if (color)   x += `<w:color w:val="${color}"/>`;
-  if (bold)    x += '<w:b/><w:bCs/>';
-  if (italic)  x += '<w:i/><w:iCs/>';
-  if (sz)      x += `<w:sz w:val="${sz}"/><w:szCs w:val="${sz}"/>`;
-  if (spacing) x += `<w:spacing w:val="${spacing}"/>`;
+  if (color)  x += `<w:color w:val="${color}"/>`;
+  if (bold)   x += '<w:b/><w:bCs/>';
+  if (italic) x += '<w:i/><w:iCs/>';
+  if (sz)     x += `<w:sz w:val="${sz}"/><w:szCs w:val="${sz}"/>`;
   x += '</w:rPr>';
   return x;
 }
@@ -49,22 +56,23 @@ function jc(val) { return `<w:jc w:val="${val}"/>`; }
 
 // ── Sidebar paragraph helpers ─────────────────────────────────────────────────
 function sbHeader(text) {
+  // Dark text on light sidebar; medium-blue underline border
   const ppr = '<w:pPr>'
-    + '<w:pBdr><w:bottom w:val="single" w:sz="4" w:space="1" w:color="' + WHITE + '"/></w:pBdr>'
+    + `<w:pBdr><w:bottom w:val="single" w:sz="4" w:space="1" w:color="${SIDEBAR_BORDER}"/></w:pBdr>`
     + spacing(200, 80)
-    + rpr({ color: WHITE, bold: true, sz: 20 })
+    + rpr({ color: SIDEBAR_DARK, bold: true, sz: 20 })
     + '</w:pPr>';
-  return para(ppr, run(text, { color: WHITE, bold: true, sz: 20 }));
+  return para(ppr, run(text, { color: SIDEBAR_DARK, bold: true, sz: 20 }));
 }
 
 function sbText(text, opts) {
-  const o = Object.assign({ color: WHITE, sz: 17 }, opts);
+  const o = Object.assign({ color: SIDEBAR_TEXT, sz: 17 }, opts);
   const ppr = '<w:pPr>' + spacing(0, 60) + rpr(o) + '</w:pPr>';
   return para(ppr, run(text, o));
 }
 
 function sbEmpty() {
-  const ppr = '<w:pPr>' + spacing(0, 80) + rpr({ color: WHITE, sz: 17 }) + '</w:pPr>';
+  const ppr = '<w:pPr>' + spacing(0, 80) + rpr({ color: SIDEBAR_TEXT, sz: 17 }) + '</w:pPr>';
   return para(ppr, '');
 }
 
@@ -79,7 +87,7 @@ const photoPara =
 + '<w:r><w:rPr><w:noProof/></w:rPr>'
 + '<w:drawing>'
 + '<wp:inline distT="0" distB="0" distL="0" distR="0">'
-+ '<wp:extent cx="1440000" cy="1440000"/>'
++ `<wp:extent cx="${PHOTO_EMU}" cy="${PHOTO_EMU}"/>`
 + '<wp:effectExtent l="0" t="0" r="0" b="0"/>'
 + '<wp:docPr id="201" name="EmployeePhoto"/>'
 + '<wp:cNvGraphicFramePr>'
@@ -97,7 +105,7 @@ const photoPara =
 + '<a:stretch><a:fillRect/></a:stretch>'
 + '</pic:blipFill>'
 + '<pic:spPr>'
-+ '<a:xfrm><a:off x="0" y="0"/><a:ext cx="1440000" cy="1440000"/></a:xfrm>'
++ `<a:xfrm><a:off x="0" y="0"/><a:ext cx="${PHOTO_EMU}" cy="${PHOTO_EMU}"/></a:xfrm>`
 + '<a:prstGeom prst="ellipse"><a:avLst/></a:prstGeom>'
 + '</pic:spPr>'
 + '</pic:pic>'
@@ -111,11 +119,11 @@ const photoPara =
 // ── Right content paragraph helpers ──────────────────────────────────────────
 function ctHeader(text) {
   const ppr = '<w:pPr>'
-    + '<w:pBdr><w:bottom w:val="single" w:sz="6" w:space="1" w:color="' + BLUE + '"/></w:pBdr>'
+    + `<w:pBdr><w:bottom w:val="single" w:sz="6" w:space="1" w:color="${CONTENT_BLUE}"/></w:pBdr>`
     + spacing(280, 80)
-    + rpr({ color: BLUE, bold: true, sz: 24 })
+    + rpr({ color: CONTENT_BLUE, bold: true, sz: 24 })
     + '</w:pPr>';
-  return para(ppr, run(text, { color: BLUE, bold: true, sz: 24 }));
+  return para(ppr, run(text, { color: CONTENT_BLUE, bold: true, sz: 24 }));
 }
 
 function ctBold(text) {
@@ -124,8 +132,8 @@ function ctBold(text) {
 }
 
 function ctItalic(text) {
-  const ppr = '<w:pPr>' + spacing(0, 0) + rpr({ color: BLUE, sz: 18, italic: true }) + '</w:pPr>';
-  return para(ppr, run(text, { color: BLUE, sz: 18, italic: true }));
+  const ppr = '<w:pPr>' + spacing(0, 0) + rpr({ color: CONTENT_BLUE, sz: 18, italic: true }) + '</w:pPr>';
+  return para(ppr, run(text, { color: CONTENT_BLUE, sz: 18, italic: true }));
 }
 
 function ctNormal(text) {
@@ -141,18 +149,18 @@ function ctEmpty() {
 const sidebarContent = [
   photoPara,
 
-  // Name
+  // Name — dark text on light sidebar
   para(
     '<w:pPr>' + spacing(0, 40) + jc('center')
-    + rpr({ color: WHITE, bold: true, sz: 36 }) + '</w:pPr>',
-    run('{firstName} {lastName}', { color: WHITE, bold: true, sz: 36 })
+    + rpr({ color: SIDEBAR_DARK, bold: true, sz: 36 }) + '</w:pPr>',
+    run('{firstName} {lastName}', { color: SIDEBAR_DARK, bold: true, sz: 36 })
   ),
 
-  // Department / position
+  // Department (show nothing if empty/N/A is handled in cvService)
   para(
     '<w:pPr>' + spacing(0, 160) + jc('center')
-    + rpr({ color: WHITE, sz: 18 }) + '</w:pPr>',
-    run('{department}', { color: WHITE, sz: 18 })
+    + rpr({ color: SIDEBAR_TEXT, sz: 18 }) + '</w:pPr>',
+    run('{department}', { color: SIDEBAR_TEXT, sz: 18 })
   ),
 
   // ΕΠΙΚΟΙΝΩΝΙΑ
@@ -174,12 +182,15 @@ const sidebarContent = [
   // ΓΝΩΣΕΙΣ (skills from education specializations + languages)
   sbHeader('ΓΝΩΣΕΙΣ'),
   loopPara('{#skillRows}'),
-  sbText('• {skillText}'),   // • {skillText}
+  sbText('• {skillText}'),
   loopPara('{/skillRows}'),
 
 ].join('');
 
 // ── Assemble right content ────────────────────────────────────────────────────
+// {#projectText}...{/projectText} and {#roleName}...{/roleName} are docxtemplater
+// conditionals — they render only when the value is truthy (non-empty string).
+// This hides the blank italic/normal lines for CMT availability-period entries.
 const rightContent = [
 
   // ΕΚΠΑΙΔΕΥΣΗ
@@ -187,8 +198,12 @@ const rightContent = [
   loopPara('{#educationOnlyRows}'),
   ctBold('{institutionFull}'),
   ctItalic('{degreeTitle}'),
+  loopPara('{#degreeType}'),
   ctNormal('{degreeType}'),
+  loopPara('{/degreeType}'),
+  loopPara('{#specialization}'),
   ctNormal('{specialization}'),
+  loopPara('{/specialization}'),
   ctNormal('{dateAwarded}'),
   ctEmpty(),
   loopPara('{/educationOnlyRows}'),
@@ -197,8 +212,12 @@ const rightContent = [
   ctHeader('ΕΠΑΓΓΕΛΜΑΤΙΚΗ ΕΜΠΕΙΡΙΑ'),
   loopPara('{#workExperienceRows}'),
   ctBold('{employerName}'),
+  loopPara('{#projectText}'),
   ctItalic('{projectText}'),
+  loopPara('{/projectText}'),
+  loopPara('{#roleName}'),
   ctNormal('{roleName}'),
+  loopPara('{/roleName}'),
   ctNormal('{period}'),
   ctEmpty(),
   loopPara('{/workExperienceRows}'),
@@ -232,11 +251,11 @@ const tableXml =
 + '<w:tr>'
 + '<w:trPr><w:trHeight w:val="100" w:hRule="atLeast"/></w:trPr>'
 
-// ── LEFT SIDEBAR ──
+// ── LEFT SIDEBAR (light-medium blue) ──
 + '<w:tc>'
 + '<w:tcPr>'
 + '<w:tcW w:w="1750" w:type="pct"/>'
-+ `<w:shd w:val="clear" w:color="auto" w:fill="${BLUE}"/>`
++ `<w:shd w:val="clear" w:color="auto" w:fill="${SIDEBAR_BG}"/>`
 + '<w:tcMar>'
 + '<w:top w:w="0" w:type="dxa"/>'
 + '<w:left w:w="200" w:type="dxa"/>'
@@ -248,7 +267,7 @@ const tableXml =
 + sidebarContent
 + '</w:tc>'
 
-// ── RIGHT CONTENT ──
+// ── RIGHT CONTENT (white) ──
 + '<w:tc>'
 + '<w:tcPr>'
 + '<w:tcW w:w="3250" w:type="pct"/>'
@@ -268,15 +287,12 @@ const tableXml =
 + '</w:tbl>';
 
 // ── Build document.xml ────────────────────────────────────────────────────────
-// Read navy as base (reuse all infrastructure: styles, fonts, settings, etc.)
+// Read navy as ZIP base — reuses styles, fonts, settings infrastructure.
 const base    = fs.readFileSync(path.join(__dirname, '../../templates/cv_job_navy_placeholders.docx'), 'binary');
 const zip     = new PizZip(base);
 const navyXml = zip.files['word/document.xml'].asText();
 
-// Take everything up to (not including) <w:body — this captures the XML declaration
-// AND the full <w:document xmlns:wpc="..." ... > opening tag with all namespace declarations.
-// (The previous approach of taking up to the first '>' only captured <?xml...?> and missed
-//  the <w:document> opening tag entirely, producing a document with no root element.)
+// Capture XML declaration + full <w:document xmlns:...> opening tag (everything before <w:body).
 const bodyStart  = navyXml.indexOf('<w:body');
 const docOpenTag = navyXml.substring(0, bodyStart);
 

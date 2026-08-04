@@ -239,7 +239,7 @@ export async function generateCVBuffer(employeeId: number, template = 'classic')
     phone:        employee.phone       ?? '',
     email:        employee.email       ?? '',
     homeAddress:  employee.homeAddress ?? '',
-    department:   employee.department  ?? '',
+    department:   (employee.department && employee.department !== 'N/A') ? employee.department : '',
     website:      '',
     // Classic template sections (education + languages merged)
     educationRows,
