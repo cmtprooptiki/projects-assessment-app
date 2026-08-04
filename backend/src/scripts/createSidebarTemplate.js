@@ -1,94 +1,69 @@
 /**
  * Generates cv_sidebar_blue_placeholders.docx
- * Layout: light-blue sidebar (35%) | white content (65%)
- * Run with: node src/scripts/createSidebarTemplate.js
+ * Layout: left sidebar with blue photo area + gray body | right white content
+ * Fonts: Montserrat (install in Windows for best results; falls back to Calibri)
+ * Run: node src/scripts/createSidebarTemplate.js
  */
 const PizZip = require('pizzip');
 const fs     = require('fs');
 const path   = require('path');
 
-// Sidebar palette — light-medium blue matching the Canva reference image
-const SIDEBAR_BG     = '7AB2D3';   // light-medium blue sidebar fill
-const SIDEBAR_DARK   = '1B3A52';   // near-navy for section header text
-const SIDEBAR_BORDER = '4A86C8';   // medium blue for underline borders
-const SIDEBAR_TEXT   = '1A202C';   // near-black for sidebar body text
-const CONTENT_BLUE   = '2B6CB0';   // blue for right-column section headers & italics
-const DARK           = '1A202C';   // near-black for right-column bold entries
-const GRAY           = '4A5568';   // gray for right-column normal text
-const WHITE          = 'FFFFFF';   // right cell and table cell backgrounds
+// ── Palette ───────────────────────────────────────────────────────────────────
+const BLUE    = '4472C4';   // medium blue: sidebar photo row + right-column headers
+const GRAY_BG = 'F0F0F0';   // light gray: sidebar body
+const T_DARK  = '2D2D2D';   // near-black: bold text
+const T_GRAY  = '555555';   // medium gray: normal text
+const WHITE   = 'FFFFFF';
 
-// Photo size in EMUs — 1800000 ≈ 4.9 cm (larger than the previous 1440000 ≈ 3.8 cm)
-const PHOTO_EMU = '1800000';
+// Photo diameter in EMU (1 inch = 914400 EMU; ~5 cm ≈ 1800000)
+const P_EMU = '1800000';
 
-// ── Unique paragraph ID counter (must be 8-char hex) ─────────────────────────
+// ── Paragraph ID counter ──────────────────────────────────────────────────────
 let _pid = 0x10000001;
-function pid() {
-  return (_pid++).toString(16).toUpperCase().padStart(8, '0');
+const pid = () => (_pid++).toString(16).toUpperCase().padStart(8, '0');
+
+// ── XML primitives ────────────────────────────────────────────────────────────
+const sp  = (b, a) => `<w:spacing w:before="${b}" w:after="${a}"/>`;
+const jcX = v      => `<w:jc w:val="${v}"/>`;
+
+function rPr({ color, bold, italic, sz, font } = {}) {
+  const f = font || 'Montserrat';
+  let r = `<w:rPr><w:rFonts w:ascii="${f}" w:hAnsi="${f}" w:cs="Calibri"/>`;
+  if (color)  r += `<w:color w:val="${color}"/>`;
+  if (bold)   r += '<w:b/><w:bCs/>';
+  if (italic) r += '<w:i/><w:iCs/>';
+  if (sz)     r += `<w:sz w:val="${sz}"/><w:szCs w:val="${sz}"/>`;
+  return r + '</w:rPr>';
 }
 
-// ── Low-level builders ────────────────────────────────────────────────────────
-function rpr(opts) {
-  const { color, bold, sz, font, italic } = opts || {};
-  let x = '<w:rPr>';
-  if (font !== false) x += '<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/>';
-  if (color)  x += `<w:color w:val="${color}"/>`;
-  if (bold)   x += '<w:b/><w:bCs/>';
-  if (italic) x += '<w:i/><w:iCs/>';
-  if (sz)     x += `<w:sz w:val="${sz}"/><w:szCs w:val="${sz}"/>`;
-  x += '</w:rPr>';
-  return x;
+// Icon run: uses Segoe UI Symbol for Unicode < 0x2FFF, Segoe UI Emoji for higher
+function iRun(ch, sz) {
+  if (!ch) return '';
+  const isEmoji = ch.codePointAt(0) > 0x2FFF;
+  const fnt = isEmoji ? 'Segoe UI Emoji' : 'Segoe UI Symbol';
+  return `<w:r><w:rPr><w:rFonts w:ascii="${fnt}" w:hAnsi="${fnt}" w:cs="${fnt}"/>`
+       + `<w:color w:val="${BLUE}"/><w:sz w:val="${sz}"/><w:szCs w:val="${sz}"/></w:rPr>`
+       + `<w:t xml:space="preserve">${ch} </w:t></w:r>`;
 }
 
-function run(text, opts) {
-  return `<w:r>${rpr(opts)}<w:t xml:space="preserve">${text}</w:t></w:r>`;
+function run(txt, opts) {
+  return `<w:r>${rPr(opts)}<w:t xml:space="preserve">${txt}</w:t></w:r>`;
 }
 
-function para(pprXml, runsXml) {
-  return `<w:p w14:paraId="${pid()}" w14:textId="77777777" w:rsidR="00B11A48" w:rsidRDefault="00B11A48">`
-       + pprXml + (runsXml || '') + '</w:p>';
+function para(ppr, runs) {
+  return `<w:p w14:paraId="${pid()}" w14:textId="77777777" w:rsidR="00B11A48" w:rsidRDefault="00B11A48">${ppr}${runs || ''}</w:p>`;
 }
 
-function spacing(before, after) {
-  return `<w:spacing w:before="${before}" w:after="${after}"/>`;
-}
+// Loop delimiter paragraph (no visible content, zero spacing)
+const lp = tag => para(`<w:pPr>${sp(0, 0)}</w:pPr>`, `<w:r><w:t>${tag}</w:t></w:r>`);
 
-function jc(val) { return `<w:jc w:val="${val}"/>`; }
-
-// ── Sidebar paragraph helpers ─────────────────────────────────────────────────
-function sbHeader(text) {
-  // Dark text on light sidebar; medium-blue underline border
-  const ppr = '<w:pPr>'
-    + `<w:pBdr><w:bottom w:val="single" w:sz="4" w:space="1" w:color="${SIDEBAR_BORDER}"/></w:pBdr>`
-    + spacing(200, 80)
-    + rpr({ color: SIDEBAR_DARK, bold: true, sz: 20 })
-    + '</w:pPr>';
-  return para(ppr, run(text, { color: SIDEBAR_DARK, bold: true, sz: 20 }));
-}
-
-function sbText(text, opts) {
-  const o = Object.assign({ color: SIDEBAR_TEXT, sz: 17 }, opts);
-  const ppr = '<w:pPr>' + spacing(0, 60) + rpr(o) + '</w:pPr>';
-  return para(ppr, run(text, o));
-}
-
-function sbEmpty() {
-  const ppr = '<w:pPr>' + spacing(0, 80) + rpr({ color: SIDEBAR_TEXT, sz: 17 }) + '</w:pPr>';
-  return para(ppr, '');
-}
-
-function loopPara(tag) {
-  return para('<w:pPr>' + spacing(0, 0) + '</w:pPr>', `<w:r><w:t>${tag}</w:t></w:r>`);
-}
-
-// ── Photo (circular) ──────────────────────────────────────────────────────────
+// ── Photo paragraph — circular, white border ring ─────────────────────────────
 const photoPara =
   `<w:p w14:paraId="${pid()}" w14:textId="77777777" w:rsidR="00B11A48" w:rsidRDefault="00B11A48">`
-+ '<w:pPr>' + spacing(240, 120) + jc('center') + '</w:pPr>'
-+ '<w:r><w:rPr><w:noProof/></w:rPr>'
-+ '<w:drawing>'
++ `<w:pPr>${sp(300, 200)}${jcX('center')}</w:pPr>`
++ '<w:r><w:rPr><w:noProof/></w:rPr><w:drawing>'
 + '<wp:inline distT="0" distB="0" distL="0" distR="0">'
-+ `<wp:extent cx="${PHOTO_EMU}" cy="${PHOTO_EMU}"/>`
-+ '<wp:effectExtent l="0" t="0" r="0" b="0"/>'
++ `<wp:extent cx="${P_EMU}" cy="${P_EMU}"/><wp:effectExtent l="0" t="0" r="0" b="0"/>`
 + '<wp:docPr id="201" name="EmployeePhoto"/>'
 + '<wp:cNvGraphicFramePr>'
 + '<a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/>'
@@ -100,205 +75,223 @@ const photoPara =
 + '<pic:cNvPr id="0" name="EmployeePhoto"/>'
 + '<pic:cNvPicPr><a:picLocks noChangeAspect="1"/></pic:cNvPicPr>'
 + '</pic:nvPicPr>'
-+ '<pic:blipFill>'
-+ '<a:blip r:embed="rId_employee_photo"/>'
-+ '<a:stretch><a:fillRect/></a:stretch>'
-+ '</pic:blipFill>'
++ '<pic:blipFill><a:blip r:embed="rId_employee_photo"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>'
 + '<pic:spPr>'
-+ `<a:xfrm><a:off x="0" y="0"/><a:ext cx="${PHOTO_EMU}" cy="${PHOTO_EMU}"/></a:xfrm>`
++ `<a:xfrm><a:off x="0" y="0"/><a:ext cx="${P_EMU}" cy="${P_EMU}"/></a:xfrm>`
 + '<a:prstGeom prst="ellipse"><a:avLst/></a:prstGeom>'
+// White ring border — w is in EMU (1pt = 12700 EMU; 4.5pt ≈ 57150)
++ '<a:ln w="57150"><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill></a:ln>'
 + '</pic:spPr>'
 + '</pic:pic>'
-+ '</a:graphicData>'
-+ '</a:graphic>'
-+ '</wp:inline>'
-+ '</w:drawing>'
-+ '</w:r>'
-+ '</w:p>';
++ '</a:graphicData></a:graphic>'
++ '</wp:inline></w:drawing></w:r></w:p>';
 
-// ── Right content paragraph helpers ──────────────────────────────────────────
-function ctHeader(text) {
-  const ppr = '<w:pPr>'
-    + `<w:pBdr><w:bottom w:val="single" w:sz="6" w:space="1" w:color="${CONTENT_BLUE}"/></w:pBdr>`
-    + spacing(280, 80)
-    + rpr({ color: CONTENT_BLUE, bold: true, sz: 24 })
-    + '</w:pPr>';
-  return para(ppr, run(text, { color: CONTENT_BLUE, bold: true, sz: 24 }));
+// ── Sidebar helpers ───────────────────────────────────────────────────────────
+// Section header with optional emoji icon, blue underline
+function sbHead(icon, text) {
+  const ppr = `<w:pPr><w:pBdr><w:bottom w:val="single" w:sz="6" w:space="1" w:color="${BLUE}"/></w:pBdr>${sp(180, 80)}</w:pPr>`;
+  return para(ppr, iRun(icon, 22) + run(text, { color: T_DARK, bold: true, sz: 22 }));
 }
 
+// Contact/info line with optional emoji icon
+function sbLine(icon, text) {
+  return para(`<w:pPr>${sp(0, 60)}</w:pPr>`,
+    (icon ? iRun(icon, 17) : '') + run(text, { color: T_GRAY, sz: 17 })
+  );
+}
+
+function sbEmpty(after) {
+  return para(`<w:pPr>${sp(0, after || 100)}</w:pPr>`, '');
+}
+
+// ── Inner nested sidebar table: blue row (photo) + gray row (text) ───────────
+const NO_BORDERS =
+  '<w:tblBorders>'
+  + '<w:top w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
+  + '<w:left w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
+  + '<w:bottom w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
+  + '<w:right w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
+  + '<w:insideH w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
+  + '<w:insideV w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
+  + '</w:tblBorders>';
+
+function tcMar(t, lr, b) {
+  return `<w:tcMar><w:top w:w="${t}" w:type="dxa"/><w:left w:w="${lr}" w:type="dxa"/><w:right w:w="${lr}" w:type="dxa"/><w:bottom w:w="${b}" w:type="dxa"/></w:tcMar>`;
+}
+
+// Blue row: just the circular photo, centered
+const blueRow =
+  '<w:tr>'
+  + '<w:tc>'
+  + `<w:tcPr><w:tcW w:w="5000" w:type="pct"/><w:shd w:val="clear" w:color="auto" w:fill="${BLUE}"/>${tcMar(0, 200, 0)}</w:tcPr>`
+  + photoPara
+  + '</w:tc>'
+  + '</w:tr>';
+
+// Gray row: name + contact + about + skills
+const grayContent = [
+
+  // Name (large, bold, centered)
+  para(`<w:pPr>${sp(0, 40)}${jcX('center')}</w:pPr>`,
+    run('{firstName} {lastName}', { color: T_DARK, bold: true, sz: 40 })
+  ),
+  // Department subtitle (centered)
+  para(`<w:pPr>${sp(0, 160)}${jcX('center')}</w:pPr>`,
+    run('{department}', { color: T_GRAY, sz: 18 })
+  ),
+
+  // CONTACT section
+  sbHead('☎', 'Contact'),          // ☎ Contact
+  sbLine('☎', '{phone}'),          // ☎ phone
+  sbLine('✉', '{email}'),          // ✉ email
+  sbLine('\u{1F4CD}', '{homeAddress}'), // 📍 address
+  sbLine(null, 'Ημ/νία: {dateOfBirth}'),
+  sbLine(null, 'Τόπος: {placeOfBirth}'),
+  sbEmpty(),
+
+  // ABOUT ME section
+  sbHead('\u{1F464}', 'About Me'),      // 👤 About Me
+  sbEmpty(),
+  sbEmpty(),
+  sbEmpty(),
+  sbEmpty(),
+  sbEmpty(),
+
+  // SKILLS section
+  sbHead('⭐', 'Skills'),           // ⭐ Skills
+  lp('{#skillRows}'),
+  sbLine('▪', '{skillText}'),      // ▪ skill
+  lp('{/skillRows}'),
+
+].join('');
+
+const grayRow =
+  '<w:tr>'
+  + '<w:tc>'
+  + `<w:tcPr><w:tcW w:w="5000" w:type="pct"/><w:shd w:val="clear" w:color="auto" w:fill="${GRAY_BG}"/>${tcMar(120, 200, 0)}</w:tcPr>`
+  + grayContent
+  + '</w:tc>'
+  + '</w:tr>';
+
+const innerTable =
+  '<w:tbl>'
+  + `<w:tblPr><w:tblW w:w="5000" w:type="pct"/>${NO_BORDERS}`
+  + '<w:tblCellMar><w:top w:w="0" w:type="dxa"/><w:left w:w="0" w:type="dxa"/><w:right w:w="0" w:type="dxa"/><w:bottom w:w="0" w:type="dxa"/></w:tblCellMar>'
+  + '</w:tblPr>'
+  + '<w:tblGrid><w:gridCol w:w="3200"/></w:tblGrid>'
+  + blueRow
+  + grayRow
+  + '</w:tbl>'
+  // Required final paragraph for the outer sidebar cell (gray background to match)
+  + para(`<w:pPr>${sp(0, 0)}<w:shd w:val="clear" w:color="auto" w:fill="${GRAY_BG}"/></w:pPr>`, '');
+
+// ── Right-column helpers ──────────────────────────────────────────────────────
+function ctHead(icon, text) {
+  const ppr = `<w:pPr><w:pBdr><w:bottom w:val="single" w:sz="6" w:space="1" w:color="${BLUE}"/></w:pBdr>${sp(280, 80)}</w:pPr>`;
+  return para(ppr, iRun(icon, 24) + run(text, { color: BLUE, bold: true, sz: 24 }));
+}
+
+// Entry title with blue ● bullet
 function ctBold(text) {
-  const ppr = '<w:pPr>' + spacing(100, 0) + rpr({ color: DARK, bold: true, sz: 20 }) + '</w:pPr>';
-  return para(ppr, run(text, { color: DARK, bold: true, sz: 20 }));
+  return para(`<w:pPr>${sp(100, 0)}</w:pPr>`,
+    run('● ', { color: BLUE, sz: 16, font: 'Calibri' }) +
+    run(text, { color: T_DARK, bold: true, sz: 20 })
+  );
 }
 
 function ctItalic(text) {
-  const ppr = '<w:pPr>' + spacing(0, 0) + rpr({ color: CONTENT_BLUE, sz: 18, italic: true }) + '</w:pPr>';
-  return para(ppr, run(text, { color: CONTENT_BLUE, sz: 18, italic: true }));
+  return para(`<w:pPr>${sp(0, 0)}</w:pPr>`, run(text, { color: BLUE, italic: true, sz: 18 }));
 }
 
 function ctNormal(text) {
-  const ppr = '<w:pPr>' + spacing(0, 0) + rpr({ color: GRAY, sz: 18 }) + '</w:pPr>';
-  return para(ppr, run(text, { color: GRAY, sz: 18 }));
+  return para(`<w:pPr>${sp(0, 0)}</w:pPr>`, run(text, { color: T_GRAY, sz: 18 }));
 }
 
-function ctEmpty() {
-  return para('<w:pPr>' + spacing(0, 80) + '</w:pPr>', '');
-}
+function ctEmpty() { return para(`<w:pPr>${sp(0, 80)}</w:pPr>`, ''); }
 
-// ── Assemble sidebar ──────────────────────────────────────────────────────────
-const sidebarContent = [
-  photoPara,
-
-  // Name — dark text on light sidebar
-  para(
-    '<w:pPr>' + spacing(0, 40) + jc('center')
-    + rpr({ color: SIDEBAR_DARK, bold: true, sz: 36 }) + '</w:pPr>',
-    run('{firstName} {lastName}', { color: SIDEBAR_DARK, bold: true, sz: 36 })
-  ),
-
-  // Department (show nothing if empty/N/A is handled in cvService)
-  para(
-    '<w:pPr>' + spacing(0, 160) + jc('center')
-    + rpr({ color: SIDEBAR_TEXT, sz: 18 }) + '</w:pPr>',
-    run('{department}', { color: SIDEBAR_TEXT, sz: 18 })
-  ),
-
-  // ΕΠΙΚΟΙΝΩΝΙΑ
-  sbHeader('ΕΠΙΚΟΙΝΩΝΙΑ'),
-  sbText('Τηλ: {phone}'),
-  sbText('Email: {email}'),
-  sbText('{homeAddress}'),
-  sbText('Ημ/νία: {dateOfBirth}'),
-  sbText('Τόπος: {placeOfBirth}'),
-  sbEmpty(),
-
-  // ΣΧΕΤΙΚΑ ΜΕ ΕΜΕΝΑ (empty — user fills manually)
-  sbHeader('ΣΧΕΤΙΚΑ ΜΕ ΕΜΕΝΑ'),
-  sbEmpty(),
-  sbEmpty(),
-  sbEmpty(),
-  sbEmpty(),
-
-  // ΓΝΩΣΕΙΣ (skills from education specializations + languages)
-  sbHeader('ΓΝΩΣΕΙΣ'),
-  loopPara('{#skillRows}'),
-  sbText('• {skillText}'),
-  loopPara('{/skillRows}'),
-
-].join('');
-
-// ── Assemble right content ────────────────────────────────────────────────────
-// {#projectText}...{/projectText} and {#roleName}...{/roleName} are docxtemplater
-// conditionals — they render only when the value is truthy (non-empty string).
-// This hides the blank italic/normal lines for CMT availability-period entries.
+// ── Right column content ──────────────────────────────────────────────────────
 const rightContent = [
 
-  // ΕΚΠΑΙΔΕΥΣΗ
-  ctHeader('ΕΚΠΑΙΔΕΥΣΗ'),
-  loopPara('{#educationOnlyRows}'),
+  ctHead('\u{1F393}', 'Education'),   // 🎓
+  lp('{#educationOnlyRows}'),
   ctBold('{institutionFull}'),
   ctItalic('{degreeTitle}'),
-  loopPara('{#degreeType}'),
+  lp('{#degreeType}'),
   ctNormal('{degreeType}'),
-  loopPara('{/degreeType}'),
-  loopPara('{#specialization}'),
+  lp('{/degreeType}'),
+  lp('{#specialization}'),
   ctNormal('{specialization}'),
-  loopPara('{/specialization}'),
+  lp('{/specialization}'),
   ctNormal('{dateAwarded}'),
   ctEmpty(),
-  loopPara('{/educationOnlyRows}'),
+  lp('{/educationOnlyRows}'),
 
-  // ΕΠΑΓΓΕΛΜΑΤΙΚΗ ΕΜΠΕΙΡΙΑ
-  ctHeader('ΕΠΑΓΓΕΛΜΑΤΙΚΗ ΕΜΠΕΙΡΙΑ'),
-  loopPara('{#workExperienceRows}'),
+  ctHead('\u{1F4BC}', 'Experience'),  // 💼
+  lp('{#workExperienceRows}'),
   ctBold('{employerName}'),
-  loopPara('{#projectText}'),
+  lp('{#projectText}'),
   ctItalic('{projectText}'),
-  loopPara('{/projectText}'),
-  loopPara('{#roleName}'),
+  lp('{/projectText}'),
+  lp('{#roleName}'),
   ctNormal('{roleName}'),
-  loopPara('{/roleName}'),
+  lp('{/roleName}'),
   ctNormal('{period}'),
   ctEmpty(),
-  loopPara('{/workExperienceRows}'),
+  lp('{/workExperienceRows}'),
 
-  // ΔΗΜΟΣΙΕΥΣΕΙΣ (conditional)
-  loopPara('{#hasPublications}'),
-  ctHeader('ΔΗΜΟΣΙΕΥΣΕΙΣ'),
+  lp('{#hasPublications}'),
+  ctHead(null, 'Publications'),
   ctNormal('{publicationsText}'),
-  loopPara('{/hasPublications}'),
+  lp('{/hasPublications}'),
 
   ctEmpty(),
 
 ].join('');
 
-// ── Full table ────────────────────────────────────────────────────────────────
-const tableXml =
+// ── Outer 2-column table ──────────────────────────────────────────────────────
+const outerTable =
   '<w:tbl>'
-+ '<w:tblPr>'
-+ '<w:tblW w:w="5000" w:type="pct"/>'
-+ '<w:tblBorders>'
-+ '<w:top w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
-+ '<w:left w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
-+ '<w:bottom w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
-+ '<w:right w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
-+ '<w:insideH w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
-+ '<w:insideV w:val="none" w:sz="0" w:space="0" w:color="auto"/>'
-+ '</w:tblBorders>'
++ `<w:tblPr><w:tblW w:w="5000" w:type="pct"/>${NO_BORDERS}`
 + '<w:tblLook w:val="0000" w:firstRow="0" w:lastRow="0" w:firstColumn="0" w:lastColumn="0" w:noHBand="0" w:noVBand="0"/>'
 + '</w:tblPr>'
-+ '<w:tblGrid><w:gridCol w:w="3203"/><w:gridCol w:w="6437"/></w:tblGrid>'
-+ '<w:tr>'
-+ '<w:trPr><w:trHeight w:val="100" w:hRule="atLeast"/></w:trPr>'
++ '<w:tblGrid><w:gridCol w:w="3200"/><w:gridCol w:w="6440"/></w:tblGrid>'
++ '<w:tr><w:trPr><w:trHeight w:val="100" w:hRule="atLeast"/></w:trPr>'
 
-// ── LEFT SIDEBAR (light-medium blue) ──
+// LEFT SIDEBAR — outer cell (gray fill to blend with inner table gray row)
 + '<w:tc>'
 + '<w:tcPr>'
 + '<w:tcW w:w="1750" w:type="pct"/>'
-+ `<w:shd w:val="clear" w:color="auto" w:fill="${SIDEBAR_BG}"/>`
-+ '<w:tcMar>'
-+ '<w:top w:w="0" w:type="dxa"/>'
-+ '<w:left w:w="200" w:type="dxa"/>'
-+ '<w:right w:w="200" w:type="dxa"/>'
-+ '<w:bottom w:w="0" w:type="dxa"/>'
-+ '</w:tcMar>'
++ `<w:shd w:val="clear" w:color="auto" w:fill="${GRAY_BG}"/>`
++ tcMar(0, 0, 0)
 + '<w:vAlign w:val="top"/>'
 + '</w:tcPr>'
-+ sidebarContent
++ innerTable
 + '</w:tc>'
 
-// ── RIGHT CONTENT (white) ──
+// RIGHT CONTENT
 + '<w:tc>'
 + '<w:tcPr>'
 + '<w:tcW w:w="3250" w:type="pct"/>'
 + `<w:shd w:val="clear" w:color="auto" w:fill="${WHITE}"/>`
-+ '<w:tcMar>'
-+ '<w:top w:w="200" w:type="dxa"/>'
-+ '<w:left w:w="300" w:type="dxa"/>'
-+ '<w:right w:w="200" w:type="dxa"/>'
-+ '<w:bottom w:w="0" w:type="dxa"/>'
-+ '</w:tcMar>'
++ tcMar(200, 300, 0)
 + '<w:vAlign w:val="top"/>'
 + '</w:tcPr>'
 + rightContent
 + '</w:tc>'
 
-+ '</w:tr>'
-+ '</w:tbl>';
++ '</w:tr></w:tbl>';
 
 // ── Build document.xml ────────────────────────────────────────────────────────
-// Read navy as ZIP base — reuses styles, fonts, settings infrastructure.
 const base    = fs.readFileSync(path.join(__dirname, '../../templates/cv_job_navy_placeholders.docx'), 'binary');
 const zip     = new PizZip(base);
 const navyXml = zip.files['word/document.xml'].asText();
 
-// Capture XML declaration + full <w:document xmlns:...> opening tag (everything before <w:body).
 const bodyStart  = navyXml.indexOf('<w:body');
 const docOpenTag = navyXml.substring(0, bodyStart);
 
 const newDocXml = docOpenTag
   + '<w:body>'
-  + tableXml
+  + outerTable
   + '<w:sectPr>'
   + '<w:pgSz w:w="11906" w:h="16838"/>'
   + '<w:pgMar w:top="567" w:right="567" w:bottom="567" w:left="567" w:header="708" w:footer="708" w:gutter="0"/>'
@@ -309,14 +302,12 @@ const newDocXml = docOpenTag
 zip.file('word/document.xml', newDocXml);
 
 const outPath = path.join(__dirname, '../../templates/cv_sidebar_blue_placeholders.docx');
-const output  = zip.generate({ type: 'nodebuffer', compression: 'DEFLATE' });
-fs.writeFileSync(outPath, output);
+fs.writeFileSync(outPath, zip.generate({ type: 'nodebuffer', compression: 'DEFLATE' }));
 console.log('Created:', outPath);
 
-// Sanity check
-const check = new PizZip(fs.readFileSync(outPath, 'binary'));
-const checkXml = check.files['word/document.xml'].asText();
-const tags = [
+// ── Sanity check ──────────────────────────────────────────────────────────────
+const checkXml = new PizZip(fs.readFileSync(outPath, 'binary')).files['word/document.xml'].asText();
+[
   '{firstName}', '{lastName}', '{department}',
   '{phone}', '{email}', '{homeAddress}', '{dateOfBirth}', '{placeOfBirth}',
   '{#skillRows}', '{skillText}', '{/skillRows}',
@@ -324,5 +315,4 @@ const tags = [
   '{#workExperienceRows}', '{/workExperienceRows}',
   '{#hasPublications}', '{publicationsText}', '{/hasPublications}',
   'rId_employee_photo',
-];
-tags.forEach(t => console.log((checkXml.includes(t) ? '✓' : '✗ MISSING') + '  ' + t));
+].forEach(t => console.log((checkXml.includes(t) ? '✓' : '✗ MISSING') + '  ' + t));
