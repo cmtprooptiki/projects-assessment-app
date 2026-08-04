@@ -8,7 +8,7 @@ import { useClients } from '@/hooks/useClients';
 import ProjectStatsView from '@/components/statistics/ProjectStatsView';
 import EmployeeStatsView from '@/components/statistics/EmployeeStatsView';
 import ClientStatsView from '@/components/statistics/ClientStatsView';
-import Select from '@/components/ui/Select';
+import Combobox from '@/components/ui/Combobox';
 
 type Tab = 'project' | 'employee' | 'client';
 
@@ -74,12 +74,12 @@ export default function StatisticsPage() {
         <div className="space-y-6">
           <div className="flex items-center gap-3">
             <span className="text-sm font-semibold text-slate-600 dark:text-slate-400 whitespace-nowrap">Select Project</span>
-            <div className="w-72">
-              <Select
+            <div className="w-80">
+              <Combobox
                 placeholder="— Choose a project —"
-                value={selectedProjectId ?? ''}
-                options={projects.map((p) => ({ value: p.id, label: `${p.projectCode} – ${p.name}` }))}
-                onChange={(e) => setSelectedProjectId(e.target.value ? parseInt(e.target.value, 10) : null)}
+                value={selectedProjectId?.toString() ?? ''}
+                options={projects.map((p) => ({ value: p.id.toString(), label: `${p.projectCode} – ${p.name}` }))}
+                onChange={(val) => setSelectedProjectId(val ? parseInt(val, 10) : null)}
               />
             </div>
           </div>
@@ -93,12 +93,12 @@ export default function StatisticsPage() {
         <div className="space-y-6">
           <div className="flex items-center gap-3">
             <span className="text-sm font-semibold text-slate-600 dark:text-slate-400 whitespace-nowrap">Select Employee</span>
-            <div className="w-72">
-              <Select
+            <div className="w-80">
+              <Combobox
                 placeholder="— Choose an employee —"
-                value={selectedEmployeeId ?? ''}
-                options={employees.map((e) => ({ value: e.id, label: `${e.firstName} ${e.lastName} — ${e.department}` }))}
-                onChange={(e) => setSelectedEmployeeId(e.target.value ? parseInt(e.target.value, 10) : null)}
+                value={selectedEmployeeId?.toString() ?? ''}
+                options={employees.map((e) => ({ value: e.id.toString(), label: `${e.firstName} ${e.lastName} — ${e.department}` }))}
+                onChange={(val) => setSelectedEmployeeId(val ? parseInt(val, 10) : null)}
               />
             </div>
           </div>
@@ -112,12 +112,12 @@ export default function StatisticsPage() {
         <div className="space-y-6">
           <div className="flex items-center gap-3">
             <span className="text-sm font-semibold text-slate-600 dark:text-slate-400 whitespace-nowrap">Select Client</span>
-            <div className="w-72">
-              <Select
+            <div className="w-80">
+              <Combobox
                 placeholder="— Choose a client —"
-                value={selectedClientId ?? ''}
-                options={clients.map((c) => ({ value: c.id, label: c.name + (c.industry ? ` — ${c.industry}` : '') }))}
-                onChange={(e) => setSelectedClientId(e.target.value ? parseInt(e.target.value, 10) : null)}
+                value={selectedClientId?.toString() ?? ''}
+                options={clients.map((c) => ({ value: c.id.toString(), label: c.name + (c.industry ? ` — ${c.industry}` : '') }))}
+                onChange={(val) => setSelectedClientId(val ? parseInt(val, 10) : null)}
               />
             </div>
           </div>

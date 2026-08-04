@@ -215,7 +215,7 @@ export default function EmployeeStatsView({ employeeId }: Props) {
     <div className="space-y-6">
       {/* Employee header */}
       <div className="flex items-center gap-3">
-        <EmployeeAvatar employee={employee} size="md" className="shadow-md shadow-indigo-200" />
+        <EmployeeAvatar employee={employee} size="xl" className="shadow-md shadow-indigo-200" />
         <div>
           <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">{employee.firstName} {employee.lastName}</h2>
           <p className="text-sm text-slate-400 dark:text-slate-500">{employee.department}</p>
