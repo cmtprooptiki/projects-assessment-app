@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Users, Link2 } from 'lucide-react';
+import { Users, Link2, Search, Download } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import ApexChart from '@/components/ui/ApexChart';
 import Select from '@/components/ui/Select';
+import SortableTh from '@/components/ui/SortableTh';
 import { useProjectDashboard } from '@/hooks/useDashboard';
 import { useTheme } from '@/lib/theme';
 import { hBarOptions, donutOptions, COLORS, FONT } from '@/lib/chartConfig';
@@ -38,6 +40,15 @@ export default function ProjectStatsView({ projectId }: Props) {
 
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear);
+
+  const [participantsFilter, setParticipantsFilter] = useState('');
+  const [sortBy, setSortBy]       = useState('startDate');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+  const handleSort = (field: string) => {
+    if (sortBy === field) setSortOrder(o => o === 'asc' ? 'desc' : 'asc');
+    else { setSortBy(field); setSortOrder('asc'); }
+  };
 
   // Pull participations before early returns so hooks always run in same order
   const rawData = (data as any)?.data ?? (data as any);
@@ -117,6 +128,54 @@ export default function ProjectStatsView({ projectId }: Props) {
     });
     return Array.from(map.values());
   }, [participations]);
+
+  // Filtered + sorted Participants rows
+  const displayParticipations = useMemo(() => {
+    const q = participantsFilter.toLowerCase();
+    const filtered = q
+      ? participations.filter((p: any) =>
+          (`${p.employee?.firstName} ${p.employee?.lastName}`).toLowerCase().includes(q) ||
+          (p.employee?.department ?? '').toLowerCase().includes(q) ||
+          (p.role?.name ?? '').toLowerCase().includes(q)
+        )
+      : participations;
+
+    return [...filtered].sort((a: any, b: any) => {
+      let av: any, bv: any;
+      switch (sortBy) {
+        case 'employee':
+          av = `${a.employee?.lastName} ${a.employee?.firstName}`.toLowerCase();
+          bv = `${b.employee?.lastName} ${b.employee?.firstName}`.toLowerCase();
+          break;
+        case 'role':    av = a.role?.name ?? '';  bv = b.role?.name ?? '';  break;
+        case 'endDate':
+          av = a.endDate ?? '9999-12-31';
+          bv = b.endDate ?? '9999-12-31';
+          break;
+        case 'months':  av = a.totalMonths ?? 0; bv = b.totalMonths ?? 0; break;
+        default:        av = a.startDate ?? '';   bv = b.startDate ?? '';  break;
+      }
+      if (av < bv) return sortOrder === 'asc' ? -1 : 1;
+      if (av > bv) return sortOrder === 'asc' ?  1 : -1;
+      return 0;
+    });
+  }, [participations, participantsFilter, sortBy, sortOrder]);
+
+  const exportParticipants = (proj: any) => {
+    const rows = displayParticipations.map((p: any) => ({
+      'Employee':   `${p.employee?.lastName} ${p.employee?.firstName}`,
+      'Department': p.employee?.department ?? '',
+      'Role':       p.role?.name ?? '',
+      'Start Date': p.startDate ?? '',
+      'End Date':   p.endDate ?? 'Ongoing',
+      'Months':     p.totalMonths ?? 0,
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = [28, 20, 22, 12, 12, 8].map(wch => ({ wch }));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Participants');
+    XLSX.writeFile(wb, `participants_${proj.projectCode ?? proj.name}.xlsx`);
+  };
 
   // --- Early returns (after all hooks) ---
   if (isLoading) {
@@ -320,16 +379,52 @@ export default function ProjectStatsView({ projectId }: Props) {
 
           {/* Participants table */}
           <Card className="p-6">
-            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-4">Participants</h3>
+            <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                Participants
+                {participantsFilter && (
+                  <span className="ml-2 text-xs font-normal text-slate-400">
+                    {displayParticipations.length} / {participations.length} rows
+                  </span>
+                )}
+              </h3>
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={participantsFilter}
+                    onChange={e => setParticipantsFilter(e.target.value)}
+                    placeholder="Filter by employee or role…"
+                    className="pl-7 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-52"
+                  />
+                </div>
+                <button
+                  onClick={() => exportParticipants(project)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800 transition-colors"
+                >
+                  <Download size={13} />
+                  Export XLSX
+                </button>
+              </div>
+            </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-100 dark:border-slate-700">
-                    {['Employee', 'Role', 'Start Date', 'End Date', 'Months'].map((h) => <th key={h} className={th}>{h}</th>)}
+                    <SortableTh field="employee"  label="Employee"   sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} />
+                    <SortableTh field="role"      label="Role"       sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} />
+                    <SortableTh field="startDate" label="Start Date" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} />
+                    <SortableTh field="endDate"   label="End Date"   sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} />
+                    <SortableTh field="months"    label="Months"     sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50 dark:divide-slate-700">
-                  {participations.map((p: any) => (
+                  {displayParticipations.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-3 py-8 text-center text-sm text-slate-400">No results match your filter.</td>
+                    </tr>
+                  ) : displayParticipations.map((p: any) => (
                     <tr key={p.id} className={tableRow}>
                       <td className={`${tdBase} font-semibold text-slate-800 dark:text-slate-200`}>{p.employee.firstName} {p.employee.lastName}</td>
                       <td className={`${tdBase} text-slate-500 dark:text-slate-400`}>{p.role.name}</td>
