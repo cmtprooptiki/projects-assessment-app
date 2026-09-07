@@ -87,10 +87,22 @@ export default function ProjectForm({ defaultValues, clients, onSubmit, submitLa
       setError('Please fill in all required fields.');
       return;
     }
+    // Parse European number format: "737.798,52" → 737798.52
+    let parsedBudget: number | null = null;
+    if (form.totalBudget.trim()) {
+      const normalized = form.totalBudget.trim().replace(/\./g, '').replace(',', '.');
+      parsedBudget = parseFloat(normalized);
+      if (isNaN(parsedBudget)) {
+        setError('Total budget must be a valid number (e.g. 737.798,52 or 737798.52).');
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       const projectId = await onSubmit({
         ...form,
+        totalBudget: parsedBudget != null ? String(parsedBudget) : '',
         description: form.description || null as any,
       });
       await linkContracts.mutateAsync({ id: projectId, contractIds: linkedContractIds });
@@ -125,12 +137,12 @@ export default function ProjectForm({ defaultValues, clients, onSubmit, submitLa
 
         <Input
           label="Total Budget (€)"
-          type="number"
-          min="0"
-          step="0.01"
+          type="text"
+          inputMode="decimal"
           value={form.totalBudget}
           onChange={(e) => set('totalBudget', e.target.value)}
-          placeholder="0.00"
+          placeholder="737.798,52"
+          hint="Use either format: 737798.52 or 737.798,52"
         />
 
         <Select
