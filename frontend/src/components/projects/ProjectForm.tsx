@@ -28,6 +28,12 @@ interface Props {
   submitLabel?: string;
 }
 
+const toEuropean = (value: number): string => {
+  const parts = value.toFixed(2).split('.');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return parts.join(',');
+};
+
 export default function ProjectForm({ defaultValues, clients, onSubmit, submitLabel = 'Save Project' }: Props) {
   const router = useRouter();
   const qc = useQueryClient();
@@ -39,7 +45,7 @@ export default function ProjectForm({ defaultValues, clients, onSubmit, submitLa
     acronym: defaultValues?.acronym ?? '',
     description: defaultValues?.description ?? '',
     clientId: defaultValues?.clientId ?? null,
-    totalBudget: defaultValues?.totalBudget != null ? String(defaultValues.totalBudget) : '',
+    totalBudget: defaultValues?.totalBudget != null ? toEuropean(Number(defaultValues.totalBudget)) : '',
   });
 
   const [linkedContractIds, setLinkedContractIds] = useState<number[]>(
@@ -141,8 +147,8 @@ export default function ProjectForm({ defaultValues, clients, onSubmit, submitLa
           inputMode="decimal"
           value={form.totalBudget}
           onChange={(e) => set('totalBudget', e.target.value)}
-          placeholder="737.798,52"
-          hint="Use either format: 737798.52 or 737.798,52"
+          placeholder="e.g. 150.000,00"
+          hint="Accepts both formats: 150000.00 or 150.000,00"
         />
 
         <Select
