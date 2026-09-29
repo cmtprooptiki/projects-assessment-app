@@ -7,6 +7,7 @@ const CLIENT_SORT: Record<string, string> = {
   name: 'name',
   code: 'code',
   industry: 'industry',
+  createdAt: 'createdAt',
 };
 
 export const getAllClients = async (filters: {

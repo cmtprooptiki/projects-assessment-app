@@ -27,7 +27,7 @@ function CashFlowBadge() {
   );
 }
 
-const defaultFilters: IClientFilters = { page: 1, limit: 15, sortBy: 'name', sortOrder: 'asc' };
+const defaultFilters: IClientFilters = { page: 1, limit: 15, sortBy: 'createdAt', sortOrder: 'desc' };
 
 export default function ClientsPage() {
   const [filters, setFilters] = useState<IClientFilters>(defaultFilters);
