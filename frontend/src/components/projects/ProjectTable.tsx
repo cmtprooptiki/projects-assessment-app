@@ -16,7 +16,7 @@ type SortField = 'projectCode' | 'name' | 'acronym' | 'client' | 'startDate' | '
 const isNew = (createdAt: string | undefined) => {
   if (!createdAt) return false;
   const diff = Date.now() - new Date(createdAt).getTime();
-  return diff < 7 * 24 * 60 * 60 * 1000; // 7 days
+  return diff < 30 * 24 * 60 * 60 * 1000; // 30 days
 };
 type SortDir   = 'asc' | 'desc';
 

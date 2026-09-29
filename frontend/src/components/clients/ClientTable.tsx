@@ -12,6 +12,11 @@ import { useDeleteClient } from '@/hooks/useClients';
 
 type SortDir = 'asc' | 'desc';
 
+const isNew = (createdAt: string | undefined) => {
+  if (!createdAt) return false;
+  return Date.now() - new Date(createdAt).getTime() < 30 * 24 * 60 * 60 * 1000;
+};
+
 interface Props {
   clients: Client[];
   sortBy?: string;
@@ -62,7 +67,16 @@ export default function ClientTable({ clients, sortBy = 'name', sortOrder = 'asc
           <tbody className="divide-y divide-gray-50 dark:divide-slate-700/50">
             {clients.map((client) => (
               <tr key={client.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors">
-                <td className="px-4 py-3 font-medium text-gray-900 dark:text-slate-200">{client.name}</td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-gray-900 dark:text-slate-200">{client.name}</span>
+                    {isNew(client.createdAt) && (
+                      <span className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 leading-none">
+                        New
+                      </span>
+                    )}
+                  </div>
+                </td>
                 <td className="px-4 py-3">
                   {client.code
                     ? <span className="font-mono text-xs bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 px-2 py-0.5 rounded">{client.code}</span>
