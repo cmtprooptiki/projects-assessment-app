@@ -11,6 +11,7 @@ const CONTRACT_SORT: Record<string, any[]> = {
   endDate: [['endDate', 'ASC']],
   status: [['status', 'ASC']],
   budget: [['budget', 'ASC']],
+  createdAt: [['createdAt', 'ASC']],
 };
 
 export const getAllContracts = async (filters: {
@@ -24,7 +25,7 @@ export const getAllContracts = async (filters: {
   sortBy?: string;
   sortOrder?: string;
 }) => {
-  const { status, clientId, projectId, unlinked, search, page = 1, limit = 20, sortBy = 'name', sortOrder = 'asc' } = filters;
+  const { status, clientId, projectId, unlinked, search, page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc' } = filters;
   const offset = (page - 1) * limit;
   const dir = sortOrder === 'desc' ? 'DESC' : 'ASC';
   const order: any = (CONTRACT_SORT[sortBy] ?? CONTRACT_SORT.name).map((clause) =>

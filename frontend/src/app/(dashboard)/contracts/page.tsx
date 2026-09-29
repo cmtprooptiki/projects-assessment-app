@@ -26,7 +26,7 @@ function CashFlowBadge() {
   );
 }
 
-const defaultFilters: IContractFilters = { page: 1, limit: 15, sortBy: 'name', sortOrder: 'asc' };
+const defaultFilters: IContractFilters = { page: 1, limit: 15, sortBy: 'createdAt', sortOrder: 'desc' };
 
 export default function ContractsPage() {
   const [filters, setFilters] = useState<IContractFilters>(defaultFilters);
