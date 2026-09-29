@@ -11,7 +11,13 @@ import { Project } from '@/types';
 import { useDeleteProject } from '@/hooks/useProjects';
 import { formatDate } from '@/lib/utils';
 
-type SortField = 'projectCode' | 'name' | 'acronym' | 'client' | 'startDate' | 'contracts' | 'totalBudget' | 'cmtBudget';
+type SortField = 'projectCode' | 'name' | 'acronym' | 'client' | 'startDate' | 'contracts' | 'totalBudget' | 'cmtBudget' | 'createdAt';
+
+const isNew = (createdAt: string | undefined) => {
+  if (!createdAt) return false;
+  const diff = Date.now() - new Date(createdAt).getTime();
+  return diff < 7 * 24 * 60 * 60 * 1000; // 7 days
+};
 type SortDir   = 'asc' | 'desc';
 
 interface Props {
@@ -63,11 +69,18 @@ export default function ProjectTable({ projects, sortBy = 'projectCode', sortOrd
               <tr key={p.id} className="group hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors">
                 <td className="px-4 py-3 font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400">{p.projectCode}</td>
                 <td className="px-4 py-3">
-                  <Link href={`/projects/${p.id}/edit`} className="group inline-flex items-center gap-1 w-fit">
-                    <span className="font-medium text-gray-900 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 group-hover:underline underline-offset-2 transition-colors">
-                      {p.name}
-                    </span>
-                  </Link>
+                  <div className="flex items-center gap-2">
+                    <Link href={`/projects/${p.id}/edit`} className="group inline-flex items-center gap-1 w-fit">
+                      <span className="font-medium text-gray-900 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 group-hover:underline underline-offset-2 transition-colors">
+                        {p.name}
+                      </span>
+                    </Link>
+                    {isNew(p.createdAt) && (
+                      <span className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 leading-none">
+                        New
+                      </span>
+                    )}
+                  </div>
                 </td>
                 <td className="px-4 py-3 text-gray-600 dark:text-slate-300">{p.acronym}</td>
                 <td className="px-4 py-3 text-gray-600 dark:text-slate-300">{p.client?.name ?? <span className="text-gray-300 dark:text-slate-600">—</span>}</td>

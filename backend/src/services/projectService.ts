@@ -32,7 +32,7 @@ const withDates = (p: any) => {
   return { ...json, ...computeProjectDates(contracts), cmtBudget };
 };
 
-const ALLOWED_SORT = new Set(['projectCode', 'name', 'acronym', 'client', 'startDate', 'contracts', 'totalBudget', 'cmtBudget']);
+const ALLOWED_SORT = new Set(['projectCode', 'name', 'acronym', 'client', 'startDate', 'contracts', 'totalBudget', 'cmtBudget', 'createdAt']);
 
 export const getAllProjects = async (filters: {
   clientId?: string;
@@ -42,10 +42,10 @@ export const getAllProjects = async (filters: {
   sortBy?: string;
   sortOrder?: string;
 }) => {
-  const { clientId, search, page = 1, limit = 20, sortBy = 'projectCode', sortOrder = 'asc' } = filters;
+  const { clientId, search, page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc' } = filters;
   const offset = (page - 1) * limit;
   const dir = sortOrder === 'desc' ? 'DESC' : 'ASC';
-  const field = ALLOWED_SORT.has(sortBy) ? sortBy : 'projectCode';
+  const field = ALLOWED_SORT.has(sortBy) ? sortBy : 'createdAt';
 
   const order: any[] = (() => {
     switch (field) {
@@ -56,7 +56,8 @@ export const getAllProjects = async (filters: {
       case 'contracts':    return [[literal('(SELECT COUNT(*) FROM contracts WHERE projectId = Project.id)'), dir]];
       case 'totalBudget':  return [['totalBudget', dir]];
       case 'cmtBudget':    return [[literal('(SELECT COALESCE(SUM(budget), 0) FROM contracts WHERE projectId = Project.id)'), dir]];
-      default:           return [['projectCode', dir]];
+      case 'createdAt':    return [['createdAt', dir]];
+      default:           return [['createdAt', 'DESC']];
     }
   })();
 

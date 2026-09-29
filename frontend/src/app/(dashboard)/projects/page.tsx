@@ -16,7 +16,7 @@ import { ProjectFilters as IProjectFilters } from '@/types';
 import api from '@/lib/api';
 import { exportProjectsToXlsx } from '@/lib/exportProjects';
 
-const defaultFilters: IProjectFilters = { page: 1, limit: 50, sortBy: 'projectCode', sortOrder: 'asc' };
+const defaultFilters: IProjectFilters = { page: 1, limit: 50, sortBy: 'createdAt', sortOrder: 'desc' };
 
 export default function ProjectsPage() {
   const [filters, setFilters] = useState<IProjectFilters>(defaultFilters);
