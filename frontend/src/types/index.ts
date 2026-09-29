@@ -236,6 +236,8 @@ export interface DashboardSummary {
     activeContracts: number;
     totalRoles: number;
     totalParticipations: number;
+    totalClients: number;
+    confirmedClients: number;
   };
   contractsByStatus: Array<{ status: string; count: string }>;
   employeesByDepartment: Array<{ department: string; count: string }>;

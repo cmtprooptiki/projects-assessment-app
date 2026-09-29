@@ -1,6 +1,6 @@
 'use client';
 
-import { Users, Briefcase, Link2, FolderKanban, Building2, UserCheck } from 'lucide-react';
+import { Users, Briefcase, Link2, FolderKanban, Building2, UserCheck, HeartHandshake } from 'lucide-react';
 import { useDashboardSummary } from '@/hooks/useDashboard';
 
 type OverviewKey =
@@ -8,7 +8,8 @@ type OverviewKey =
   | 'internalEmployees' | 'externalEmployees'
   | 'totalProjects'
   | 'totalContracts' | 'activeContracts'
-  | 'totalParticipations';
+  | 'totalParticipations'
+  | 'totalClients' | 'confirmedClients';
 
 const metrics: Array<{
   key: OverviewKey;
@@ -73,6 +74,15 @@ const metrics: Array<{
     gradient: 'from-orange-400 to-amber-500',
     shadow: 'shadow-orange-100 dark:shadow-orange-900/20',
   },
+  {
+    key: 'totalClients',
+    sub: 'confirmedClients',
+    subLabel: 'confirmed',
+    label: 'Total Clients',
+    icon: HeartHandshake,
+    gradient: 'from-rose-400 to-pink-500',
+    shadow: 'shadow-rose-100 dark:shadow-rose-900/20',
+  },
 ];
 
 function SkeletonCard() {
@@ -97,7 +107,7 @@ export default function SummaryCards() {
   if (isLoading) {
     return (
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
+        {[...Array(7)].map((_, i) => <SkeletonCard key={i} />)}
       </div>
     );
   }

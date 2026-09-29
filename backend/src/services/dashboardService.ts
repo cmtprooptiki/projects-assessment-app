@@ -181,6 +181,8 @@ export const getDashboardSummary = async () => {
     totalProjects,
     totalRoles,
     totalParticipations,
+    totalClients,
+    confirmedClients,
   ] = await Promise.all([
     Employee.count(),
     Employee.count({ where: { isActive: true } }),
@@ -191,6 +193,8 @@ export const getDashboardSummary = async () => {
     Project.count(),
     Role.count(),
     ProjectParticipation.count(),
+    Client.count(),
+    Client.count({ where: { code: { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: '' }] } } }),
   ]);
 
   const contractsByStatus = await Contract.findAll({
@@ -228,6 +232,8 @@ export const getDashboardSummary = async () => {
       activeContracts,
       totalRoles,
       totalParticipations,
+      totalClients,
+      confirmedClients,
     },
     contractsByStatus,
     employeesByDepartment,
